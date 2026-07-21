@@ -1,0 +1,58 @@
+import type { Customer } from "@/types"
+
+export const customers: Customer[] = [
+  {
+    id: "cus_01",
+    name: "Nguyễn Minh Tú",
+    email: "minhtu@example.com",
+    phone: "0901 234 567",
+    totalOrders: 8,
+    totalSpent: 4820000,
+    lastOrderDate: "2025-06-28",
+  },
+  {
+    id: "cus_02",
+    name: "Trần Quốc Hưng",
+    email: "quochung@example.com",
+    phone: "0912 345 678",
+    totalOrders: 3,
+    totalSpent: 1290000,
+    lastOrderDate: "2025-05-11",
+  },
+  {
+    id: "cus_03",
+    name: "Lê Hoàng Long",
+    email: "hoanglong@example.com",
+    phone: "0987 654 321",
+    totalOrders: 12,
+    totalSpent: 7650000,
+    lastOrderDate: "2025-07-02",
+  },
+  {
+    id: "cus_04",
+    name: "Phạm Anh Khoa",
+    email: "anhkhoa@example.com",
+    phone: "0934 567 890",
+    totalOrders: 1,
+    totalSpent: 350000,
+    lastOrderDate: "2025-01-15",
+  },
+  {
+    id: "cus_05",
+    name: "Đỗ Thành Đạt",
+    email: "thanhdat@example.com",
+    phone: "0945 678 901",
+    totalOrders: 5,
+    totalSpent: 2310000,
+    lastOrderDate: "2025-04-20",
+  },
+  {
+    id: "cus_06",
+    name: "Vũ Gia Bảo",
+    email: "giabao@example.com",
+    phone: "0956 789 012",
+    totalOrders: 2,
+    totalSpent: 890000,
+    lastOrderDate: "2025-03-19",
+  },
+]

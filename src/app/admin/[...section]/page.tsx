@@ -1,0 +1,1 @@
+import { CrudPage } from "@/components/admin/crud-page"; export default async function Page({params}:{params:Promise<{section:string[]}>}){const {section}=await params;return <CrudPage section={section[0]}/>} 
