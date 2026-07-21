@@ -14,15 +14,12 @@ interface CartState {
   clear: () => void
   applyCoupon: (code: string | null) => void
   setOpen: (open: boolean) => void
-<<<<<<< HEAD
   openCart: () => void
   closeCart: () => void
   toggleCart: () => void
   clearCart: () => void
   increaseQuantity: (variantId: string) => void
   decreaseQuantity: (variantId: string) => void
-=======
->>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   // derived
   totalItems: () => number
   subtotal: () => number
@@ -73,7 +70,6 @@ export const useCartStore = create<CartState>()(
       applyCoupon: (code) => set({ couponCode: code }),
 
       setOpen: (open) => set({ isOpen: open }),
-<<<<<<< HEAD
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
@@ -86,8 +82,6 @@ export const useCartStore = create<CartState>()(
         const item = get().items.find((i) => i.variantId === variantId)
         if (item) get().updateQuantity(variantId, item.quantity - 1)
       },
-=======
->>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
 
       totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 
