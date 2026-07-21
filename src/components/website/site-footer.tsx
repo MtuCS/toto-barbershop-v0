@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Camera, AtSign, Play, MapPin, Phone, Mail, Scissors } from "lucide-react"
+import { Instagram, Facebook, Youtube, MapPin, Phone, Mail, Scissors } from "lucide-react"
 import { defaultSettings } from "@/data/settings"
 import { MAIN_NAV } from "@/lib/constants"
 
