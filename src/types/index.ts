@@ -24,7 +24,10 @@ export interface ProductVariant {
 }
 
 export interface Product {
+<<<<<<< HEAD
   [key: string]: unknown
+=======
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   id: ID
   slug: string
   title: string
@@ -54,7 +57,10 @@ export interface SeoFields {
 }
 
 export interface Category {
+<<<<<<< HEAD
   [key: string]: unknown
+=======
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   id: ID
   slug: string
   name: string
@@ -70,7 +76,10 @@ export interface Category {
 export type ServiceStatus = 'active' | 'hidden'
 
 export interface Service {
+<<<<<<< HEAD
   [key: string]: unknown
+=======
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   id: ID
   slug: string
   name: string
@@ -96,7 +105,10 @@ export interface TrainingModule {
 }
 
 export interface TrainingCourse {
+<<<<<<< HEAD
   [key: string]: unknown
+=======
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   id: ID
   slug: string
   title: string
@@ -116,7 +128,10 @@ export interface TrainingCourse {
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'rejected'
 
 export interface TrainingLead {
+<<<<<<< HEAD
   [key: string]: unknown
+=======
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   id: ID
   name: string
   phone: string
@@ -143,7 +158,10 @@ export interface StoryBlock {
 }
 
 export interface MerchandiseStory {
+<<<<<<< HEAD
   [key: string]: unknown
+=======
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   id: ID
   slug: string
   title: string
@@ -162,7 +180,10 @@ export interface MerchandiseStory {
 // ---------------------------------------------------------------------------
 
 export interface LookbookItem {
+<<<<<<< HEAD
   [key: string]: unknown
+=======
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   id: ID
   image: string
   caption: string
@@ -217,7 +238,10 @@ export interface OrderTimelineEntry {
 }
 
 export interface Order {
+<<<<<<< HEAD
   [key: string]: unknown
+=======
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   id: ID
   code: string
   customer: {
@@ -255,7 +279,10 @@ export interface Customer {
 // ---------------------------------------------------------------------------
 
 export interface MediaItem {
+<<<<<<< HEAD
   [key: string]: unknown
+=======
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
   id: ID
   url: string
   name: string

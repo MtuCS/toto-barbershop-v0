@@ -10,8 +10,13 @@ import type { AdminSession } from "@/types"
 // Backend hook point: replace login() with a real auth call + httpOnly cookie.
 // ============================================================================
 
+<<<<<<< HEAD
 const DEMO_EMAIL = "admin@totobarbershop.vn"
 const DEMO_PASSWORD = "admin123"
+=======
+const DEMO_EMAIL = "admin@totobarber.vn"
+const DEMO_PASSWORD = "toto2025"
+>>>>>>> 8cf460e46482dfa97694c69a0b753d049efa2fdb
 
 interface AuthState {
   session: AdminSession | null
