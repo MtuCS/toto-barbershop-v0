@@ -3,7 +3,7 @@ import { Clock, MapPin, Scissors, Truck } from "lucide-react"
 const items = [
   { icon: Scissors, title: "Barber lành nghề", desc: "Đội ngũ đào tạo bài bản, tay nghề cao." },
   { icon: Clock, title: "Mở cửa cả tuần", desc: "09:00 - 21:00, T7 & CN tới 22:00." },
-  { icon: MapPin, title: "Quận 1, TP.HCM", desc: "128 Lê Thánh Tôn, trung tâm thành phố." },
+  { icon: MapPin, title: "Quận Tân Bình, TP.HCM", desc: "85 Đồng Đen,Phường 12, Quận Tân Bình,TP. Hồ Chí Minh." },
   { icon: Truck, title: "Giao toàn quốc", desc: "Miễn phí ship cho đơn từ 500K." },
 ]
 
