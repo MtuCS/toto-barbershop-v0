@@ -25,37 +25,39 @@ export function ServicesBento() {
         </Button>
       </div>
 
-      <div className="mt-10 grid gap-3 md:grid-cols-3 md:grid-rows-2">
+      <div className="mt-10 grid gap-3 sm:grid-cols-2 md:grid-cols-12 md:grid-rows-2 md:auto-rows-[240px] lg:auto-rows-[290px]">
         {featured.map((service, i) => (
           <Link
             key={service.id}
             href="/services"
             className={cn(
-              "group relative overflow-hidden rounded-sm border border-border",
-              i === 0 && "md:col-span-2 md:row-span-2",
+              "group relative min-h-72 overflow-hidden rounded-sm border border-border bg-neutral-950 sm:min-h-64 md:min-h-0",
+              i === 0 && "sm:col-span-2 md:col-span-8 md:row-span-2",
+              i === 1 && "md:col-span-4",
+              i > 1 && "md:col-span-2",
             )}
           >
-            <div className={cn("relative", i === 0 ? "aspect-square md:h-full" : "aspect-[16/10]")}>
+            <div className="absolute inset-0">
               <Image
                 src={service.image || "/placeholder.svg"}
                 alt={service.name}
                 fill
-                sizes={i === 0 ? "(max-width:768px) 100vw, 55vw" : "(max-width:768px) 100vw, 30vw"}
+                sizes={i === 0 ? "(max-width: 767px) 100vw, 66vw" : i === 1 ? "(max-width: 767px) 50vw, 33vw" : "(max-width: 767px) 50vw, 17vw"}
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/20 to-transparent" />
             </div>
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 text-background md:p-5">
+            <div className="relative flex h-full items-end justify-between gap-3 p-4 text-background md:p-5">
               <div>
                 <span className="text-xs uppercase tracking-wide text-background/70">{service.category}</span>
-                <h3 className={cn("font-display font-bold uppercase leading-tight", i === 0 ? "text-2xl md:text-4xl" : "text-lg")}>
+                <h3 className={cn("font-display font-bold uppercase leading-tight", i === 0 ? "text-2xl md:text-4xl" : "text-lg md:text-base lg:text-lg")}>
                   {service.name}
                 </h3>
-                <p className="mt-1 text-sm text-background/80">
+                <p className={cn("mt-1 text-sm text-background/80", i > 1 && "md:text-xs lg:text-sm")}>
                   {formatCurrency(service.price)} · {formatDuration(service.duration)}
                 </p>
               </div>
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1">
+              <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1", i > 1 && "md:size-8")}>
                 <ArrowUpRight className="size-4" />
               </span>
             </div>

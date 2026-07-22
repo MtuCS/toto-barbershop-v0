@@ -7,4 +7,8 @@ export const lookbookItems: LookbookItem[] = [
   { id: 'lb-4', image: '/images/lookbook-4.png', caption: 'Side part thanh lịch', category: 'Classic', featured: false, published: true, order: 4 },
   { id: 'lb-5', image: '/images/lookbook-5.png', caption: 'Hot towel shave', category: 'Grooming', featured: true, published: true, order: 5 },
   { id: 'lb-6', image: '/images/lookbook-6.png', caption: 'Buzz cut & line-up', category: 'Modern', featured: false, published: true, order: 6 },
+  { id: 'lb-7', image: '/images/lookbook-7.png', caption: 'Quiff & beard combo', category: 'Modern', featured: false, published: true, order: 7 },
+  { id: 'lb-8', image: '/images/lookbook-8.png', caption: 'Disconnected undercut', category: 'Modern', featured: false, published: true, order: 8 },
+  // { id: 'lb-9', image: '/images/lookbook-9.png', caption: 'Taper fade & textured top', category: 'Fade', featured: false, published: true, order: 9 },
+  // { id: 'lb-10', image: '/images/lookbook-10.png', caption: 'Slicked back undercut', category: 'Classic', featured: false, published: true, order: 10 },
 ]

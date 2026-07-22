@@ -5,24 +5,24 @@ export const defaultSettings: SettingsData = {
     name: "TOTO Barbershop",
     tagline: "Craft. Culture. Character.",
     description:
-      "TOTO là barbershop kết hợp giữa tay nghề cắt tóc cổ điển và tinh thần streetwear đương đại. Chúng tôi tạo ra những kiểu tóc, sản phẩm grooming và merchandise mang đậm chất riêng.",
+      "ToTo barbershop kết hợp giữa tay nghề cắt tóc cổ điển và tinh thần streetwear đương đại. Chúng tôi tạo ra những kiểu tóc, sản phẩm grooming và merchandise mang đậm chất riêng.",
   },
   contact: {
-    phone: "0909 888 777",
-    email: "hello@totobarber.vn",
+    phone: "098 137 81 79",
+    email: "nguyenphap506@gmail.com",
     address: "85 Đồng Đen,Phường 12, Quận Tân Bình,TP. Hồ Chí Minh",
     
   },
   social: {
-    instagram: "https://instagram.com/totobarber",
-    facebook: "https://facebook.com/totobarber",
+    instagram: "https://www.instagram.com/totobarbershop_/",
+    facebook: "https://www.facebook.com/totobarbershopHCM",
     tiktok: "https://tiktok.com/@totobarber",
     youtube: "https://youtube.com/@totobarber",
   },
   openingHours: [
-    { day: "Thứ 2 - Thứ 6", hours: "09:00 - 21:00" },
-    { day: "Thứ 7", hours: "08:00 - 22:00" },
-    { day: "Chủ nhật", hours: "08:00 - 20:00" },
+    { day: "Thứ 2 - Chủ nhật", hours: "08:30 - 20:30" },
+    // { day: "Thứ 7", hours: "08:00 - 22:00" },
+    // { day: "Chủ nhật", hours: "08:00 - 20:00" },
   ],
   shipping: {
     freeThreshold: 500000,

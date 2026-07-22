@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Instagram, Facebook, Youtube, MapPin, Phone, Mail, Scissors } from "lucide-react"
 import { defaultSettings } from "@/data/settings"
 import { MAIN_NAV } from "@/lib/constants"
-
+import Image from "next/image"
 const shopLinks = [
   { label: "Grooming", href: "/shop/grooming" },
   { label: "Merchandise", href: "/shop/merchandise" },
@@ -23,19 +23,28 @@ export function SiteFooter() {
               </span>
               <span className="font-display text-2xl font-bold uppercase">Toto</span>
             </div>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-background/70">
+            {/* <p className="mt-4 max-w-xs text-sm leading-relaxed text-background/70">
               {s.business.tagline}. {s.business.description}
-            </p>
-            <div className="mt-6 flex items-center gap-3">
+            </p> */}
+            <div className="mt-4 max-w-xs overflow-hidden rounded-md">
+              <Image
+                src="/images/avatar-Photoroom.png"
+                alt="Toto Barbershop"
+                width={320}
+                height={200}
+                className="h-auto w-full object-contain opacity-90"
+              />
+            </div>
+            <div className="mt-6 flex items-center justify-center gap-3">
               <Link href={s.social.instagram} aria-label="Instagram" className="rounded-sm border border-background/20 p-2 transition-colors hover:bg-primary hover:text-primary-foreground">
                 <Instagram className="size-4" />
               </Link>
               <Link href={s.social.facebook} aria-label="Facebook" className="rounded-sm border border-background/20 p-2 transition-colors hover:bg-primary hover:text-primary-foreground">
                 <Facebook className="size-4" />
               </Link>
-              <Link href={s.social.youtube} aria-label="YouTube" className="rounded-sm border border-background/20 p-2 transition-colors hover:bg-primary hover:text-primary-foreground">
+              {/* <Link href={s.social.youtube} aria-label="YouTube" className="rounded-sm border border-background/20 p-2 transition-colors hover:bg-primary hover:text-primary-foreground">
                 <Youtube className="size-4" />
-              </Link>
+              </Link> */}
             </div>
           </div>
 
@@ -99,7 +108,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-background/15 pt-6 text-xs text-background/60 md:flex-row">
-          <p>© {new Date().getFullYear()} {s.business.name}. Prototype frontend.</p>
+          <p>© {new Date().getFullYear()} {s.business.name}. Developed by ToTo Team.</p>
           <p>Craft. Culture. Character.</p>
         </div>
       </div>
