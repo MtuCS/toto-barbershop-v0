@@ -15,7 +15,7 @@ export function GroomingFeatured() {
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
         <SectionHeading
           eyebrow="Grooming"
-          title="Chăm sóc chuẩn tiệm"
+          title="Chăm sóc chuẩn đàn ông"
           description="Pomade, sáp, dầu gội và bộ kit — mang trải nghiệm barber về nhà."
         />
         <Button asChild variant="outline" className="shrink-0">

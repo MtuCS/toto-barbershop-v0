@@ -21,7 +21,7 @@ export function MerchTeaser() {
               <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-background/80">
                 <span className="h-px w-6 bg-primary" /> Merchandise
               </span>
-              <h2 className="mt-4 font-display text-4xl font-bold uppercase leading-[0.9] tracking-tight text-balance md:text-6xl">
+              <h2 className="mt-4 font-display text-4xl font-bold uppercase leading-[1.25] tracking-tight text-balance md:text-6xl">
                 Mặc lên tinh thần của tiệm
               </h2>
               <p className="mt-5 max-w-md leading-relaxed text-background/80">

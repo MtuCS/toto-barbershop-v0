@@ -10,7 +10,8 @@ export const defaultSettings: SettingsData = {
   contact: {
     phone: "0909 888 777",
     email: "hello@totobarber.vn",
-    address: "128 Lê Thánh Tôn, Quận 1, TP. Hồ Chí Minh",
+    address: "85 Đồng Đen,Phường 12, Quận Tân Bình,TP. Hồ Chí Minh",
+    
   },
   social: {
     instagram: "https://instagram.com/totobarber",

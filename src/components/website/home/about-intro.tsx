@@ -15,7 +15,7 @@ export function AboutIntro() {
             <span className="h-px w-6 bg-primary" /> Về Toto
           </span>
           <h2 className="mt-4 font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight text-balance md:text-5xl">
-            Không chỉ là một cú cắt
+            It’s not just a cut. It’s a culture.
           </h2>
           <p className="mt-5 leading-relaxed text-background/75">
             Toto ra đời từ tình yêu với văn hoá barber và tinh thần streetwear. Chúng tôi tin

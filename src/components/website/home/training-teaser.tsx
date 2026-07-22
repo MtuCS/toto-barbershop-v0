@@ -17,7 +17,7 @@ export function TrainingTeaser() {
           <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-primary">
             <span className="h-px w-6 bg-primary" /> Đào tạo
           </span>
-          <h2 className="mt-4 font-display text-3xl font-bold uppercase leading-[0.95] tracking-tight text-balance md:text-5xl">
+          <h2 className="mt-4 font-display text-3xl font-bold uppercase leading-[1.15] tracking-tight text-balance md:text-5xl">
             Trở thành barber chuyên nghiệp
           </h2>
           <p className="mt-5 leading-relaxed text-muted-foreground">

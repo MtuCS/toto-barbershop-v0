@@ -12,12 +12,19 @@ export function Hero() {
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Est. Sài Gòn
           </span>
-          <h1 className="mt-5 font-display text-5xl font-bold uppercase leading-[0.9] tracking-tight text-balance sm:text-6xl lg:text-7xl">
+          {/* <h1 className="mt-5 font-display text-5xl font-bold uppercase leading-[0.9] tracking-tight text-balance sm:text-6xl lg:text-7xl">
             Barber.
             <br />
             Culture.
             <br />
             <span className="text-primary">Craft.</span>
+          </h1> */}
+          <h1 className="mt-5 mb-8 font-display text-6xl font-bold uppercase leading-[0.9] tracking-tight text-foreground sm:text-7xl md:text-8xl lg:text-[8rem]">
+            Barber.
+            <br />
+            Culture.
+            <br />
+            <span className="text-accent">Craft.</span>
           </h1>
           <p className="mt-6 max-w-md text-pretty leading-relaxed text-muted-foreground">
             Tiệm cắt tóc chuẩn barber, học viện đào tạo, grooming và merchandise mang tinh
