@@ -18,6 +18,14 @@ export function CheckoutForm() {
   
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Idempotency key để tránh double-submit
+  const [idempotencyKey, setIdempotencyKey] = useState("");
+  
+  useEffect(() => {
+    setIdempotencyKey(crypto.randomUUID());
+  }, []);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -176,40 +184,61 @@ export function CheckoutForm() {
     <div className="mx-auto grid max-w-6xl gap-12 px-5 py-14 md:grid-cols-[1fr_420px] md:px-8">
       <form
         className="grid gap-6"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
+          if (isSubmitting) return;
+
           const f = new FormData(e.currentTarget);
-          
           const finalAddress = getAddressText();
           if (!finalAddress.trim()) {
             alert("Vui lòng điền đầy đủ thông tin địa chỉ giao hàng");
             return;
           }
 
-          const o = place({
-            customer: {
-              name: String(f.get("name")),
-              phone: String(f.get("phone")),
-              email: String(f.get("email")),
-              address: finalAddress,
-              note: String(f.get("note")),
-            },
-            items,
-            subtotal,
-            shippingFee: shipping,
-            discount: discountAmount,
-            total,
-            couponCode: validPromoCode || undefined,
-            paymentMethod: String(f.get("payment")) as "cod" | "bank_transfer",
-          });
-          clear();
-          router.push(`/order-success?code=${o.code}`);
+          setIsSubmitting(true);
+          try {
+            const res = await fetch("/api/orders/checkout", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                items: items.map(i => ({
+                  productId: i.productId,
+                  variantId: i.variantId,
+                  quantity: i.quantity,
+                  price: i.price
+                })),
+                total,
+                discount: discountAmount,
+                promoCode: validPromoCode || undefined,
+                idempotencyKey,
+                paymentMethod: String(f.get("payment")),
+                address: finalAddress,
+                note: String(f.get("note")),
+              })
+            });
+
+            if (!res.ok) {
+              const errData = await res.json();
+              throw new Error(errData.error || "Có lỗi xảy ra khi tạo đơn hàng.");
+            }
+
+            const newOrder = await res.json();
+            clear();
+            router.push(`/order-success?code=${newOrder.id}`);
+          } catch (err: any) {
+            alert(err.message);
+          } finally {
+            setIsSubmitting(false);
+          }
         }}
       >
         <div>
           <h1 className="font-display text-5xl font-bold uppercase">Checkout</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Thanh toán mô phỏng — không có giao dịch thật.
+            Thanh toán an toàn — xác nhận đơn hàng thành công.
           </p>
         </div>
         
@@ -373,7 +402,7 @@ export function CheckoutForm() {
           </div>
         </div>
         
-        <Button disabled={!items.length} className="h-14 text-base uppercase mt-4 rounded-xl shadow-lg hover:shadow-xl transition-all">
+        <Button type="submit" disabled={!items.length} className="h-14 text-base uppercase mt-4 rounded-xl shadow-lg hover:shadow-xl transition-all">
           Xác nhận đặt hàng — {formatCurrency(total)}
         </Button>
       </form>
