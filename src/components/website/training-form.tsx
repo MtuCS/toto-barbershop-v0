@@ -47,10 +47,29 @@ export function TrainingForm() {
         placeholder="Email"
         className="border bg-transparent px-4 py-3"
       />
-      <select name="course" className="border bg-background px-4 py-3">
+      {/* <select name="course" className="border bg-background px-4 py-3">
         <option value="t-foundation">Barber Foundation</option>
         <option value="t-pro">Advanced Fade & Styling</option>
+      </select> */}
+
+      <select
+        name="course"
+        defaultValue=""
+        className="w-full border border-white/70 bg-transparent px-4 py-3 text-white outline-none transition-colors focus:border-emerald-400"
+      >
+        <option value="" disabled className="bg-neutral-950 text-white">
+          Chọn khóa học
+        </option>
+
+        <option value="t-foundation" className="bg-neutral-950 text-white">
+          Barber Foundation
+        </option>
+
+        <option value="t-pro" className="bg-neutral-950 text-white">
+          Advanced Fade & Styling
+        </option>
       </select>
+
       <textarea
         name="message"
         placeholder="Bạn muốn được tư vấn điều gì?"

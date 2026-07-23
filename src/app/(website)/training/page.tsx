@@ -85,36 +85,6 @@ export default function Page() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-24">
-        <SectionTitle label="Khóa học" title="Từ nền tảng đến làm chủ" />
-        <div className="grid gap-8 md:grid-cols-2">
-          {trainingCourses.map((course) => (
-            <article key={course.id} className="border p-6 md:p-8">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                {course.level} · {course.duration}
-              </p>
-              <h2 className="mt-3 font-display text-4xl font-bold uppercase">
-                {course.title}
-              </h2>
-              <p className="mt-4 text-muted-foreground">{course.summary}</p>
-              <p className="mt-5 text-xl font-bold">
-                {formatCurrency(course.price)}
-              </p>
-              <div className="mt-7 border-t pt-5">
-                {course.roadmap.map((item) => (
-                  <div
-                    key={item.week}
-                    className="grid grid-cols-[90px_1fr] border-b py-3 text-sm"
-                  >
-                    <b>{item.week}</b>
-                    <span className="text-muted-foreground">{item.focus}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
 
       <section className="bg-neutral-950 py-16 text-white md:py-24">
         <div className="mx-auto max-w-7xl px-5 md:px-8">
@@ -145,13 +115,46 @@ export default function Page() {
         </div>
       </section>
 
+      <section className=" mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-24">
+        <SectionTitle label="Khóa học" title="Từ nền tảng đến làm chủ" />
+        <div className="grid gap-8 md:grid-cols-2">
+          {trainingCourses.map((course) => (
+            <article key={course.id} className="border p-6 md:p-8">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                {course.level} · {course.duration}
+              </p>
+              <h2 className="mt-3 font-display text-4xl font-bold uppercase">
+                {course.title}
+              </h2>
+              <p className="mt-4 text-muted-foreground">{course.summary}</p>
+              <p className="mt-5 text-xl font-bold">
+                {formatCurrency(course.price)}
+              </p>
+              <div className="mt-7 border-t pt-5">
+                {course.roadmap.map((item) => (
+                  <div
+                    key={item.week}
+                    className="grid grid-cols-[90px_1fr] border-b py-3 text-sm"
+                  >
+                    <b>{item.week}</b>
+                    <span className="text-muted-foreground">{item.focus}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className="bg-neutral-950 pb-16 text-white md:pb-24">
         <div className="mx-auto grid max-w-7xl gap-12 border-t border-white/15 px-5 pt-16 md:grid-cols-2 md:px-8 md:pt-24">
           <div>
             <SectionTitle
               label="Giảng viên"
               title="Học từ người đang làm nghề"
+              labelClassName="text-emerald-300"
             />
+            
             <div className="relative aspect-[4/3] overflow-hidden">
               <Image
                 src="/images/instructor.png"
