@@ -1,13 +1,14 @@
 "use client"
 import { useMemo, useState } from "react"
 import { Search } from "lucide-react"
-import { products } from "@/data/products"
 import { ProductCard } from "@/components/website/product-card"
+import { useDataStore } from "@/store/data-store"
 
 export function ShopCatalog({ category }: { category?: "grooming" | "merchandise" }) {
+  const products = useDataStore((s) => s.products)
   const [query, setQuery] = useState("")
   const [sort, setSort] = useState("featured")
-  const list = useMemo(() => products.filter(p => (!category || p.category === category) && `${p.title} ${p.collection}`.toLowerCase().includes(query.toLowerCase())).sort((a,b) => sort === "low" ? a.basePrice-b.basePrice : sort === "high" ? b.basePrice-a.basePrice : Number(b.featured)-Number(a.featured)), [category, query, sort])
+  const list = useMemo(() => products.filter(p => (!category || p.category === category) && `${p.title} ${p.collection}`.toLowerCase().includes(query.toLowerCase())).sort((a,b) => sort === "low" ? a.basePrice-b.basePrice : sort === "high" ? b.basePrice-a.basePrice : Number(b.featured)-Number(a.featured)), [category, products, query, sort])
   return <section className="mx-auto max-w-7xl px-5 py-14 md:px-8">
     <div className="mb-10 flex flex-col gap-3 border-y py-4 md:flex-row md:items-center md:justify-between">
       <label className="flex items-center gap-2 border-b px-2 py-2 md:w-80"><Search className="size-4 text-primary"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Tìm sản phẩm..." className="w-full bg-transparent text-sm outline-none" /></label>

@@ -4,7 +4,7 @@
 // backend later (see README "Backend hook points").
 // ============================================================================
 
-export type ID = string
+export type ID = string | number
 
 export type ProductCategory = 'grooming' | 'merchandise'
 

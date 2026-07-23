@@ -22,6 +22,7 @@ const labels: Record<string, string> = {
   lookbook: "Lookbook",
   orders: "Đơn hàng",
   customers: "Khách hàng",
+  staff: "Nhân viên",
   media: "Tệp media",
   settings: "Cài đặt",
 }
@@ -29,6 +30,10 @@ const labels: Record<string, string> = {
 // Config: Vietnamese field labels
 const fieldLabels: Record<string, string> = {
   name: "Tên",
+  email: "Email",
+  password: "Mật khẩu",
+  phone: "Số điện thoại",
+  role: "Vai trò",
   title: "Tiêu đề",
   price: "Giá (VNĐ)",
   basePrice: "Giá cơ bản (VNĐ)",
@@ -574,6 +579,8 @@ function generateDefaultForm(section: string) {
     case "training": return { title: "", duration: "", price: 0 }
     case "merchandise-stories": return { title: "", excerpt: "", heroImage: "" }
     case "lookbook": return { caption: "", category: "", image: "" }
+    case "customers": return { name: "", email: "", password: "", phone: "", role: "CUSTOMER" }
+    case "staff": return { name: "", email: "", password: "", phone: "", role: "ADMIN" }
     default: return { name: "" }
   }
 }
@@ -589,6 +596,8 @@ export function CrudPage({ section }: { section: string }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Row | null>(null)
   const [formData, setFormData] = useState<Row>({})
+  const [page, setPage] = useState(1)
+  const pageSize = 10
 
   let rows: Row[] = []
   if (section === "products") rows = d.products
@@ -599,13 +608,24 @@ export function CrudPage({ section }: { section: string }) {
   if (section === "lookbook") rows = d.lookbook
   if (section === "orders") rows = d.orders
   if (section === "media") rows = d.media
-  if (section === "customers") {
-    const map = new Map<string, Row & { totalOrders: number; totalSpent: number }>()
-    d.orders.forEach((o) => {
-      const row = map.get(o.customer.email) ?? { id: o.customer.email, name: o.customer.name, email: o.customer.email, totalOrders: 0, totalSpent: 0 }
-      row.totalOrders += 1; row.totalSpent += o.total; map.set(o.customer.email, row)
-    })
-    rows = [...map.values()]
+  if (section === "customers" || section === "staff") {
+    const customerMap = new Map();
+    d.customers.forEach(c => {
+      customerMap.set(c.email, { ...c, totalOrders: 0, totalSpent: 0 });
+    });
+    d.orders.forEach(o => {
+      if (o.customer?.email && customerMap.has(o.customer.email)) {
+        const c = customerMap.get(o.customer.email);
+        c.totalOrders += 1;
+        c.totalSpent += o.total;
+      }
+    });
+    
+    if (section === "customers") {
+      rows = Array.from(customerMap.values()).filter(c => c.role === 'CUSTOMER');
+    } else {
+      rows = Array.from(customerMap.values()).filter(c => c.role !== 'CUSTOMER');
+    }
   }
 
   const filtered = rows.filter(r => {
@@ -635,7 +655,10 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "lookbook") d.deleteLookbook(item.id)
   }
 
-  const handleSaveGeneric = () => {
+  const handleSaveGeneric = async () => {
+    if (section === "customers" || section === "staff") {
+      await d.createUser(formData)
+    }
     if (section === "categories") d.upsertCategory(formData as any)
     if (section === "services") d.upsertService(formData as any)
     if (section === "training") d.upsertCourse(formData as any)
@@ -671,7 +694,7 @@ export function CrudPage({ section }: { section: string }) {
           <p className="text-xs font-bold uppercase tracking-widest text-primary">Quản trị nội dung</p>
           <h1 className="mt-2 font-display text-4xl font-bold uppercase">{labels[section] ?? section}</h1>
         </div>
-        {section !== "settings" && section !== "orders" && section !== "customers" && (
+        {section !== "settings" && section !== "orders" && (
           <Button onClick={handleAdd}><Plus className="mr-2 size-4" />Thêm mới</Button>
         )}
       </header>
@@ -679,7 +702,7 @@ export function CrudPage({ section }: { section: string }) {
       <div className="mt-8 border bg-white">
         <div className="flex items-center gap-2 border-b p-4">
           <Search className="size-4 text-neutral-400" />
-          <input placeholder="Tìm kiếm..." className="flex-1 outline-none" value={search} onChange={e => setSearch(e.target.value)} />
+          <input placeholder="Tìm kiếm..." className="flex-1 outline-none" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-sm">
@@ -693,7 +716,7 @@ export function CrudPage({ section }: { section: string }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.length ? filtered.slice(0, 50).map((r, i) => (
+              {filtered.length ? filtered.slice((page - 1) * pageSize, page * pageSize).map((r, i) => (
                 <tr key={String(r.id ?? i)} className="border-t">
                   <td className="p-4 font-medium">
                     <div className="flex items-center gap-3">
@@ -705,14 +728,14 @@ export function CrudPage({ section }: { section: string }) {
                       {String(r.title ?? r.name ?? r.code ?? r.email ?? `Bản ghi ${i + 1}`)}
                     </div>
                   </td>
-                  <td>{String(r.category ?? r.collection ?? r.level ?? r.type ?? "—")}</td>
+                  <td>{String(r.role ?? r.category ?? r.collection ?? r.level ?? r.type ?? "—")}</td>
                   <td>
                     <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-500"}`}>
-                      {r.status === "active" ? "Đang bán" : r.status === "draft" ? "Nháp" : r.status === "published" ? "Hiển thị" : r.status === "pending" ? "Chờ xử lý" : r.status === "completed" ? "Hoàn thành" : String(r.status ?? "—")}
+                      {r.status === "active" ? ((section === "customers" || section === "staff") ? "Đang HĐ" : "Đang bán") : r.status === "draft" ? "Nháp" : r.status === "published" ? "Hiển thị" : r.status === "pending" ? "Chờ xử lý" : r.status === "completed" ? "Hoàn thành" : String(r.status ?? "—")}
                     </span>
                   </td>
                   <td>
-                    {typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : "—"}
+                    {typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
                   </td>
                   <td>
                     {section !== "orders" && section !== "customers" && (
@@ -738,6 +761,32 @@ export function CrudPage({ section }: { section: string }) {
             </tbody>
           </table>
         </div>
+        {/* Pagination controls */}
+        {filtered.length > pageSize && (
+          <div className="flex items-center justify-between border-t p-4 text-sm text-neutral-500">
+            <div>
+              Hiển thị từ {(page - 1) * pageSize + 1} đến {Math.min(page * pageSize, filtered.length)} trong tổng số {filtered.length} bản ghi
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Trang trước
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= Math.ceil(filtered.length / pageSize)}
+                onClick={() => setPage(page + 1)}
+              >
+                Trang sau
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal */}
@@ -760,11 +809,28 @@ export function CrudPage({ section }: { section: string }) {
                 return (
                   <div key={key} className="space-y-1.5">
                     <label className="text-xs font-semibold text-neutral-600">{fieldLabels[key] ?? key}</label>
-                    <Input
-                      value={formData[key] || ""}
-                      onChange={e => handleChange(key, typeof formData[key] === "number" ? Number(e.target.value) : e.target.value)}
-                      type={typeof formData[key] === "number" ? "number" : "text"}
-                    />
+                    {key === "role" ? (
+                      <select 
+                        value={formData[key] || (section === "staff" ? "ADMIN" : "CUSTOMER")} 
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        {section === "customers" ? (
+                          <option value="CUSTOMER">Khách hàng</option>
+                        ) : (
+                          <>
+                            <option value="ADMIN">Quản trị viên</option>
+                            <option value="STAFF">Nhân viên</option>
+                          </>
+                        )}
+                      </select>
+                    ) : (
+                      <Input
+                        value={formData[key] || ""}
+                        onChange={e => handleChange(key, typeof formData[key] === "number" ? Number(e.target.value) : e.target.value)}
+                        type={key === "password" ? "password" : typeof formData[key] === "number" ? "number" : "text"}
+                      />
+                    )}
                   </div>
                 )
               })}

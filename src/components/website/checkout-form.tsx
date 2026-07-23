@@ -8,13 +8,14 @@ import { useCustomerUserStore } from "@/store/customer-user-store";
 import { formatCurrency } from "@/lib/format";
 import { Button } from "@/components/ui/button"
 import { Loader2, MapPin, Tag } from "lucide-react";
+import { toast } from "sonner";
 
 export function CheckoutForm() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
   const place = useDataStore((s) => s.placeOrder);
-  const { user, token, setUser, setAuthModalOpen } = useCustomerUserStore();
+  const { user, token, setUser, setAuthModalOpen, logout } = useCustomerUserStore();
   
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -191,7 +192,7 @@ export function CheckoutForm() {
           const f = new FormData(e.currentTarget);
           const finalAddress = getAddressText();
           if (!finalAddress.trim()) {
-            alert("Vui lòng điền đầy đủ thông tin địa chỉ giao hàng");
+            toast.error("Vui lòng điền đầy đủ địa chỉ giao hàng");
             return;
           }
 
@@ -226,10 +227,29 @@ export function CheckoutForm() {
             }
 
             const newOrder = await res.json();
+
+            // payOS: redirect sang trang thanh toán QR
+            if (newOrder.checkoutUrl) {
+              clear();
+              window.location.href = newOrder.checkoutUrl;
+              return;
+            }
+
             clear();
             router.push(`/order-success?code=${newOrder.id}`);
           } catch (err: any) {
-            alert(err.message);
+            const msg = err.message || "Có lỗi xảy ra";
+            // Token hết hạn → đăng xuất tự động và mở modal đăng nhập
+            if (msg.toLowerCase().includes("invalid or expired token") || msg.toLowerCase().includes("unauthorized")) {
+              logout();
+              toast.error("Phiên đăng nhập hết hạn", {
+                description: "Vui lòng đăng nhập lại để tiếp tục.",
+                action: { label: "Đăng nhập", onClick: () => setAuthModalOpen(true) },
+                duration: 6000,
+              });
+            } else {
+              toast.error(msg, { duration: 5000 });
+            }
           } finally {
             setIsSubmitting(false);
           }
@@ -390,20 +410,23 @@ export function CheckoutForm() {
             placeholder="Ghi chú thêm cho đơn hàng (không bắt buộc)"
             className="min-h-24 w-full border px-4 py-3 outline-none focus:border-primary rounded-lg"
           />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <label className="flex items-center gap-3 border p-4 rounded-xl cursor-pointer hover:bg-neutral-50 hover:border-primary transition-colors">
               <input defaultChecked type="radio" name="payment" value="cod" className="size-4 text-primary" /> 
               <span className="font-medium">Thanh toán khi nhận hàng (COD)</span>
             </label>
-            <label className="flex items-center gap-3 border p-4 rounded-xl cursor-pointer hover:bg-neutral-50 hover:border-primary transition-colors">
-              <input type="radio" name="payment" value="bank_transfer" className="size-4 text-primary" /> 
-              <span className="font-medium">Chuyển khoản (Mô phỏng)</span>
+            <label className="flex items-center gap-3 border-2 border-primary/30 bg-primary/5 p-4 rounded-xl cursor-pointer hover:border-primary transition-colors">
+              <input type="radio" name="payment" value="payos" className="size-4 text-primary" />
+              <span className="flex flex-col">
+                <span className="font-bold text-primary">Chuyển khoản / VietQR</span>
+                <span className="text-xs text-muted-foreground mt-0.5">Quét mã QR qua app ngân hàng</span>
+              </span>
             </label>
           </div>
         </div>
         
-        <Button type="submit" disabled={!items.length} className="h-14 text-base uppercase mt-4 rounded-xl shadow-lg hover:shadow-xl transition-all">
-          Xác nhận đặt hàng — {formatCurrency(total)}
+        <Button type="submit" disabled={!items.length || isSubmitting} className="h-14 text-base uppercase mt-4 rounded-xl shadow-lg hover:shadow-xl transition-all">
+          {isSubmitting ? 'Đang xử lý...' : `Xác nhận đặt hàng — ${formatCurrency(total)}`}
         </Button>
       </form>
       

@@ -17,13 +17,13 @@ import type {
   CartItem,
 } from "@/types"
 
-import { products as seedProducts } from "@/data/products"
+
 import { categories as seedCategories } from "@/data/categories"
 import { services as seedServices } from "@/data/services"
 import { trainingCourses as seedCourses } from "@/data/training"
 import { merchandiseStories as seedStories } from "@/data/stories"
 import { lookbookItems as seedLookbook } from "@/data/lookbook"
-import { orders as seedOrders } from "@/data/orders"
+// import { orders as seedOrders } from "@/data/orders"
 import { media as seedMedia } from "@/data/media"
 import { defaultSettings } from "@/data/settings"
 
@@ -43,10 +43,14 @@ interface DataState {
   stories: MerchandiseStory[]
   lookbook: LookbookItem[]
   orders: Order[]
+  customers: any[] // we use users as customers
   media: MediaItem[]
   settings: SettingsData
 
-  // Products
+  fetchProducts: () => Promise<void>
+  fetchOrders: () => Promise<void>
+  fetchUsers: () => Promise<void>
+  createUser: (userData: any) => Promise<void>
   upsertProduct: (product: Product) => void
   deleteProduct: (id: string) => void
 
@@ -99,14 +103,15 @@ interface DataState {
 }
 
 const seed = {
-  products: seedProducts,
+  products: [] as Product[],
   categories: seedCategories,
   services: seedServices,
   courses: seedCourses,
   leads: [] as TrainingLead[],
   stories: seedStories,
   lookbook: seedLookbook,
-  orders: seedOrders,
+  orders: [] as Order[],
+  customers: [] as any[],
   media: seedMedia,
   settings: defaultSettings,
 }
@@ -116,13 +121,69 @@ export const useDataStore = create<DataState>()(
     (set, get) => ({
       ...seed,
 
+      fetchProducts: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/products`);
+          if (res.ok) {
+            const data = await res.json();
+            set({ products: data });
+          }
+        } catch (error) {
+          console.error("Failed to fetch products:", error);
+        }
+      },
+
+      fetchOrders: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders`);
+          if (res.ok) {
+            const data = await res.json();
+            set({ orders: data });
+          }
+        } catch (error) {
+          console.error("Failed to fetch orders:", error);
+        }
+      },
+
+      fetchUsers: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/users`);
+          if (res.ok) {
+            const data = await res.json();
+            set({ customers: data });
+          }
+        } catch (error) {
+          console.error("Failed to fetch users:", error);
+        }
+      },
+
+      createUser: async (userData: any) => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+          });
+          if (res.ok) {
+            const newUser = await res.json();
+            set(s => ({ customers: [newUser, ...s.customers] }));
+          } else {
+            const err = await res.json();
+            alert(err.error || 'Failed to create user');
+          }
+        } catch (error) {
+          console.error("Failed to create user:", error);
+          alert('Failed to create user');
+        }
+      },
+
       upsertProduct: (product) =>
         set((s) => ({
           products: s.products.some((p) => p.id === product.id)
             ? s.products.map((p) => (p.id === product.id ? product : p))
-            : [{ ...product, id: product.id || uid("p") }, ...s.products],
+            : [{ ...product, id: product.id || Number(uid("p").replace('p-','')) }, ...s.products],
         })),
-      deleteProduct: (id) => set((s) => ({ products: s.products.filter((p) => p.id !== id) })),
+      deleteProduct: (id) => set((s) => ({ products: s.products.filter((p) => p.id !== Number(id)) })),
 
       upsertCategory: (category) =>
         set((s) => ({

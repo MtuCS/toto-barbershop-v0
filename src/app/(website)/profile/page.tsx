@@ -8,18 +8,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useDataStore } from "@/store/data-store"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { user, token, setUser } = useCustomerUserStore()
+  const { user, token, setUser, logout } = useCustomerUserStore()
   const allOrders = useDataStore((s) => s.orders)
   const orders = allOrders.filter(o => o.customer.email === user?.email)
 
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [errorMsg, setErrorMsg] = useState("")
-  const [successMsg, setSuccessMsg] = useState("")
 
   const [formData, setFormData] = useState({
     name: "",
@@ -53,12 +52,22 @@ export default function ProfilePage() {
     if (user && token) fetchProfile()
   }, [user?.id, token])
 
+  const handleTokenExpired = () => {
+    toast.error("Phên đăng nhập đã hết hạn", {
+      description: "Vui lòng đăng nhập lại để tiếp tục.",
+      duration: 5000,
+    })
+    logout()
+    router.push("/")
+  }
+
   const fetchProfile = async () => {
     setLoading(true)
     try {
       const res = await fetch("/api/users/profile", {
         headers: { Authorization: `Bearer ${token}` }
       })
+      if (res.status === 401) { handleTokenExpired(); return; }
       if (res.ok) {
         const data = await res.json()
         setFormData({
@@ -77,8 +86,6 @@ export default function ProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    setErrorMsg("")
-    setSuccessMsg("")
 
     try {
       const res = await fetch("/api/users/profile", {
@@ -88,18 +95,18 @@ export default function ProfilePage() {
       })
 
       const data = await res.json()
+      if (res.status === 401) { handleTokenExpired(); return; }
       if (res.ok) {
-        setSuccessMsg("Cập nhật thông tin thành công!")
+        toast.success("Cập nhật thành công!")
         setUser(data, token)
       } else {
-        setErrorMsg(data.error || "Cập nhật thất bại")
+        toast.error(data.error || "Cập nhật thất bại")
       }
     } catch (err: any) {
       console.error("Save error:", err);
-      setErrorMsg(err.message || "Lỗi kết nối máy chủ")
+      toast.error(err.message || "Lỗi kết nối máy chủ")
     } finally {
       setSaving(false)
-      setTimeout(() => setSuccessMsg(""), 3000)
     }
   }
 
@@ -197,8 +204,7 @@ export default function ProfilePage() {
           {/* Thông tin liên hệ */}
           <div className="space-y-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 md:p-8">
             <h2 className="text-xl font-bold">Thông tin liên hệ</h2>
-            {errorMsg && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-600">{errorMsg}</div>}
-            {successMsg && <div className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-600">{successMsg}</div>}
+
             
             <form onSubmit={handleSave} className="space-y-5">
               <div className="space-y-1.5">

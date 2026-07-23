@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/website/site-header"
 import { SiteFooter } from "@/components/website/site-footer"
 import { CartDrawer } from "@/components/cart/cart-drawer"
 import { ScrollToTop } from "@/components/website/scroll-to-top"
+import { DataFetcher } from "@/components/website/data-fetcher"
 
 export default function WebsiteLayout({ children }: { children: ReactNode }) {
   return (
@@ -12,6 +13,7 @@ export default function WebsiteLayout({ children }: { children: ReactNode }) {
       <SiteFooter />
       <CartDrawer />
       <ScrollToTop />
+      <DataFetcher />
     </div>
   )
 }
