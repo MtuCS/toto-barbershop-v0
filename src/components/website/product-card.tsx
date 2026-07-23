@@ -9,6 +9,7 @@ import type { Product, ProductVariant } from "@/types"
 import { cn } from "@/lib/utils"
 import { formatCurrency, discountPercent } from "@/lib/format"
 import { useCartStore } from "@/store/cart-store"
+import { useCustomerUserStore } from "@/store/customer-user-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -30,7 +31,13 @@ export function ProductCard({ product }: ProductCardProps) {
   const soldOut = inStockVariants.length === 0
   const discount = discountPercent(product.basePrice, product.compareAtPrice)
 
+  const { user, setAuthModalOpen } = useCustomerUserStore()
+
   const addVariant = (variant: ProductVariant) => {
+    if (!user) {
+      setAuthModalOpen(true)
+      return
+    }
     addItem({
       variantId: variant.id,
       productId: product.id,
@@ -46,6 +53,10 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const handleQuickAdd = () => {
     if (soldOut) return
+    if (!user) {
+      setAuthModalOpen(true)
+      return
+    }
     if (inStockVariants.length === 1) {
       addVariant(inStockVariants[0])
     } else {

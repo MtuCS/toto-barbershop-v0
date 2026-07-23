@@ -156,7 +156,7 @@ export const useDataStore = create<DataState>()(
               id: uid("lead"),
               status: "new",
               createdAt: new Date().toISOString(),
-            },
+            } as TrainingLead,
             ...s.leads,
           ],
         })),
@@ -225,7 +225,7 @@ export const useDataStore = create<DataState>()(
       addMedia: (item) =>
         set((s) => ({
           media: [
-            { ...item, id: uid("med"), createdAt: new Date().toISOString().slice(0, 10) },
+            { ...item, id: uid("med"), createdAt: new Date().toISOString().slice(0, 10) } as MediaItem,
             ...s.media,
           ],
         })),

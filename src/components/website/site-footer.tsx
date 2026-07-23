@@ -32,6 +32,7 @@ export function SiteFooter() {
                 alt="Toto Barbershop"
                 width={320}
                 height={200}
+                priority
                 className="h-auto w-full object-contain opacity-90"
               />
             </div>
