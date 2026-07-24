@@ -194,7 +194,7 @@ export function SiteHeader() {
                       return (
                         <Link
                           key={product.id || product.slug}
-                          href="/shop"
+                          href={`/shop/${product.slug}`}
                           onClick={() => setIsSearchOpen(false)}
                           className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/60 transition-colors"
                         >

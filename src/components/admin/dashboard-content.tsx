@@ -24,7 +24,7 @@ export function DashboardContent() {
     const productSales: Record<string, number> = {};
     orders.forEach(o => {
       o.items?.forEach(i => {
-        const name = i.product?.title || i.product?.name || 'Unknown';
+        const name = i.title || 'Unknown';
         productSales[name] = (productSales[name] || 0) + i.quantity;
       });
     });

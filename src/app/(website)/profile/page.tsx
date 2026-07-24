@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useDataStore } from "@/store/data-store"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import type { OrderStatus, PaymentStatus } from "@/types"
@@ -81,6 +91,8 @@ export default function ProfilePage() {
     isDefault: false
   })
   const [addingAddress, setAddingAddress] = useState(false)
+  const [addressToDelete, setAddressToDelete] = useState<number | null>(null)
+  const [orderToCancel, setOrderToCancel] = useState<string | number | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -276,7 +288,6 @@ export default function ProfilePage() {
   }
 
   const handleDeleteAddress = async (id: number) => {
-    if (!confirm("Bạn có chắc muốn xóa địa chỉ này?")) return
     try {
       const res = await fetch(`/api/users/addresses/${id}`, {
         method: "DELETE",
@@ -285,6 +296,8 @@ export default function ProfilePage() {
       if (res.ok) fetchProfile()
     } catch (e) {
       console.error(e)
+    } finally {
+      setAddressToDelete(null)
     }
   }
 
@@ -301,13 +314,13 @@ export default function ProfilePage() {
   }
 
   const handleCancelOrder = async (id: string | number) => {
-    if (!confirm("Bạn có chắc muốn hủy đơn hàng này?")) return
     const success = await useDataStore.getState().cancelOrder(id.toString(), token || "")
     if (success) {
       toast.success("Đã hủy đơn hàng thành công")
     } else {
       toast.error("Hủy đơn hàng thất bại")
     }
+    setOrderToCancel(null)
   }
 
   if (!mounted || !user) return null
@@ -392,7 +405,8 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteAddress(addr.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50 size-8 rounded-full"><Trash2 className="size-4"/></Button>
+                          <Button variant="outline" size="sm" onClick={() => setAddressToDelete(addr.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                            <Trash2 className="size-4 mr-2" /> Xóa</Button>
                           {!addr.isDefault && (
                             <Button variant="link" size="sm" onClick={() => handleSetDefaultAddress(addr.id)} className="text-xs h-6 px-2 text-primary hover:text-primary/80">Đặt mặc định</Button>
                           )}
@@ -421,8 +435,8 @@ export default function ProfilePage() {
                       <div className="text-left sm:text-right">
                         <p className="font-bold text-lg text-primary">{o.total.toLocaleString("vi-VN")}đ</p>
                         <div className="flex items-center sm:justify-end gap-2 mt-2">
-                          <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${o.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-700' : (o.paymentStatus || '').toUpperCase() === 'REFUNDED' ? 'bg-purple-100 text-purple-700' : 'bg-neutral-100 text-neutral-600'}`}>
-                            {o.paymentStatus === 'PAID' ? 'Đã thanh toán' : (o.paymentStatus || '').toUpperCase() === 'REFUNDED' ? 'Đã hoàn tiền' : 'Chưa thanh toán'}
+                          <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${(o.paymentStatus || '').toUpperCase() === 'PAID' ? 'bg-emerald-100 text-emerald-700' : (o.paymentStatus || '').toUpperCase() === 'REFUNDED' ? 'bg-purple-100 text-purple-700' : 'bg-neutral-100 text-neutral-600'}`}>
+                            {(o.paymentStatus || '').toUpperCase() === 'PAID' ? 'Đã thanh toán' : (o.paymentStatus || '').toUpperCase() === 'REFUNDED' ? 'Đã hoàn tiền' : 'Chưa thanh toán'}
                           </span>
                         </div>
                       </div>
@@ -434,9 +448,9 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="mt-4 flex flex-col items-center sm:flex-row sm:justify-end gap-4">
-                      {(o.status || '').toUpperCase() === "PENDING" && o.paymentStatus !== "PAID" && (
-                        <Button variant="outline" onClick={() => handleCancelOrder(o.id)} className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 w-full sm:w-auto">
-                          Hủy đơn hàng này
+                      {((o.status || 'PENDING').toUpperCase() === 'PENDING' || (o.status || 'PENDING').toUpperCase() === 'PROCESSING') && (
+                        <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => setOrderToCancel(o.id)}>
+                          Hủy đơn
                         </Button>
                       )}
                       {(o.status || '').toUpperCase() === "PENDING" && o.paymentStatus === "PAID" && (
@@ -523,6 +537,40 @@ export default function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={addressToDelete !== null} onOpenChange={(open) => !open && setAddressToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc muốn xóa địa chỉ này?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Địa chỉ này sẽ bị xóa khỏi danh sách sổ địa chỉ của bạn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={() => addressToDelete !== null && handleDeleteAddress(addressToDelete)}>
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={orderToCancel !== null} onOpenChange={(open) => !open && setOrderToCancel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc muốn hủy đơn hàng này?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Đơn hàng sẽ bị hủy.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Đóng</AlertDialogCancel>
+            <AlertDialogAction onClick={() => orderToCancel !== null && handleCancelOrder(orderToCancel)}>
+              Hủy Đơn Hàng
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

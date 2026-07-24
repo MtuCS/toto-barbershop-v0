@@ -2,12 +2,24 @@
 import Image from "next/image"
 import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react"
 import { useDataStore } from "@/store/data-store"
+import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { useState, useMemo } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
 import type { Product, ProductVariant } from "@/types"
 
 // ============================================================================
@@ -54,6 +66,12 @@ const fieldLabels: Record<string, string> = {
   subtitle: "Phụ đề",
   heroImage: "Ảnh bìa",
   manifesto: "Tuyên ngôn",
+  published: "Trạng thái hiển thị",
+  order: "Thứ tự",
+  url: "Đường dẫn file (URL)",
+  size: "Kích thước",
+  parent: "Danh mục cha",
+  productCount: "Số lượng sản phẩm",
 }
 
 // ============================================================================
@@ -148,28 +166,46 @@ function cartesianProduct(arrays: string[][]): string[][] {
   )
 }
 
+function getOptionsKey(opts: Record<string, any>) {
+  const clean: any = {}
+  if (opts.size) clean.size = opts.size
+  if (opts.color) clean.color = opts.color
+  // add any other keys
+  Object.keys(opts).forEach(k => { if (opts[k]) clean[k] = opts[k] })
+  return Object.entries(clean).sort((a, b) => a[0].localeCompare(b[0])).map(x => `${x[0]}=${x[1]}`).join('|')
+}
+
 function generateVariants(
   selectedOptions: Record<string, string[]>,
   dimensions: VariantDimension[],
   variantPrices: Record<string, number>,
   variantStocks: Record<string, number>,
-  basePrice: number
+  basePrice: number,
+  initialVariants: ProductVariant[] = []
 ): ProductVariant[] {
   const activeDimensions = dimensions.filter(d => (selectedOptions[d.key]?.length ?? 0) > 0)
   if (activeDimensions.length === 0) return []
   const optionArrays = activeDimensions.map(d => selectedOptions[d.key])
   const combinations = cartesianProduct(optionArrays)
+  
   return combinations.map(combo => {
     const optionMap: Record<string, string> = {}
     activeDimensions.forEach((d, i) => { optionMap[d.key] = combo[i] })
-    const variantName = combo.join(" / ")
+    
+    const optKey = getOptionsKey(optionMap)
+    const existing = initialVariants.find(v => {
+      const eOpts = v.options || { size: v.size, color: v.color }
+      return getOptionsKey(eOpts) === optKey
+    })
+
+    const variantName = existing?.name || combo.join(" / ")
     return {
-      id: `variant-${Math.random().toString(36).slice(2, 9)}`,
+      id: existing?.id || `variant-${Math.random().toString(36).slice(2, 9)}`,
       name: variantName,
       options: optionMap,
-      price: variantPrices[variantName] ?? basePrice,
-      stock: variantStocks[variantName] ?? 0,
-      sku: `SKU-${combo.join("-").toUpperCase().replace(/\s/g, "")}`,
+      price: variantPrices[variantName] ?? existing?.price ?? basePrice,
+      stock: variantStocks[variantName] ?? existing?.stock ?? 0,
+      sku: existing?.sku || `SKU-${combo.join("-").toUpperCase().replace(/\s/g, "")}`,
     }
   })
 }
@@ -192,22 +228,54 @@ function ProductForm({ initial, onSave, onCancel }: {
   const [status, setStatus] = useState<"active"|"draft"|"archived">(initial.status ?? "active")
   const [featured, setFeatured] = useState(initial.featured ?? false)
   const [categoryId, setCategoryId] = useState(initial.category ?? "")
-  const [sku, setSku] = useState((initial as any).sku ?? "")
-  const [weight, setWeight] = useState((initial as any).weight ?? 0)
-  const [stock, setStock] = useState((initial as any).stock ?? 0)
+  const defaultVar = initial.variants?.[0]
+  const [sku, setSku] = useState((initial as any).sku ?? defaultVar?.sku ?? "")
+  const [weight, setWeight] = useState((initial as any).weight ?? (defaultVar as any)?.weight ?? 0)
+  const [stock, setStock] = useState((initial as any).stock ?? defaultVar?.stock ?? 0)
 
   // Images (multiple)
   const [images, setImages] = useState<string[]>(initial.images ?? [])
   const [urlInput, setUrlInput] = useState("")
   const [uploadingImage, setUploadingImage] = useState(false)
 
-  // Variant config
-  const [productType, setProductType] = useState(initial.collection ?? "")
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({})
+  const [collection, setCollection] = useState(initial.collection ?? "")
+  const [productType, setProductType] = useState(() => {
+    if (PRODUCT_TYPES.some(t => t.value === initial.collection)) return initial.collection;
+    if (initial.variants && initial.variants.length > 0) {
+      const opts = initial.variants[0].options || { size: initial.variants[0].size, color: initial.variants[0].color }
+      if (opts.size && opts.color) return "fashion-top"
+      if (opts.size && !opts.color) {
+        if (opts.size.includes("g") || opts.size.includes("ml")) return "grooming"
+        if (opts.size === "One-size" || opts.size.includes("/")) return "cap"
+        return "fashion-bottom"
+      }
+      if (opts.color && !opts.size) return "fashion-top" // color-only defaults to fashion-top layout
+    }
+    return ""
+  })
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>(() => {
+    const opts: Record<string, string[]> = {}
+    initial.variants?.forEach(v => {
+      const options: any = v.options || {}
+      if (v.size && !options.size) options.size = v.size
+      if (v.color && !options.color) options.color = v.color
+      Object.entries(options).forEach(([k, val]) => {
+        if (!opts[k]) opts[k] = []
+        if (typeof val === 'string' && !opts[k].includes(val)) opts[k].push(val)
+      })
+    })
+    return opts
+  })
   const [customOptionInputs, setCustomOptionInputs] = useState<Record<string, string>>({})
-  const [variantPrices, setVariantPrices] = useState<Record<string, number>>({})
-  const [variantStocks, setVariantStocks] = useState<Record<string, number>>({})
-  const [variantSkus, setVariantSkus] = useState<Record<string, string>>({})
+  const [variantPrices, setVariantPrices] = useState<Record<string, number>>(() => {
+    const p: Record<string, number> = {}; initial.variants?.forEach(v => { p[v.name] = v.price }); return p
+  })
+  const [variantStocks, setVariantStocks] = useState<Record<string, number>>(() => {
+    const s: Record<string, number> = {}; initial.variants?.forEach(v => { s[v.name] = v.stock }); return s
+  })
+  const [variantSkus, setVariantSkus] = useState<Record<string, string>>(() => {
+    const s: Record<string, string> = {}; initial.variants?.forEach(v => { s[v.name] = v.sku ?? "" }); return s
+  })
   const [variantOpen, setVariantOpen] = useState(true)
 
   const typeConfig = PRODUCT_TYPES.find(t => t.value === productType)
@@ -215,13 +283,13 @@ function ProductForm({ initial, onSave, onCancel }: {
 
   const generatedVariants = useMemo(() => {
     if (!typeConfig) return []
-    return generateVariants(selectedOptions, typeConfig.dimensions, variantPrices, variantStocks, basePrice)
-  }, [selectedOptions, variantPrices, variantStocks, basePrice, typeConfig])
+    return generateVariants(selectedOptions, typeConfig.dimensions, variantPrices, variantStocks, basePrice, initial.variants as ProductVariant[])
+  }, [selectedOptions, variantPrices, variantStocks, basePrice, typeConfig, initial.variants])
 
   const addImageFromFile = async (file: File) => {
     setUploadingImage(true)
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("admin-token") : null
+      const token = typeof window !== "undefined" ? useAuthStore.getState().session?.token : null
       if (token) {
         const formData = new FormData()
         formData.append("image", file)
@@ -280,8 +348,8 @@ function ProductForm({ initial, onSave, onCancel }: {
   }
 
   const handleSave = () => {
-    if (!title.trim()) { alert("Vui lòng nhập tên sản phẩm."); return }
-    if (!categoryId) { alert("Vui lòng chọn danh mục sản phẩm."); return }
+    if (!title.trim()) { toast.error("Vui lòng nhập tên sản phẩm."); return }
+    if (!categoryId) { toast.error("Vui lòng chọn danh mục sản phẩm."); return }
 
     const finalVariants: ProductVariant[] = generatedVariants.length > 0
       ? generatedVariants.map(v => ({ ...v, sku: variantSkus[v.name] || v.sku }))
@@ -289,18 +357,17 @@ function ProductForm({ initial, onSave, onCancel }: {
 
     onSave({
       ...(initial as Product),
-      id: initial.id ?? `p-${Math.random().toString(36).slice(2, 9)}`,
+      id: initial.id,
       title,
       slug: initial.slug || title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").toLowerCase(),
       description,
-      excerpt: description.slice(0, 120),
-      images,
       basePrice,
-      compareAtPrice: compareAtPrice > 0 ? compareAtPrice : undefined,
-      category: categoryId as any,
-      collection: productType,
+      compareAtPrice,
+      images,
       status,
       featured,
+      category: categoryId as any,
+      collection,
       variants: finalVariants,
       tags: initial.tags ?? [],
       rating: initial.rating ?? 0,
@@ -333,12 +400,12 @@ function ProductForm({ initial, onSave, onCancel }: {
               <option value="">— Chọn danh mục —</option>
               {groomingCats.length > 0 && (
                 <optgroup label="🧴 Grooming">
-                  {groomingCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {groomingCats.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
                 </optgroup>
               )}
               {merchCats.length > 0 && (
                 <optgroup label="👕 Merchandise">
-                  {merchCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {merchCats.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
                 </optgroup>
               )}
             </select>
@@ -442,16 +509,23 @@ function ProductForm({ initial, onSave, onCancel }: {
       <section className="space-y-4">
         <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b pb-2">Loại & Biến thể</h3>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-neutral-600">Loại sản phẩm (xác định biến thể) *</label>
-          <select
-            value={productType}
-            onChange={e => { setProductType(e.target.value); setSelectedOptions({}) }}
-            className="w-full border px-3 py-2 rounded-md text-sm outline-none bg-white focus:border-primary"
-          >
-            <option value="">— Chọn loại sản phẩm —</option>
-            {PRODUCT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-neutral-600">Bộ sưu tập (Phân loại hiển thị) *</label>
+            <Input value={collection} onChange={e => setCollection(e.target.value)} placeholder="VD: jacket, pomade, tee..." />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-neutral-600">Kiểu biến thể (Kích thước / Màu sắc)</label>
+            <select
+              value={productType}
+              onChange={e => { setProductType(e.target.value); setSelectedOptions({}) }}
+              className="w-full border px-3 py-2 rounded-md text-sm outline-none bg-white focus:border-primary"
+            >
+              <option value="">— Không có biến thể / Tùy chỉnh —</option>
+              {PRODUCT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* Stock for single-variant products */}
@@ -570,15 +644,15 @@ function ProductForm({ initial, onSave, onCancel }: {
 // ============================================================================
 // Generic form for other sections
 // ============================================================================
-const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "blocks", "gallery", "relatedProductIds", "timeline", "items", "process", "modules", "roadmap", "benefits", "audience"]
+const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "blocks", "gallery", "relatedProductIds", "timeline", "items", "process", "modules", "roadmap", "benefits", "audience", "productCount"]
 
 function generateDefaultForm(section: string) {
   switch (section) {
-    case "categories": return { name: "", slug: "" }
+    case "categories": return { name: "", slug: "", parent: "", description: "" }
     case "services": return { name: "", duration: "", price: 0, category: "" }
     case "training": return { title: "", duration: "", price: 0 }
-    case "merchandise-stories": return { title: "", excerpt: "", heroImage: "" }
-    case "lookbook": return { caption: "", category: "", image: "" }
+    case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", status: "draft", order: 1 }
+    case "lookbook": return { caption: "", category: "", image: "", featured: false, published: true, order: 1 }
     case "customers": return { name: "", email: "", password: "", phone: "", role: "CUSTOMER" }
     case "staff": return { name: "", email: "", password: "", phone: "", role: "ADMIN" }
     default: return { name: "" }
@@ -598,6 +672,7 @@ export function CrudPage({ section }: { section: string }) {
   const [formData, setFormData] = useState<Row>({})
   const [page, setPage] = useState(1)
   const pageSize = 10
+  const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
 
   let rows: Row[] = []
   if (section === "products") rows = d.products
@@ -645,14 +720,14 @@ export function CrudPage({ section }: { section: string }) {
     setModalOpen(true)
   }
 
-  const handleDelete = (item: Row) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa?")) return
-    if (section === "products") d.deleteProduct(item.id)
-    if (section === "categories") d.deleteCategory(item.id)
-    if (section === "services") d.deleteService(item.id)
+  const confirmDelete = async (item: Row) => {
+    if (section === "products") await d.deleteProduct(item.id)
+    if (section === "categories") await d.deleteCategory(item.id)
+    if (section === "services") await d.deleteService(item.id)
     if (section === "training") d.deleteCourse(item.id)
     if (section === "merchandise-stories") d.deleteStory(item.id)
     if (section === "lookbook") d.deleteLookbook(item.id)
+    setItemToDelete(null)
   }
 
   const handleSaveGeneric = async () => {
@@ -661,15 +736,15 @@ export function CrudPage({ section }: { section: string }) {
     } else if (section === "orders") {
       await d.updateOrderStatus(formData.id, { status: formData.status, paymentStatus: formData.paymentStatus })
     }
-    if (section === "categories") d.upsertCategory(formData as any)
-    if (section === "services") d.upsertService(formData as any)
+    if (section === "categories") await d.upsertCategory(formData as any)
+    if (section === "services") await d.upsertService(formData as any)
     if (section === "training") d.upsertCourse(formData as any)
     if (section === "merchandise-stories") d.upsertStory(formData as any)
     if (section === "lookbook") d.upsertLookbook(formData as any)
     setModalOpen(false)
   }
 
-  const handleChange = (key: string, value: string | number) => {
+  const handleChange = (key: string, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [key]: value }))
   }
 
@@ -712,8 +787,8 @@ export function CrudPage({ section }: { section: string }) {
               <tr>
                 <th className="p-4">Tên / Mã</th>
                 <th>Loại</th>
-                <th>Trạng thái</th>
-                <th>Giá trị</th>
+                <th>{section === "media" ? "" : section === "categories" ? "Mô tả" : "Trạng thái"}</th>
+                {section !== "merchandise-stories" && <th>{section === "categories" ? "Số lượng SP" : section === "media" ? "Kích thước" : section === "lookbook" ? "Thứ tự" : "Giá trị"}</th>}
                 <th />
               </tr>
             </thead>
@@ -721,38 +796,49 @@ export function CrudPage({ section }: { section: string }) {
               {filtered.length ? filtered.slice((page - 1) * pageSize, page * pageSize).map((r, i) => (
                 <tr key={String(r.id ?? i)} className="border-t">
                   <td className="p-4 font-medium">
-                    <div className="flex items-center gap-3">
-                      {(typeof r.image === "string" || (Array.isArray(r.images) && r.images[0])) && (
-                        <div className="relative size-10 bg-neutral-100 overflow-hidden rounded-md">
-                          <Image src={typeof r.image === "string" ? r.image : r.images[0]} alt="" fill className="object-cover" />
-                        </div>
-                      )}
-                      {String(r.title ?? r.name ?? r.code ?? r.email ?? `Bản ghi ${i + 1}`)}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-3">
+                        {(typeof r.image === "string" || (Array.isArray(r.images) && r.images[0])) && (
+                          <div className="relative size-10 bg-neutral-100 overflow-hidden rounded-md">
+                            <Image src={typeof r.image === "string" ? r.image : r.images[0]} alt="" fill className="object-cover" />
+                          </div>
+                        )}
+                        {String(r.title ?? r.name ?? r.caption ?? r.code ?? r.email ?? `Bản ghi ${i + 1}`)}
+                      </div>
+                      {r.slug && <span className="text-xs text-neutral-400 font-normal">{r.slug}</span>}
                     </div>
                   </td>
-                  <td>{String(section === "orders" ? r.paymentMethod : (r.role ?? r.category ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
+                  <td>{String(section === "orders" ? r.paymentMethod : section === "merchandise-stories" ? "Bài viết" : (r.role ?? r.category ?? r.parent ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
                   <td>
-                    <div className="flex flex-col gap-1 items-start">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : r.status === "CANCELLED" ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
-                        {r.status === "active" ? ((section === "customers" || section === "staff") ? "Đang HĐ" : "Đang bán") : 
-                         r.status === "draft" ? "Nháp" : 
-                         r.status === "published" ? "Hiển thị" : 
-                         (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
-                         r.status === "PROCESSING" ? "Đang chuẩn bị" :
-                         r.status === "SHIPPED" ? "Đang giao" :
-                         r.status === "CANCELLED" ? "Đã hủy" :
-                         (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
-                      </span>
-                      {section === "orders" && (
-                        <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
-                          {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
+                    {section === "media" ? "—" : section === "categories" ? (
+                      <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
+                    ) : (
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
+                          {r.status === "active" ? ((section === "customers" || section === "staff") ? "Đang HĐ" : "Đang bán") : 
+                           r.status === "draft" ? "Nháp" : 
+                           (r.status === "published" || r.published === true) ? "Hiển thị" : 
+                           r.published === false ? "Ẩn" :
+                           (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
+                           r.status === "PROCESSING" ? "Đang chuẩn bị" :
+                           r.status === "SHIPPED" ? "Đang giao" :
+                           r.status === "CANCELLED" ? "Đã hủy" :
+                           (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
                         </span>
-                      )}
-                    </div>
+                        {section === "orders" && (
+                          <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
+                            {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </td>
-                  <td>
-                    {typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
-                  </td>
+                  {section !== "merchandise-stories" && <td>
+                    {section === "lookbook" ? (r.order ?? "—") :
+                     section === "categories" ? (r.productCount ?? 0) :
+                     section === "media" ? (typeof r.size === "string" ? r.size : "—") :
+                     typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
+                  </td>}
                   <td>
                     {section !== "customers" && section !== "staff" && (
                       <DropdownMenu>
@@ -764,7 +850,7 @@ export function CrudPage({ section }: { section: string }) {
                             <Edit className="mr-2 size-4" /> Chỉnh sửa
                           </DropdownMenuItem>
                           {section !== "orders" && (
-                            <DropdownMenuItem onClick={() => handleDelete(r)} className="text-red-600 focus:bg-red-50">
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
                               <Trash2 className="mr-2 size-4" /> Xóa
                             </DropdownMenuItem>
                           )}
@@ -817,7 +903,7 @@ export function CrudPage({ section }: { section: string }) {
           {section === "products" ? (
             <ProductForm
               initial={editingItem ?? {}}
-              onSave={(product) => { d.upsertProduct(product); setModalOpen(false) }}
+              onSave={async (product) => { await d.upsertProduct(product); setModalOpen(false) }}
               onCancel={() => setModalOpen(false)}
             />
           ) : section === "orders" ? (
@@ -871,6 +957,98 @@ export function CrudPage({ section }: { section: string }) {
                           </>
                         )}
                       </select>
+                    ) : typeof formData[key] === "boolean" ? (
+                      <select 
+                        value={String(formData[key])} 
+                        onChange={e => handleChange(key, e.target.value === "true")}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="true">Bật (True)</option>
+                        <option value="false">Tắt (False)</option>
+                      </select>
+                    ) : key === "status" ? (
+                      <select 
+                        value={formData[key] || "draft"} 
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="published">Hiển thị</option>
+                        <option value="draft">Nháp</option>
+                      </select>
+                    ) : key === "url" || key === "image" || key === "heroImage" ? (
+                      <div className="flex gap-2 items-center">
+                        <Input
+                          value={formData[key] || ""}
+                          onChange={e => handleChange(key, e.target.value)}
+                          placeholder="Hoặc nhập URL trực tiếp..."
+                          className="flex-1"
+                        />
+                        <label className="flex h-10 px-3 shrink-0 items-center justify-center rounded-md border bg-neutral-100 hover:bg-neutral-200 cursor-pointer text-sm font-medium transition-colors">
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            try {
+                              const token = useAuthStore.getState().session?.token
+                              const res = await fetch("/api/upload/image", {
+                                method: "POST",
+                                headers: { Authorization: `Bearer ${token}` },
+                                body: (() => { const fd = new FormData(); fd.append("image", file); return fd })()
+                              })
+                              if (res.ok) {
+                                const data = await res.json()
+                                handleChange(key, data.url)
+                                if (key === "url" && section === "media") {
+                                  const sizeMb = (file.size / 1024 / 1024).toFixed(2)
+                                  handleChange("size", `${sizeMb} MB`)
+                                  handleChange("name", file.name)
+                                }
+                                toast.success("Tải ảnh lên thành công!")
+                              } else { toast.error("Tải ảnh thất bại") }
+                            } catch(err) { toast.error("Lỗi tải ảnh") }
+                          }} />
+                          Tải ảnh lên
+                        </label>
+                      </div>
+                    ) : key === "size" && section === "media" ? (
+                      <Input value={formData[key] || ""} disabled className="bg-neutral-50" />
+                    ) : key === "category" && section === "lookbook" ? (
+                      <select 
+                        value={formData[key] || ""} 
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="">— Chọn danh mục —</option>
+                        <option value="Classic">Classic</option>
+                        <option value="Modern">Modern</option>
+                        <option value="Fade">Fade</option>
+                        <option value="Grooming">Grooming</option>
+                        <option value="Coloring">Coloring</option>
+                      </select>
+                    ) : key === "type" && section === "media" ? (
+                      <select 
+                        value={formData[key] || "image"} 
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="image">Hình ảnh</option>
+                        <option value="video">Video</option>
+                      </select>
+                    ) : key === "parent" && section === "categories" ? (
+                      <select 
+                        value={formData[key] || ""} 
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="">— Không (Mặc định) —</option>
+                        <option value="grooming">Grooming (Chăm sóc tóc & râu)</option>
+                        <option value="merchandise">Merchandise (Thời trang)</option>
+                      </select>
+                    ) : key === "manifesto" || key === "excerpt" || key === "description" ? (
+                      <textarea
+                        value={formData[key] || ""}
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y"
+                      />
                     ) : (
                       <Input
                         value={formData[key] || ""}
@@ -892,6 +1070,23 @@ export function CrudPage({ section }: { section: string }) {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Dữ liệu sẽ bị xóa vĩnh viễn khỏi hệ thống.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction onClick={() => itemToDelete && confirmDelete(itemToDelete)}>
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
