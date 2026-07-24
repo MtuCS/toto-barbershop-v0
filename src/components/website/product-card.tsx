@@ -19,11 +19,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-interface ProductCardProps {
+export function ProductCard({
+  product,
+  featured = false,
+  priority = false,
+}: {
   product: Product
-}
-
-export function ProductCard({ product }: ProductCardProps) {
+  featured?: boolean
+  priority?: boolean
+}) {
   const addItem = useCartStore((s) => s.addItem)
   const [pickerOpen, setPickerOpen] = useState(false)
 
@@ -72,6 +76,7 @@ export function ProductCard({ product }: ProductCardProps) {
             src={product.images[0] || "/placeholder.svg"}
             alt={product.title}
             fill
+            priority={priority}
             sizes="(max-width: 768px) 50vw, 25vw"
             className={cn(
               "object-cover transition-transform duration-500 group-hover:scale-105",
