@@ -658,6 +658,8 @@ export function CrudPage({ section }: { section: string }) {
   const handleSaveGeneric = async () => {
     if (section === "customers" || section === "staff") {
       await d.createUser(formData)
+    } else if (section === "orders") {
+      await d.updateOrderStatus(formData.id, { status: formData.status, paymentStatus: formData.paymentStatus })
     }
     if (section === "categories") d.upsertCategory(formData as any)
     if (section === "services") d.upsertService(formData as any)
@@ -728,17 +730,31 @@ export function CrudPage({ section }: { section: string }) {
                       {String(r.title ?? r.name ?? r.code ?? r.email ?? `Bản ghi ${i + 1}`)}
                     </div>
                   </td>
-                  <td>{String(r.role ?? r.category ?? r.collection ?? r.level ?? r.type ?? "—")}</td>
+                  <td>{String(section === "orders" ? r.paymentMethod : (r.role ?? r.category ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
                   <td>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-500"}`}>
-                      {r.status === "active" ? ((section === "customers" || section === "staff") ? "Đang HĐ" : "Đang bán") : r.status === "draft" ? "Nháp" : r.status === "published" ? "Hiển thị" : r.status === "pending" ? "Chờ xử lý" : r.status === "completed" ? "Hoàn thành" : String(r.status ?? "—")}
-                    </span>
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : r.status === "CANCELLED" ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
+                        {r.status === "active" ? ((section === "customers" || section === "staff") ? "Đang HĐ" : "Đang bán") : 
+                         r.status === "draft" ? "Nháp" : 
+                         r.status === "published" ? "Hiển thị" : 
+                         (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
+                         r.status === "PROCESSING" ? "Đang chuẩn bị" :
+                         r.status === "SHIPPED" ? "Đang giao" :
+                         r.status === "CANCELLED" ? "Đã hủy" :
+                         (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
+                      </span>
+                      {section === "orders" && (
+                        <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
+                          {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td>
                     {typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
                   </td>
                   <td>
-                    {section !== "orders" && section !== "customers" && (
+                    {section !== "customers" && section !== "staff" && (
                       <DropdownMenu>
                         <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
                           <MoreHorizontal className="size-4" />
@@ -747,9 +763,11 @@ export function CrudPage({ section }: { section: string }) {
                           <DropdownMenuItem onClick={() => handleEdit(r)}>
                             <Edit className="mr-2 size-4" /> Chỉnh sửa
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(r)} className="text-red-600 focus:bg-red-50">
-                            <Trash2 className="mr-2 size-4" /> Xóa
-                          </DropdownMenuItem>
+                          {section !== "orders" && (
+                            <DropdownMenuItem onClick={() => handleDelete(r)} className="text-red-600 focus:bg-red-50">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
@@ -802,6 +820,35 @@ export function CrudPage({ section }: { section: string }) {
               onSave={(product) => { d.upsertProduct(product); setModalOpen(false) }}
               onCancel={() => setModalOpen(false)}
             />
+          ) : section === "orders" ? (
+            <div className="grid gap-4 py-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-neutral-600">Trạng thái đơn hàng</label>
+                <select 
+                  value={formData.status || "PENDING"} 
+                  onChange={e => handleChange("status", e.target.value)}
+                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="PENDING">Chờ xử lý</option>
+                  <option value="PROCESSING">Đang chuẩn bị hàng</option>
+                  <option value="SHIPPED">Đang giao</option>
+                  <option value="COMPLETED">Đã giao thành công</option>
+                  <option value="CANCELLED">Đã hủy</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-neutral-600">Trạng thái thanh toán</label>
+                <select 
+                  value={formData.paymentStatus || "UNPAID"} 
+                  onChange={e => handleChange("paymentStatus", e.target.value)}
+                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="UNPAID">Chưa thanh toán</option>
+                  <option value="PAID">Đã thanh toán</option>
+                  <option value="REFUNDED">Đã hoàn tiền</option>
+                </select>
+              </div>
+            </div>
           ) : (
             <div className="grid gap-4 py-4">
               {Object.keys(formData).map((key) => {

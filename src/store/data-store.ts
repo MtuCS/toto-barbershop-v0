@@ -14,6 +14,7 @@ import type {
   MediaItem,
   SettingsData,
   OrderStatus,
+  PaymentStatus,
   CartItem,
 } from "@/types"
 
@@ -51,6 +52,8 @@ interface DataState {
   fetchOrders: () => Promise<void>
   fetchUsers: () => Promise<void>
   createUser: (userData: any) => Promise<void>
+  updateOrderStatus: (id: string, data: { status?: string, paymentStatus?: string }) => Promise<void>
+  cancelOrder: (id: string, token: string) => Promise<boolean>
   upsertProduct: (product: Product) => void
   deleteProduct: (id: string) => void
 
@@ -90,7 +93,7 @@ interface DataState {
     couponCode?: string
     paymentMethod: Order["paymentMethod"]
   }) => Order
-  updateOrderStatus: (id: string, status: OrderStatus, note?: string) => void
+  setOrderStatusInStore: (id: string | number, status: OrderStatus, paymentStatus: PaymentStatus) => void
 
   // Media
   addMedia: (item: Omit<MediaItem, "id" | "createdAt">) => void
@@ -175,6 +178,43 @@ export const useDataStore = create<DataState>()(
           console.error("Failed to create user:", error);
           alert('Failed to create user');
         }
+      },
+
+      updateOrderStatus: async (id, data) => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (res.ok) {
+            get().fetchOrders();
+          }
+        } catch (error) {
+          console.error("Failed to update order:", error);
+        }
+      },
+
+      cancelOrder: async (id, token) => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${id}/cancel`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            get().fetchOrders();
+            return true;
+          }
+        } catch (error) {
+          console.error("Failed to cancel order:", error);
+        }
+        return false;
+      },
+
+      setOrderStatusInStore: (id, status, paymentStatus) => {
+        set((state) => ({
+          orders: state.orders.map(o => o.id.toString() === id.toString() ? { ...o, status, paymentStatus } : o)
+        }))
       },
 
       upsertProduct: (product) =>
@@ -270,18 +310,7 @@ export const useDataStore = create<DataState>()(
         set((s) => ({ orders: [order, ...s.orders] }))
         return order
       },
-      updateOrderStatus: (id, status, note) =>
-        set((s) => ({
-          orders: s.orders.map((o) =>
-            o.id === id
-              ? {
-                  ...o,
-                  status,
-                  timeline: [...o.timeline, { status, at: new Date().toISOString(), note }],
-                }
-              : o,
-          ),
-        })),
+
 
       addMedia: (item) =>
         set((s) => ({

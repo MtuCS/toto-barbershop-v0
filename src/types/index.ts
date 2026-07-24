@@ -190,15 +190,15 @@ export interface CartItem {
 }
 
 export type OrderStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'shipping'
-  | 'completed'
-  | 'cancelled'
+  | 'pending' | 'PENDING'
+  | 'confirmed' | 'PROCESSING'
+  | 'shipping' | 'SHIPPED'
+  | 'completed' | 'COMPLETED'
+  | 'cancelled' | 'CANCELLED'
 
-export type PaymentMethod = 'cod' | 'bank_transfer'
+export type PaymentMethod = 'cod' | 'bank_transfer' | 'payos'
 
-export type PaymentStatus = 'unpaid' | 'paid' | 'refunded'
+export type PaymentStatus = 'unpaid' | 'UNPAID' | 'paid' | 'PAID' | 'refunded' | 'REFUNDED'
 
 export interface OrderItem {
   variantId: ID
