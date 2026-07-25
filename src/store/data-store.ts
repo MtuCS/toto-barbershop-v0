@@ -24,9 +24,10 @@ import { services as seedServices } from "@/data/services"
 import { trainingCourses as seedCourses } from "@/data/training"
 import { merchandiseStories as seedStories } from "@/data/stories"
 import { lookbookItems as seedLookbook } from "@/data/lookbook"
-// import { orders as seedOrders } from "@/data/orders"
 import { media as seedMedia } from "@/data/media"
+import { toast } from "sonner"
 import { defaultSettings } from "@/data/settings"
+import { useAuthStore } from "./auth-store"
 
 // ============================================================================
 // Central editable data store (admin CMS). Persisted to LocalStorage so admin
@@ -49,21 +50,24 @@ interface DataState {
   settings: SettingsData
 
   fetchProducts: () => Promise<void>
+  fetchCategories: () => Promise<void>
+  fetchServices: () => Promise<void>
   fetchOrders: () => Promise<void>
   fetchUsers: () => Promise<void>
   createUser: (userData: any) => Promise<void>
   updateOrderStatus: (id: string, data: { status?: string, paymentStatus?: string }) => Promise<void>
   cancelOrder: (id: string, token: string) => Promise<boolean>
-  upsertProduct: (product: Product) => void
-  deleteProduct: (id: string) => void
+  
+  upsertProduct: (product: Partial<Product>) => Promise<void>
+  deleteProduct: (id: string | number) => Promise<void>
 
   // Categories
-  upsertCategory: (category: Category) => void
-  deleteCategory: (id: string) => void
+  upsertCategory: (category: Partial<Category>) => Promise<void>
+  deleteCategory: (id: string | number) => Promise<void>
 
   // Services
-  upsertService: (service: Service) => void
-  deleteService: (id: string) => void
+  upsertService: (service: Partial<Service>) => Promise<void>
+  deleteService: (id: string | number) => Promise<void>
 
   // Courses
   upsertCourse: (course: TrainingCourse) => void
@@ -136,6 +140,30 @@ export const useDataStore = create<DataState>()(
         }
       },
 
+      fetchCategories: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/categories`);
+          if (res.ok) {
+            const data = await res.json();
+            set({ categories: data });
+          }
+        } catch (error) {
+          console.error("Failed to fetch categories:", error);
+        }
+      },
+
+      fetchServices: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/services`);
+          if (res.ok) {
+            const data = await res.json();
+            set({ services: data });
+          }
+        } catch (error) {
+          console.error("Failed to fetch services:", error);
+        }
+      },
+
       fetchOrders: async () => {
         try {
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders`);
@@ -172,11 +200,11 @@ export const useDataStore = create<DataState>()(
             set(s => ({ customers: [newUser, ...s.customers] }));
           } else {
             const err = await res.json();
-            alert(err.error || 'Failed to create user');
+            toast.error(err.error || 'Failed to create user');
           }
         } catch (error) {
           console.error("Failed to create user:", error);
-          alert('Failed to create user');
+          toast.error('Failed to create user');
         }
       },
 
@@ -217,29 +245,155 @@ export const useDataStore = create<DataState>()(
         }))
       },
 
-      upsertProduct: (product) =>
-        set((s) => ({
-          products: s.products.some((p) => p.id === product.id)
-            ? s.products.map((p) => (p.id === product.id ? product : p))
-            : [{ ...product, id: product.id || Number(uid("p").replace('p-','')) }, ...s.products],
-        })),
-      deleteProduct: (id) => set((s) => ({ products: s.products.filter((p) => p.id !== Number(id)) })),
+      upsertProduct: async (product) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const isUpdate = !!product.id;
+          const url = isUpdate 
+            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/products/${product.id}`
+            : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/products`;
+          const method = isUpdate ? 'PUT' : 'POST';
+          
+          const res = await fetch(url, {
+            method,
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(product)
+          });
+          
+          if (res.ok) {
+            get().fetchProducts();
+          } else {
+            const err = await res.json();
+            toast.error(err.error || 'Failed to save product');
+          }
+        } catch (error) {
+          console.error("Failed to save product:", error);
+          toast.error('Failed to save product');
+        }
+      },
+      
+      deleteProduct: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/products/${id}`, {
+            method: 'DELETE',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          if (res.ok) {
+            get().fetchProducts();
+          } else {
+            toast.error('Failed to delete product');
+          }
+        } catch (error) {
+          console.error("Failed to delete product:", error);
+          toast.error('Failed to delete product');
+        }
+      },
 
-      upsertCategory: (category) =>
-        set((s) => ({
-          categories: s.categories.some((c) => c.id === category.id)
-            ? s.categories.map((c) => (c.id === category.id ? category : c))
-            : [...s.categories, { ...category, id: category.id || uid("c") }],
-        })),
-      deleteCategory: (id) => set((s) => ({ categories: s.categories.filter((c) => c.id !== id) })),
+      upsertCategory: async (category) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const isUpdate = !!category.id;
+          const url = isUpdate 
+            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/categories/${category.id}`
+            : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/categories`;
+          const method = isUpdate ? 'PUT' : 'POST';
+          
+          const res = await fetch(url, {
+            method,
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(category)
+          });
+          
+          if (res.ok) {
+            get().fetchCategories();
+          } else {
+            const err = await res.json();
+            toast.error(err.error || 'Failed to save category');
+          }
+        } catch (error) {
+          console.error("Failed to save category:", error);
+          toast.error('Failed to save category');
+        }
+      },
+      
+      deleteCategory: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/categories/${id}`, {
+            method: 'DELETE',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          if (res.ok) {
+            get().fetchCategories();
+          } else {
+            toast.error('Failed to delete category');
+          }
+        } catch (error) {
+          console.error("Failed to delete category:", error);
+          toast.error('Failed to delete category');
+        }
+      },
 
-      upsertService: (service) =>
-        set((s) => ({
-          services: s.services.some((x) => x.id === service.id)
-            ? s.services.map((x) => (x.id === service.id ? service : x))
-            : [...s.services, { ...service, id: service.id || uid("s") }],
-        })),
-      deleteService: (id) => set((s) => ({ services: s.services.filter((x) => x.id !== id) })),
+      upsertService: async (service) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const isUpdate = !!service.id;
+          const url = isUpdate 
+            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/services/${service.id}`
+            : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/services`;
+          const method = isUpdate ? 'PUT' : 'POST';
+          
+          const res = await fetch(url, {
+            method,
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(service)
+          });
+          
+          if (res.ok) {
+            get().fetchServices();
+          } else {
+            const err = await res.json();
+            toast.error(err.error || 'Failed to save service');
+          }
+        } catch (error) {
+          console.error("Failed to save service:", error);
+          toast.error('Failed to save service');
+        }
+      },
+      
+      deleteService: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/services/${id}`, {
+            method: 'DELETE',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          if (res.ok) {
+            get().fetchServices();
+          } else {
+            toast.error('Failed to delete service');
+          }
+        } catch (error) {
+          console.error("Failed to delete service:", error);
+          toast.error('Failed to delete service');
+        }
+      },
 
       upsertCourse: (course) =>
         set((s) => ({

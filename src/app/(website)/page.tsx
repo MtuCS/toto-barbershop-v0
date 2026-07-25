@@ -1,5 +1,6 @@
 import { Hero } from "@/components/website/home/hero"
 import { Marquee } from "@/components/website/marquee"
+import { VisualVideo } from "@/components/website/home/visual-video"
 import { QuickInfo } from "@/components/website/home/quick-info"
 import { ServicesBento } from "@/components/website/home/services-bento"
 import { AboutIntro } from "@/components/website/home/about-intro"
@@ -14,13 +15,14 @@ export default function HomePage() {
     <>
       <Hero />
       <Marquee />
-      <QuickInfo />
+      <VisualVideo />
+      {/* <QuickInfo /> */}
       <ServicesBento />
       <AboutIntro />
       <LookbookPreview />
       <MerchTeaser />
-      <GroomingFeatured />
-      <TrainingTeaser />
+      {/* <GroomingFeatured /> */}
+      {/* <TrainingTeaser /> */}
       <SocialSection />
     </>
   )

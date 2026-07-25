@@ -21,6 +21,8 @@ export interface ProductVariant {
   compareAtPrice?: number
   stock: number
   sku: string
+  size?: string
+  color?: string
 }
 
 export interface Product {
@@ -306,6 +308,7 @@ export interface AdminSession {
   email: string
   name: string
   loggedInAt: string
+  token: string
 }
 
 // ---------------------------------------------------------------------------

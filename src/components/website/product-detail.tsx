@@ -6,6 +6,8 @@ import type { Product } from "@/types";
 import { formatCurrency } from "@/lib/format";
 import { useCartStore } from "@/store/cart-store";
 import { useCustomerUserStore } from "@/store/customer-user-store";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button"
 
 export function ProductDetail({ product }: { product: Product }) {
@@ -35,8 +37,12 @@ export function ProductDetail({ product }: { product: Product }) {
   };
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-10 px-5 py-10 md:grid-cols-2 md:px-8 md:py-16">
-      <div className="grid gap-3 sm:grid-cols-2">
+    <div className="mx-auto max-w-7xl px-5 py-8 md:px-8 md:py-12">
+      <Link href="/shop" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
+        <ArrowLeft className="size-4" /> Quay lại cửa hàng
+      </Link>
+      <div className="grid gap-10 md:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
         {product.images.map((src, i) => (
           <div
             key={src}
@@ -48,6 +54,7 @@ export function ProductDetail({ product }: { product: Product }) {
               src={src}
               alt={`${product.title} ${i + 1}`}
               fill
+              priority={i === 0}
               className="object-cover"
             />
           </div>
@@ -93,6 +100,7 @@ export function ProductDetail({ product }: { product: Product }) {
           <span>Giao toàn quốc</span>
           <span>Đổi trong 7 ngày</span>
           <span>Hỗ trợ tận tâm</span>
+        </div>
         </div>
       </div>
     </div>
