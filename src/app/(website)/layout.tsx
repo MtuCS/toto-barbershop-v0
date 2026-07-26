@@ -4,13 +4,17 @@ import { SiteFooter } from "@/components/website/site-footer"
 import { CartDrawer } from "@/components/cart/cart-drawer"
 import { ScrollToTop } from "@/components/website/scroll-to-top"
 import { DataFetcher } from "@/components/website/data-fetcher"
+import { SiteAtmosphere } from "@/components/website/site-atmosphere"
 
 export default function WebsiteLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative isolate flex min-h-screen flex-col overflow-x-clip">
+      <SiteAtmosphere />
       <SiteHeader />
-      <main className="flex-1 pt-16">{children}</main>
-      <SiteFooter />
+      <main className="relative z-10 flex-1 pt-16">{children}</main>
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
       <CartDrawer />
       <ScrollToTop />
       <DataFetcher />

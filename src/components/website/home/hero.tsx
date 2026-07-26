@@ -49,10 +49,11 @@
 
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
+import TextType from "@/components/ui/text-type";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-background">
+    <section className="relative overflow-hidden bg-background/24 backdrop-blur-[1px]">
       {/* Sweeping arc */}
       <div
         aria-hidden="true"
@@ -88,7 +89,7 @@ export function Hero() {
           </div>
 
           {/* Portrait */}
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-border shadow-2xl sm:aspect-[16/9] lg:aspect-[16/8]">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-border shadow-2xl sm:aspect-[16/9] lg:translate-y-10 lg:aspect-[16/8]">
             <Image
               src="/images/hero-portrait.png"
               alt="Hero_img"
@@ -115,12 +116,30 @@ export function Hero() {
           </h1> */}
 
           <h1 className="font-serif font-medium uppercase leading-[0.86] tracking-tight text-accent text-balance">
-            <span className="block text-[19vw] sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]">
-              ToTo
-            </span>
-            <span className="block text-[19vw] text-foreground sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]">
-              BARBERSHOP
-            </span>
+            <span className="sr-only">ToTo Barbershop</span>
+            <TextType
+              aria-hidden="true"
+              as="span"
+              text="ToTo"
+              typingSpeed={105}
+              initialDelay={250}
+              loop={false}
+              showCursor={false}
+              className="!block min-h-[0.86em] text-[19vw] sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]"
+            />
+            <TextType
+              aria-hidden="true"
+              as="span"
+              text="BARBERSHOP"
+              typingSpeed={68}
+              initialDelay={780}
+              loop={false}
+              showCursor
+              cursorCharacter="|"
+              cursorBlinkDuration={0.65}
+              cursorClassName="font-sans font-light text-primary"
+              className="!block min-h-[0.86em] pl-[0.88em] text-[14vw] text-foreground sm:text-[14vw] lg:text-[13vw] xl:text-[5.5rem]"
+            />
           </h1>
 
           <div className="mt-8 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">

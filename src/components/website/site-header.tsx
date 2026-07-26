@@ -111,7 +111,7 @@ export function SiteHeader() {
   }, [])
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-black/10 bg-white/95 text-foreground backdrop-blur-md">
+    <header className="site-glass-header fixed inset-x-0 top-0 z-50 border-b border-white/55 text-foreground backdrop-blur-xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(12,45,38,0.08),inset_0_1px_0_rgba(255,255,255,0.78)]">
       <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-4 px-5 md:px-6">
         <Logo />
 
