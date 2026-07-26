@@ -9,6 +9,12 @@ export const lookbookItems: LookbookItem[] = [
   { id: 'lb-6', image: '/images/lookbook-6.png', caption: 'Buzz cut & line-up', category: 'Modern', featured: false, published: true, order: 6 },
   { id: 'lb-7', image: '/images/lookbook-7.png', caption: 'Quiff & beard combo', category: 'Modern', featured: false, published: true, order: 7 },
   { id: 'lb-8', image: '/images/lookbook-8.png', caption: 'Disconnected undercut', category: 'Modern', featured: false, published: true, order: 8 },
-  // { id: 'lb-9', image: '/images/lookbook-9.png', caption: 'Taper fade & textured top', category: 'Fade', featured: false, published: true, order: 9 },
-  // { id: 'lb-10', image: '/images/lookbook-10.png', caption: 'Slicked back undercut', category: 'Classic', featured: false, published: true, order: 10 },
+  
+  // Shop images
+  { id: 'lb-shop-1', image: '/images/interior.png', caption: 'Không gian nội thất', category: 'Shop', featured: true, published: true, order: 9 },
+  { id: 'lb-shop-2', image: '/images/interior1.png', caption: 'Góc chờ', category: 'Shop', featured: false, published: true, order: 10 },
+  { id: 'lb-shop-3', image: '/images/behind-scenes.png', caption: 'Sau hậu trường', category: 'Shop', featured: false, published: true, order: 11 },
+  { id: 'lb-shop-4', image: '/images/barber-1.png', caption: 'Thợ cạo TOTO', category: 'Shop', featured: false, published: true, order: 12 },
+  { id: 'lb-shop-5', image: '/images/barber-2.png', caption: 'Kỹ thuật fade', category: 'Shop', featured: false, published: true, order: 13 },
+  { id: 'lb-shop-6', image: '/images/barber-3.png', caption: 'Chăm sóc tỉ mỉ', category: 'Shop', featured: false, published: true, order: 14 },
 ]
