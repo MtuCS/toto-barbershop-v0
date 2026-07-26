@@ -53,9 +53,9 @@ export function ServicesBento() {
                 <h3 className={cn("font-display font-bold uppercase leading-tight", i === 0 ? "text-2xl md:text-4xl" : "text-lg md:text-base lg:text-lg")}>
                   {service.name}
                 </h3>
-                <p className={cn("mt-1 text-sm text-background/80", i > 1 && "md:text-xs lg:text-sm")}>
+                {/* <p className={cn("mt-1 text-sm text-background/80", i > 1 && "md:text-xs lg:text-sm")}>
                   {formatCurrency(service.price)} · {formatDuration(service.duration)}
-                </p>
+                </p> */}
               </div>
               <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1", i > 1 && "md:size-8")}>
                 <ArrowUpRight className="size-4" />

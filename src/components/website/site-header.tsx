@@ -137,7 +137,7 @@ export function SiteHeader() {
         {/* Right Section: Inline Search Input + Icons */}
         <div className="flex items-center gap-3">
           {/* Direct Search Input Box */}
-          <div ref={searchRef} className="relative hidden md:block w-48 lg:w-64">
+          {/* <div ref={searchRef} className="relative hidden md:block w-48 lg:w-64">
             <div className="relative flex items-center">
               <Search className="absolute left-3 size-4 text-muted-foreground" />
               <Input
@@ -162,10 +162,10 @@ export function SiteHeader() {
                   <X className="size-3.5" />
                 </button>
               )}
-            </div>
+            </div> */}
 
             {/* Live Search Results Dropdown */}
-            {isSearchOpen && searchQuery.trim() !== "" && (
+            {/* {isSearchOpen && searchQuery.trim() !== "" && (
               <div className="absolute left-0 right-0 top-full mt-2 z-50 overflow-hidden rounded-xl border border-border bg-background p-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150">
                 {isSearching ? (
                   <p className="p-3 text-center text-xs text-muted-foreground">Đang tìm kiếm...</p>
@@ -216,7 +216,7 @@ export function SiteHeader() {
                 )}
               </div>
             )}
-          </div>
+          </div> */}
           
 
           {/* User Auth Icon Button (Đăng nhập / Đăng ký) */}
@@ -276,7 +276,7 @@ export function SiteHeader() {
               </SheetHeader>
 
               {/* Mobile Inline Search */}
-              <div className="px-2 pt-2 pb-4">
+              {/* <div className="px-2 pt-2 pb-4">
                 <div className="relative flex items-center">
                   <Search className="absolute left-3 size-4 text-muted-foreground" />
                   <Input
@@ -287,7 +287,7 @@ export function SiteHeader() {
                     className="h-10 w-full rounded-full border-black/15 bg-neutral-100 pl-9 text-xs"
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* Mobile Auth Button */}
               <div className="px-2 pb-4 border-b border-border">

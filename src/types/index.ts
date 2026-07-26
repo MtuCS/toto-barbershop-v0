@@ -77,7 +77,7 @@ export interface Service {
   slug: string
   name: string
   category: string
-  price: number
+  // price: number
   /** minutes */
   duration: number
   description: string

@@ -30,16 +30,16 @@ export default function Page() {
                 />
               </div>
               <div className="p-5">
-                <p className="text-xs uppercase text-primary">
+                {/* <p className="text-xs uppercase text-primary">
                   {s.category} · {s.duration} phút
-                </p>
+                </p> */}
                 <h2 className="mt-2 font-display text-2xl font-bold uppercase">
                   {s.name}
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {s.description}
                 </p>
-                <p className="mt-5 font-bold">{formatCurrency(s.price)}</p>
+                {/* <p className="mt-5 font-bold">{formatCurrency(s.price)}</p> */}
               </div>
             </article>
           ))}
