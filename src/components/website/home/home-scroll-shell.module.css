@@ -44,19 +44,14 @@
     padding-block: 2rem;
   }
 
-  .root > :nth-child(5) > div {
-    height: 100%;
-    padding-block: 2rem;
-  }
 
-  .root > :nth-child(5) > div > :first-child {
-    height: min(68dvh, 620px);
-    aspect-ratio: auto;
-  }
-
-  .root > :nth-child(6) > :nth-child(2),
-  .root > :nth-child(8) > div > :nth-child(2) {
+  .root > :nth-child(6) > :nth-child(2) {
     margin-top: 1.5rem;
+  }
+
+  .root > :nth-child(7) {
+    min-height: 0;
+    padding-block: 0;
   }
 
   .root > :nth-child(7) > div {
@@ -70,6 +65,8 @@
   }
 
   .root > :nth-child(8) > div {
+    height: 100%;
+    min-height: 0;
     width: 100%;
     padding-block: 2rem;
   }

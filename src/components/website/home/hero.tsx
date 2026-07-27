@@ -53,32 +53,32 @@ import TextType from "@/components/ui/text-type";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-background/24 backdrop-blur-[1px]">
+    <section className="relative overflow-hidden bg-[#07110f] text-[#f2f5f3]">
       {/* Sweeping arc */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-[18%] aspect-square w-[130%] max-w-[1500px] -translate-x-1/2 rounded-full border border-accent/20"
+        className="pointer-events-none absolute left-1/2 top-[18%] aspect-square w-[130%] max-w-[1500px] -translate-x-1/2 rounded-full border border-[#2f7a68]/30"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-40 top-1/2 size-[500px] -translate-y-1/2 rounded-full bg-accent/5 blur-3xl"
+        className="pointer-events-none absolute -right-40 top-1/2 size-[500px] -translate-y-1/2 rounded-full bg-[#2f7a68]/10 blur-3xl"
       />
       <div className="relative mx-auto w-full max-w-[1400px] px-4 pb-4 pt-2 md:px-8 md:pb-6 md:pt-4">
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)] lg:gap-8">
           {/* Left copy */}
           <div className="max-w-xs lg:self-center">
-            <span className="mb-6 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-accent">
-              <span className="h-px w-6 bg-accent" aria-hidden="true" />
+            <span className="mb-6 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">
+              <span className="h-px w-6 bg-[#2f7a68]" aria-hidden="true" />
               Est. Sài Gòn
             </span>
 
-            <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+            <p className="text-pretty text-sm leading-relaxed text-white/65">
               Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since 1966, when designers at Letraset and James Mosley, the librarian at St Bride Printing Library in London, took a 1914 Cicero translation and scrambled it to make dummy text for Letraset's Body Type sheets. 
             </p>
 
             <a
               href="#"
-              className="group mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-foreground transition-colors hover:text-accent"
+              className="group mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#f2f5f3] transition-colors hover:text-[#79b8a7]"
             >
               Khám phá dịch vụ
               <ArrowUpRight
@@ -89,7 +89,7 @@ export function Hero() {
           </div>
 
           {/* Portrait */}
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-border shadow-2xl sm:aspect-[16/9] lg:translate-y-10 lg:aspect-[16/8]">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:translate-y-10 lg:aspect-[16/8]">
             <Image
               src="/images/hero-portrait.png"
               alt="Hero_img"
@@ -102,7 +102,8 @@ export function Hero() {
         </div>
 
         {/* Giant headline */}
-        <div className="relative mt-6 md:mt-8 lg:mt-10">
+        {/* <div className="relative mt-6 md:mt-8 lg:mt-10"> */}
+        <div className="relative mt-6 -translate-y-6 pb-8 md:mt-8 md:-translate-y-8 md:pb-10 lg:mt-10 lg:-translate-y-10 lg:pb-14">
           {/* <h1 className="font-serif font-medium uppercase leading-[0.86] tracking-tight text-accent text-balance">
             <span className="text-right block text-[19vw] sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]">
               Barber.
@@ -115,7 +116,7 @@ export function Hero() {
             </span>
           </h1> */}
 
-          <h1 className="font-serif font-medium uppercase leading-[0.86] tracking-tight text-accent text-balance">
+          <h1 className="font-serif font-medium uppercase leading-[0.86] tracking-tight text-[#79b8a7] text-balance">
             <span className="sr-only">ToTo Barbershop</span>
             <TextType
               aria-hidden="true"
@@ -137,8 +138,8 @@ export function Hero() {
               showCursor
               cursorCharacter="|"
               cursorBlinkDuration={0.65}
-              cursorClassName="font-sans font-light text-primary"
-              className="!block min-h-[0.86em] pl-[0.88em] text-[14vw] text-foreground sm:text-[14vw] lg:text-[13vw] xl:text-[5.5rem]"
+              cursorClassName="font-sans font-light text-[#2f7a68]"
+              className="!block min-h-[0.86em] pl-[0.88em] text-[14vw] text-[#f2f5f3] sm:text-[14vw] lg:text-[13vw] xl:text-[5.5rem]"
             />
           </h1>
 

@@ -11,10 +11,12 @@ export const lookbookItems: LookbookItem[] = [
   { id: 'lb-8', image: '/images/lookbook-8.png', caption: 'Disconnected undercut', category: 'Modern', featured: false, published: true, order: 8 },
   
   // Shop images
-  { id: 'lb-shop-1', image: '/images/interior.png', caption: 'Không gian nội thất', category: 'Shop', featured: true, published: true, order: 9 },
-  { id: 'lb-shop-2', image: '/images/interior1.png', caption: 'Góc chờ', category: 'Shop', featured: false, published: true, order: 10 },
-  { id: 'lb-shop-3', image: '/images/behind-scenes.png', caption: 'Sau hậu trường', category: 'Shop', featured: false, published: true, order: 11 },
-  { id: 'lb-shop-4', image: '/images/barber-1.png', caption: 'Thợ cạo TOTO', category: 'Shop', featured: false, published: true, order: 12 },
-  { id: 'lb-shop-5', image: '/images/barber-2.png', caption: 'Kỹ thuật fade', category: 'Shop', featured: false, published: true, order: 13 },
-  { id: 'lb-shop-6', image: '/images/barber-3.png', caption: 'Chăm sóc tỉ mỉ', category: 'Shop', featured: false, published: true, order: 14 },
+  { id: 'lb-shop-1', image: '/images/ourshop-1.jpg', caption: 'Không gian nội thất', category: 'Shop', featured: true, published: true, order: 9 },
+  { id: 'lb-shop-2', image: '/images/ourshop-2.jpg', caption: 'Góc chờ', category: 'Shop', featured: false, published: true, order: 10 },
+  { id: 'lb-shop-3', image: '/images/ourshop-3.jpg', caption: 'Sau hậu trường', category: 'Shop', featured: false, published: true, order: 11 },
+  { id: 'lb-shop-4', image: '/images/ourshop-4.jpg', caption: 'Thợ cạo TOTO', category: 'Shop', featured: false, published: true, order: 12 },
+  { id: 'lb-shop-5', image: '/images/ourshop-5.jpg', caption: 'Kỹ thuật fade', category: 'Shop', featured: false, published: true, order: 13 },
+  { id: 'lb-shop-6', image: '/images/ourshop-6.jpg', caption: 'Chăm sóc tỉ mỉ', category: 'Shop', featured: false, published: true, order: 14 },
+  
+
 ]

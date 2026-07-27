@@ -18,9 +18,9 @@ export default function HomePage() {
       <VisualVideo />
       {/* <QuickInfo /> */}
       <ServicesBento />
+      <MerchTeaser />
       <AboutIntro />
       <LookbookPreview />
-      <MerchTeaser />
       {/* <GroomingFeatured /> */}
       {/* <TrainingTeaser /> */}
       <SocialSection />

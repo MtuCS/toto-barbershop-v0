@@ -1,0 +1,26 @@
+.circular-text {
+  position: relative;
+  width: clamp(10rem, 16vw, 13rem);
+  height: clamp(10rem, 16vw, 13rem);
+  margin-inline: auto;
+  color: rgb(242 245 243 / 88%);
+  text-align: center;
+  transform-origin: 50% 50%;
+  -webkit-transform-origin: 50% 50%;
+}
+
+.circular-text span {
+  position: absolute;
+  inset: 0;
+  display: inline-block;
+  font-size: clamp(1rem, 1.5vw, 1.35rem);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1;
+  transform-origin: 50% 50%;
+  transition: color 300ms ease;
+}
+
+.circular-text:hover {
+  color: #ffffff;
+}
