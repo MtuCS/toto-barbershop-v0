@@ -13,6 +13,7 @@ export interface NavLink {
   label: string
   href: string
   highlight?: boolean
+  showInHeader?: boolean
   children?: { label: string; href: string; description?: string }[]
 }
 
@@ -26,12 +27,12 @@ export const MAIN_NAV: NavLink[] = [
       { label: 'Combo chăm sóc', href: '/services', description: 'Gói dịch vụ trọn gói' },
     ],
   },
-  { label: 'Đào tạo', href: '/training' },
   { label: 'Shop', href: '/shop' },
   { label: 'ToTo Merchandise', href: '/merchandise', highlight: true },
   { label: 'Lookbook', href: '/lookbook' },
-  { label: 'Về Toto', href: '/about' },
-  { label: 'Liên hệ', href: '/contact' },
+  { label: 'Đào tạo', href: '/training' },
+  // { label: 'Về Toto', href: '/about' },
+  { label: 'Liên hệ', href: '/contact', showInHeader: false },
 ]
 
 export const ADMIN_NAV = [

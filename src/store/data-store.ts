@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
@@ -20,6 +20,7 @@ import type {
 
 
 import { categories as seedCategories } from "@/data/categories"
+import { products as seedProducts } from "@/data/products"
 import { services as seedServices } from "@/data/services"
 import { trainingCourses as seedCourses } from "@/data/training"
 import { merchandiseStories as seedStories } from "@/data/stories"
@@ -110,7 +111,7 @@ interface DataState {
 }
 
 const seed = {
-  products: [] as Product[],
+  products: seedProducts,
   categories: seedCategories,
   services: seedServices,
   courses: seedCourses,
@@ -129,17 +130,22 @@ export const useDataStore = create<DataState>()(
       ...seed,
 
       fetchProducts: async () => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiUrl) return;
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 1500);
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/products`);
+          const res = await fetch(`${apiUrl.replace(/\/$/, "")}/products`, { signal: controller.signal });
           if (res.ok) {
             const data = await res.json();
-            set({ products: data });
+            if (Array.isArray(data) && data.length) set({ products: data });
           }
-        } catch (error) {
-          console.error("Failed to fetch products:", error);
+        } catch {
+          // Keep the seeded catalogue available while the optional API is offline.
+        } finally {
+          window.clearTimeout(timeout);
         }
       },
-
       fetchCategories: async () => {
         try {
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/categories`);
@@ -458,7 +464,7 @@ export const useDataStore = create<DataState>()(
           paymentMethod: input.paymentMethod,
           paymentStatus: "unpaid",
           status: "pending",
-          timeline: [{ status: "pending", at: now, note: "Khách đặt hàng" }],
+          timeline: [{ status: "pending", at: now, note: "KhÃ¡ch Ä‘áº·t hÃ ng" }],
           createdAt: now,
         }
         set((s) => ({ orders: [order, ...s.orders] }))
@@ -481,7 +487,14 @@ export const useDataStore = create<DataState>()(
     }),
     {
       name: "toto-admin-data",
-      version: 1,
+      version: 2,
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<DataState>
+        if (version < 2 && !state.products?.length) {
+          return { ...state, products: seedProducts }
+        }
+        return state as DataState
+      },
     },
   ),
 )
@@ -489,3 +502,6 @@ export const useDataStore = create<DataState>()(
 export function getOrderByCode(orders: Order[], code: string) {
   return orders.find((o) => o.code === code)
 }
+
+
+

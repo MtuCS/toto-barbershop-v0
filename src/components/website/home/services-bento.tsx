@@ -41,9 +41,7 @@ export function ServicesBento() {
         </figure>
 
         <p className="mt-9 max-w-xl text-sm leading-7 text-white/70 md:text-base lg:col-span-6 lg:col-start-4 lg:row-span-3 lg:row-start-9 lg:mt-0 lg:max-w-[600px] lg:self-start lg:text-sm lg:leading-6 xl:text-base xl:leading-7">
-          Từ classic haircut đến skin fade, mỗi dịch vụ tại Toto được xây dựng
-          trên kỹ thuật chuẩn barber, sự tư vấn cá nhân và gu thẩm mỹ phù hợp
-          với từng người.
+          Từ classic haircut đến skin fade, shaving, beard shaping và hơn thế nữa... 
         </p>
 
         <figure className="relative mt-10 aspect-[4/5] w-[48%] max-w-[220px] overflow-hidden rounded-sm border border-white/10 sm:w-[34%] lg:col-span-2 lg:col-start-1 lg:row-span-5 lg:row-start-7 lg:mt-0 lg:w-full lg:max-w-[190px] lg:self-end">

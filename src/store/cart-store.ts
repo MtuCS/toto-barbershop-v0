@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
@@ -9,8 +9,8 @@ interface CartState {
   isOpen: boolean
   couponCode: string | null
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void
-  removeItem: (variantId: string) => void
-  updateQuantity: (variantId: string, quantity: number) => void
+  removeItem: (variantId: CartItem["variantId"]) => void
+  updateQuantity: (variantId: CartItem["variantId"], quantity: number) => void
   clear: () => void
   applyCoupon: (code: string | null) => void
   setOpen: (open: boolean) => void
@@ -18,8 +18,8 @@ interface CartState {
   closeCart: () => void
   toggleCart: () => void
   clearCart: () => void
-  increaseQuantity: (variantId: string) => void
-  decreaseQuantity: (variantId: string) => void
+  increaseQuantity: (variantId: CartItem["variantId"]) => void
+  decreaseQuantity: (variantId: CartItem["variantId"]) => void
   // derived
   totalItems: () => number
   subtotal: () => number
