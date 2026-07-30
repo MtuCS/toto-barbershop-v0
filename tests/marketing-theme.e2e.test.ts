@@ -83,3 +83,25 @@ test.describe("marketing theme", () => {
     expect(hasLightSurface).toBe(true)
   })
 })
+
+test("renders the complete services menu and keeps its contact path", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto("/services")
+
+  await expect(page.getByRole("heading", { level: 1, name: "Precision in every cut" })).toBeVisible()
+  await expect(page.getByRole("heading", { level: 2, name: "Chọn dịch vụ của bạn" })).toBeVisible()
+  await expect(page.getByRole("heading", { level: 3 })).toHaveCount(13)
+  await expect(page.getByRole("link", { name: "Liên hệ đặt lịch" }).first()).toHaveAttribute("href", "/contact")
+  await expect(page.locator("main img")).toHaveCount(14)
+
+  const question = page.getByRole("button", { name: "Tôi chưa biết mình hợp kiểu tóc nào, ToTo có tư vấn không?" })
+  await question.click()
+  await expect(page.getByText("Barber sẽ trao đổi về gương mặt")).toBeVisible()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  const widths = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }))
+  expect(widths.scrollWidth).toBe(widths.clientWidth)
+})
