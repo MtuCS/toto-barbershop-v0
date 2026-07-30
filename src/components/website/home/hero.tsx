@@ -91,7 +91,7 @@ export function Hero() {
           {/* Portrait */}
           <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:translate-y-10 lg:aspect-[16/8]">
             <Image
-              src="/images/hero-portrait.png"
+              src="/images/hero-portrait-2.jpg"
               alt="Hero_img"
               fill
               priority

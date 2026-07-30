@@ -39,7 +39,7 @@ test.describe("marketing theme", () => {
   test("keeps representative routes within the mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
 
-    for (const path of ["/services", "/shop/merchandise", "/contact", "/training", "/merchandise/the-origin"]) {
+    for (const path of ["/services", "/shop/merchandise", "/contact", "/training", "/merchandise", "/merchandise/the-origin"]) {
       await page.goto(path)
       const widths = await page.evaluate(() => ({
         clientWidth: document.documentElement.clientWidth,
@@ -49,6 +49,24 @@ test.describe("marketing theme", () => {
     }
   })
 
+  test("renders the merchandise editorial page with its hero and commerce links", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto("/merchandise")
+
+    await expect(page.getByRole("heading", { level: 1, name: "More than merchandise" })).toBeVisible()
+    await expect(page.locator('img[src*="hero-portrait.png"]')).toBeVisible()
+    await expect(page.getByRole("link", { name: "Khám phá bộ sưu tập" })).toHaveAttribute("href", "/shop/merchandise")
+    await expect(page.getByRole("link", { name: "Đọc câu chuyện The Origin" })).toHaveAttribute("href", "/merchandise/the-origin")
+    await expect(page.getByRole("link", { name: "Đọc câu chuyện Workwear Chapter" })).toHaveAttribute("href", "/merchandise/workwear-chapter")
+    await expect(page.getByRole("link", { name: "TOTO Logo Tee" }).first()).toBeVisible()
+    await expect(page.getByRole("link", { name: "TOTO Water Pomade" })).toHaveCount(0)
+
+    const widths = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    }))
+    expect(widths.scrollWidth).toBe(widths.clientWidth)
+  })
   test("keeps shop controls on a cold light surface", async ({ page }) => {
     await page.goto("/shop/merchandise")
 
