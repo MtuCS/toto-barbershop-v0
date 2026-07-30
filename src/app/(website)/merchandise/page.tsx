@@ -113,7 +113,7 @@ export default function Page() {
         </div>
       </section>
       
-      <section aria-labelledby="featured-products-title" className="bg-[#f3f5f1] px-5 pb-24 pt-20 text-[#101715] md:px-8 md:pb-32 md:pt-28">
+      {/* <section aria-labelledby="featured-products-title" className="bg-[#f3f5f1] px-5 pb-24 pt-20 text-[#101715] md:px-8 md:pb-32 md:pt-28">
         <div className="mx-auto max-w-[1400px]">
           <div className="grid gap-6 border-b-2 border-[#101715] pb-6 md:grid-cols-12 md:items-end">
             <div className="md:col-span-8">
@@ -149,7 +149,7 @@ export default function Page() {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
     </MarketingPageShell>
   )
 }

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react"
 import Image from "next/image"
@@ -53,7 +53,7 @@ export function ProductCard({ product, priority = false }: { product: Product; f
         <div className="mt-1 flex items-center gap-2"><span className="font-display text-lg font-bold">{formatCurrency(product.basePrice)}</span>{product.compareAtPrice ? <span className="text-sm text-muted-foreground line-through">{formatCurrency(product.compareAtPrice)}</span> : null}</div>
         <div className="mt-3 grid grid-cols-[1fr_1.35fr] gap-2">
           <Button variant="outline" className="h-10 font-semibold" onClick={() => startAction("cart")} disabled={soldOut} aria-label={`Thêm ${product.title} vào giỏ`}><ShoppingCart className="size-4" /><span className="hidden sm:inline">Giỏ</span></Button>
-          <Button className="h-10 bg-[#d71920] font-semibold hover:bg-[#b9141a]" onClick={() => startAction("buy")} disabled={soldOut}><Zap className="size-4" />{soldOut ? "Hết hàng" : "Mua ngay"}</Button>
+          <Button className="h-10 bg-primary font-semibold hover:bg-[#2f7a68]" onClick={() => startAction("buy")} disabled={soldOut}><Zap className="size-4" />{soldOut ? "Hết hàng" : "Mua ngay"}</Button>
         </div>
       </div>
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>

@@ -34,7 +34,7 @@ export default function Page() {
           <SectionHeader
             // label="Selected work"
             label=""
-            title="Kiểu tóc nổi bật"
+            title="Những kiểu tóc nổi bật"
             copy="Những tác phẩm được thực hiện tại TOTO, từ các thiết kế texture, fade đến màu sắc cá tính."
           />
           <div className="mt-12 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
