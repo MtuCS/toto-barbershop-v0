@@ -34,10 +34,12 @@
   }
 
   .root > :nth-child(4) {
-    padding-block: 0;
+    height: calc(100dvh - 4rem);
+    overflow: clip;
+    padding: 3.5rem 0 3rem;
   }
 
-  .root > :nth-child(6) {
+  .root > :nth-child(8) {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -45,26 +47,26 @@
   }
 
 
-  .root > :nth-child(6) > :nth-child(2) {
+  .root > :nth-child(8) > :nth-child(2) {
     margin-top: 1.5rem;
   }
 
-  .root > :nth-child(7) {
+  .root > :nth-child(9) {
     min-height: 0;
     padding-block: 0;
   }
 
-  .root > :nth-child(7) > div {
+  .root > :nth-child(9) > div {
     height: 100%;
     min-height: 0;
   }
 
-  .root > :nth-child(8) {
+  .root > :nth-child(10) {
     display: flex;
     align-items: center;
   }
 
-  .root > :nth-child(8) > div {
+  .root > :nth-child(10) > div {
     height: 100%;
     min-height: 0;
     width: 100%;

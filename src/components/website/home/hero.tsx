@@ -53,7 +53,7 @@ import TextType from "@/components/ui/text-type";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#07110f] text-[#f2f5f3]">
+    <section className="relative z-10 bg-[#07110f] text-[#f2f5f3]">
       {/* Sweeping arc */}
       <div
         aria-hidden="true"
@@ -89,7 +89,7 @@ export function Hero() {
           </div>
 
           {/* Portrait */}
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:translate-y-10 lg:aspect-[16/8]">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
             <Image
               src="/images/hero-portrait-2.jpg"
               alt="Hero_img"  
@@ -103,7 +103,7 @@ export function Hero() {
 
         {/* Giant headline */}
         {/* <div className="relative mt-6 md:mt-8 lg:mt-10"> */}
-        <div className="relative mt-6 -translate-y-6 pb-8 md:mt-8 md:-translate-y-8 md:pb-10 lg:mt-10 lg:-translate-y-10 lg:pb-14">
+        <div className="relative mt-6 pb-8 md:mt-8 md:pb-10 lg:mt-10 lg:pb-14">
           {/* <h1 className="font-serif font-medium uppercase leading-[0.86] tracking-tight text-accent text-balance">
             <span className="text-right block text-[19vw] sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]">
               Barber.

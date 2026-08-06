@@ -19,7 +19,7 @@
 
 export function VisualVideo() {
   return (
-    <section className="border-b border-border bg-background/34 py-12 backdrop-blur-[1px] md:py-20">
+    <section className="relative z-10 border-b border-border bg-[#07110f] py-12 md:py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="relative aspect-video w-full overflow-hidden bg-black">
   <video

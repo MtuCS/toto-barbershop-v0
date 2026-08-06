@@ -2,68 +2,196 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
 
+const SERVICES = [
+  {
+    title: "TÓC & TẠO KIỂU",
+    description:
+      "Tư vấn kỹ theo dáng mặt và chất tóc thật. Tỉ mỉ từng đường kéo để vài tuần sau tóc dài ra vẫn giữ nguyên form dáng.",
+    link: "/services#toc",
+    image: "/images/service-cut-1.jpg",
+    heightClass: "h-[360px] sm:h-[380px] md:h-[420px] lg:h-[440px]",
+    offsetClass: "md:mt-12 lg:mt-16",
+  },
+  {
+    title: "VỆ SINH & CHĂM SÓC",
+    description:
+      "Gội đầu xua tan mỏi mệt, cạo mặt êm không rát và ráy tai tỉ mỉ. Những chăm sóc nhỏ cho một diện mạo tươi tắn, nhẹ nhõm.",
+    link: "/services#ve-sinh",
+    image: "/images/service-shave-1.jpg",
+    heightClass: "h-[360px] sm:h-[380px] md:h-[460px] lg:h-[500px]",
+    offsetClass: "md:mt-6 lg:mt-8",
+  },
+  {
+    title: "MẤY GÓI COMBO",
+    description:
+      "Kết hợp trọn vẹn từ cắt tóc, gội đầu, cạo ráy đến dưỡng da. Thả lỏng hoàn toàn để lấy lại phong độ tinh tươm nhất.",
+    link: "/services#combo",
+    image: "/images/service-cut.jpg",
+    heightClass: "h-[360px] sm:h-[380px] md:h-[500px] lg:h-[560px]",
+    offsetClass: "md:mt-0",
+  },
+]
+
 export function ServicesBento() {
   return (
     <section
       aria-labelledby="home-services-title"
-      className="relative isolate overflow-hidden bg-[#07110f] text-[#f2f5f3]"
+      className="
+        relative isolate overflow-hidden
+        bg-[#07110f] text-[#f2f5f3]
+        pb-24 pt-16
+        md:pb-28 md:pt-20
+        lg:pb-32 lg:pt-24
+      "
     >
+      {/* Đường tròn trang trí bên trái */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-[28rem] -top-[51rem] size-[74rem] rounded-full border border-[#2f7a68]/30"
+        className="
+          pointer-events-none absolute
+          -left-[28rem] -top-[51rem]
+          size-[74rem] rounded-full
+          border border-[#2f7a68]/30
+        "
       />
+
+      {/* Đường tròn trang trí bên phải */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-[46rem] -right-[18rem] size-[68rem] rounded-full border border-[#2f7a68]/35"
+        className="
+          pointer-events-none absolute
+          -bottom-[46rem] -right-[18rem]
+          size-[68rem] rounded-full
+          border border-[#2f7a68]/35
+        "
       />
 
-      <div className="relative z-10 mx-auto grid w-full max-w-[1400px] grid-cols-1 px-4 pb-14 pt-20 sm:px-6 md:px-8 md:py-16 lg:h-full lg:grid-cols-12 lg:grid-rows-12 lg:gap-x-6 lg:px-10 lg:py-8 xl:px-14 xl:py-10">
-        <h2
-          id="home-services-title"
-          className="font-serif text-[13vw] font-medium uppercase leading-[0.78] tracking-[-0.045em] text-[#f2f5f3] sm:text-[10vw] lg:col-span-7 lg:col-start-4 lg:row-span-6 lg:row-start-2 lg:self-start lg:text-[clamp(3.45rem,6.2vw,6.5rem)]"
+      <div
+        className="
+          relative z-10 mx-auto
+          w-full max-w-[1400px]
+          px-4 sm:px-6 lg:px-10 xl:px-14
+        "
+      >
+        {/* Tiêu đề */}
+        <div className="mb-6 md:mb-7 lg:mb-8">
+          <h2
+            id="home-services-title"
+            className="
+              text-3xl font-semibold uppercase
+              leading-[1.05] tracking-tight
+              text-[#f2f5f3]
+              sm:text-4xl
+              md:text-5xl
+              lg:text-6xl
+            "
+          >
+            Mấy món nghề
+            <br />
+            <span className="text-[#2f7a68]">ToTo</span>
+          </h2>
+        </div>
+
+        {/* Gallery tăng dần từ trái sang phải */}
+        <div
+          className="
+            grid grid-cols-1 gap-6
+            md:-mt-4 md:grid-cols-3 md:items-start
+            lg:-mt-8
+          "
         >
-          <span className="block">The Toto</span>
-          <span className="block">
-            Barber <span className="text-[#2f7a68]">&amp;</span>
-          </span>
-          <span className="block">Grooming</span>
-          <span className="block">Experience</span>
-        </h2>
+          {SERVICES.map((service) => (
+            <Link
+              key={service.title}
+              href={service.link}
+              className={`
+                group relative flex w-full flex-col justify-end
+                overflow-hidden rounded-sm bg-[#0a1512]
+                ${service.heightClass}
+                ${service.offsetClass}
+              `}
+            >
+              <Image
+                src={service.image}
+                alt={service.title}
+                fill
+                sizes="(max-width: 767px) 100vw, 33vw"
+                className="
+                  object-cover object-[center_30%]
+                  opacity-70
+                  transition-all duration-700 ease-out
+                  group-hover:scale-105
+                  md:opacity-80
+                  md:group-hover:opacity-40
+                "
+              />
 
-        <figure className="relative mt-10 ml-auto aspect-[4/5] w-[58%] max-w-[280px] overflow-hidden rounded-sm border border-white/10 sm:w-[42%] lg:col-span-3 lg:col-start-10 lg:row-span-5 lg:row-start-2 lg:mt-0 lg:w-full lg:max-w-[240px] lg:self-start lg:justify-self-end">
-          <Image
-            src="/images/service-cut-1.jpg"
-            alt="Dịch vụ Classic Haircut tại Toto"
-            fill
-            sizes="(max-width: 639px) 58vw, (max-width: 1023px) 42vw, 240px"
-            className="object-cover"
-          />
-        </figure>
+              {/* Overlay */}
+              <div
+                className="
+                  absolute inset-0
+                  bg-gradient-to-t
+                  from-[#07110f]
+                  via-[#07110f]/40
+                  to-transparent
+                  opacity-80
+                  transition-opacity duration-500
+                  md:group-hover:opacity-100
+                "
+              />
 
-        <p className="mt-9 max-w-xl text-sm leading-7 text-white/70 md:text-base lg:col-span-6 lg:col-start-4 lg:row-span-3 lg:row-start-9 lg:mt-0 lg:max-w-[600px] lg:self-start lg:text-sm lg:leading-6 xl:text-base xl:leading-7">
-          Từ classic haircut đến skin fade, shaving, beard shaping và hơn thế nữa... 
-        </p>
+              {/* Nội dung */}
+              <div className="relative z-10 p-6 lg:p-8">
+                <h3
+                  className="
+                    text-xl font-bold uppercase
+                    tracking-wide text-white
+                    lg:text-2xl
+                  "
+                >
+                  {service.title}
+                </h3>
 
-        <figure className="relative mt-10 aspect-[4/5] w-[48%] max-w-[220px] overflow-hidden rounded-sm border border-white/10 sm:w-[34%] lg:col-span-2 lg:col-start-1 lg:row-span-5 lg:row-start-7 lg:mt-0 lg:w-full lg:max-w-[190px] lg:self-end">
-          <Image
-            src="/images/service-shave-1.jpg"
-            alt="Dịch vụ tạo kiểu và chăm sóc tại Toto"
-            fill
-            sizes="(max-width: 639px) 48vw, (max-width: 1023px) 34vw, 190px"
-            className="object-cover"
-          />
-        </figure>
+                <div
+                  className="
+                    grid grid-rows-[1fr]
+                    transition-all duration-500
+                    ease-[0.16,1,0.3,1]
+                    md:grid-rows-[0fr]
+                    md:group-hover:grid-rows-[1fr]
+                  "
+                >
+                  <div className="min-h-0 overflow-hidden">
+                    <div className="pt-3 lg:pt-4">
+                      <p className="text-sm leading-relaxed text-white/80">
+                        {service.description}
+                      </p>
 
-        <Link
-          href="/services"
-          className="group mt-10 ml-auto inline-flex min-h-11 w-fit items-center gap-3 border-b border-[#2f7a68] py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#f2f5f3] transition-colors hover:text-[#79b8a7] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79b8a7] lg:col-span-3 lg:col-start-10 lg:row-span-2 lg:row-start-10 lg:mt-0 lg:self-end lg:justify-self-end"
-        >
-          Khám phá dịch vụ
-          <ArrowUpRight
-            aria-hidden="true"
-            className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-          />
-        </Link>
+                      <div
+                        className="
+                          mt-4 inline-flex items-center gap-2
+                          text-xs font-bold uppercase
+                          tracking-[0.15em] text-[#79b8a7]
+                        "
+                      >
+                        Chi tiết
+
+                        <ArrowUpRight
+                          className="
+                            size-3
+                            transition-transform duration-300
+                            group-hover:-translate-y-0.5
+                            group-hover:translate-x-0.5
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   )

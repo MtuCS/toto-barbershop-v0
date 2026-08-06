@@ -48,16 +48,18 @@ export function HomeScrollShell({ children }: HomeScrollShellProps) {
 
   const getScenes = useCallback((): HomeScene[] => {
     const elements = Array.from(rootRef.current?.children ?? []) as HTMLElement[]
-    if (elements.length < 8) return []
+    if (elements.length < 10) return []
 
     return [
       { id: "hero", anchor: elements[0], elements: [elements[0]] },
       { id: "visual", anchor: elements[1], elements: [elements[1], elements[2]] },
       { id: "services", anchor: elements[3], elements: [elements[3]] },
-      { id: "about", anchor: elements[4], elements: [elements[4]] },
-      { id: "lookbook", anchor: elements[5], elements: [elements[5]] },
+      { id: "values", anchor: elements[4], elements: [elements[4]] },
+      { id: "testimonials", anchor: elements[5], elements: [elements[5]] },
       { id: "merch", anchor: elements[6], elements: [elements[6]] },
-      { id: "social", anchor: elements[7], elements: [elements[7]] },
+      { id: "about", anchor: elements[7], elements: [elements[7]] },
+      { id: "lookbook", anchor: elements[8], elements: [elements[8]] },
+      { id: "social", anchor: elements[9], elements: [elements[9]] },
     ]
   }, [])
 
