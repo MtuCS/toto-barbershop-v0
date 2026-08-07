@@ -41,17 +41,17 @@ function InstagramIcon({ className }: { className?: string }) {
 
 export function SiteFooter() {
   return (
-    <footer className="relative isolate border-t border-white/10 bg-[#050c0a] text-[#f2f5f3]">
-      <div className="mx-auto w-full max-w-[1400px] px-5 py-16 md:px-8 md:py-20 lg:px-10 xl:px-14">
-        <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-14 xl:gap-20">
+    <footer className="home-contact-footer relative isolate border-t border-white/10 bg-[#050c0a] text-[#f2f5f3]">
+      <div className="home-contact-inner mx-auto w-full max-w-[1400px] px-5 py-16 md:px-8 md:py-20 lg:px-10 xl:px-14">
+        <div className="home-contact-grid grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-14 xl:gap-20">
           {/* Thông tin chính */}
           <div className="flex flex-col justify-between">
             <div>
-              <h2 className="text-3xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-4xl lg:text-5xl leading-[1.15]">
+              <h2 className="home-section-title home-contact-title text-3xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-4xl lg:text-5xl leading-[1.15]">
                 Bạn muốn ghé ToTo thử một chuyến?
               </h2>
 
-              <ul className="mt-8 space-y-6 text-sm md:text-base text-white/85">
+              <ul className="home-contact-list mt-8 space-y-6 text-sm md:text-base text-white/85">
                 <li className="flex items-start gap-4">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#2f7a68]/30 bg-[#2f7a68]/15 text-[#79b8a7]">
                     <Clock className="size-5" />
@@ -123,7 +123,7 @@ export function SiteFooter() {
           </div>
 
           {/* Bản đồ Google Maps */}
-          <div className="relative min-h-[320px] w-full overflow-hidden rounded-xl border border-white/15 shadow-2xl lg:min-h-[400px]">
+          <div className="home-contact-map relative min-h-[320px] w-full overflow-hidden rounded-xl border border-white/15 shadow-2xl lg:min-h-[400px]">
             <iframe
               title="Bản đồ ToTo Barbershop"
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.2618228383824!2d106.64324227584168!3d10.791244358917804!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3175294a530965d1%3A0xb3e18a9be3b5be5b!2s85%20%C4%90%E1%BB%93ng%20%C4%90en%2C%20Ph%C6%B0%E1%BB%9Dng%2014%2C%20T%C3%A2n%20B%C3%ACnh%2C%20H%E1%BB%93%20Ch%C3%AD%20Minh!5e0!3m2!1svi!2s!4v1700000000000!5m2!1svi!2s"
@@ -139,7 +139,7 @@ export function SiteFooter() {
         </div>
 
         {/* Dòng bản quyền */}
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row">
+        <div className="home-contact-legal mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row">
           <p>© {new Date().getFullYear()} ToTo Barbershop. All rights reserved.</p>
           <p>Barber · Culture · Craft</p>
         </div>

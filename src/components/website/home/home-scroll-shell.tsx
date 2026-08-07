@@ -5,176 +5,343 @@ import { usePathname } from "next/navigation"
 import styles from "./home-scroll-shell.module.css"
 
 const HEADER_HEIGHT = 64
-const DESKTOP_QUERY = "(min-width: 1024px)"
-const TRANSITION_DURATION = 720
-const WHEEL_THRESHOLD = 8
+const SCENE_SELECTOR = "[data-home-scene]"
+const TRANSITION_DURATION = 760
+const REDUCED_TRANSITION_DURATION = 1
+const WHEEL_THRESHOLD = 10
+const WHEEL_QUIET_PERIOD = 180
+const SCENE_EDGE_TOLERANCE = 4
 
 interface HomeScrollShellProps {
   children: ReactNode
 }
 
-interface HomeScene {
-  id: string
-  anchor: HTMLElement
-  elements: HTMLElement[]
+function isInteractiveTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false
+
+  return Boolean(
+    target.closest(
+      'input, textarea, select, button, [contenteditable="true"], [role="dialog"], [data-home-scroll-native]',
+    ),
+  )
 }
 
 function hasNativeScrollTarget(target: EventTarget | null) {
   if (!(target instanceof Element)) return false
-  if (target.closest('input, textarea, select, [role="dialog"], [data-home-scroll-native]')) return true
+  if (isInteractiveTarget(target)) return true
 
   let element: Element | null = target
   while (element && element !== document.documentElement) {
-    const styles = window.getComputedStyle(element)
-    const canScroll = /(auto|scroll)/.test(styles.overflowY) && element.scrollHeight > element.clientHeight
+    const computed = window.getComputedStyle(element)
+    const canScroll =
+      /(auto|scroll)/.test(computed.overflowY) &&
+      element.scrollHeight > element.clientHeight
+
     if (canScroll) return true
     element = element.parentElement
   }
+
   return false
 }
 
-function easeInOutCubic(progress: number) {
-  return progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2
+function getKeyboardDirection(key: string) {
+  if (key === "ArrowDown" || key === "PageDown") return 1
+  if (key === "ArrowUp" || key === "PageUp") return -1
+  return 0
 }
 
 export function HomeScrollShell({ children }: HomeScrollShellProps) {
   const pathname = usePathname()
   const rootRef = useRef<HTMLDivElement>(null)
-  const animationFrameRef = useRef<number | null>(null)
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const unlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isAnimatingRef = useRef(false)
+  const inputLockedRef = useRef(false)
+  const lastWheelAtRef = useRef(0)
   const wheelDeltaRef = useRef(0)
   const isHome = pathname === "/"
 
-  const getScenes = useCallback((): HomeScene[] => {
-    const elements = Array.from(rootRef.current?.children ?? []) as HTMLElement[]
-    if (elements.length < 10) return []
-
-    return [
-      { id: "hero", anchor: elements[0], elements: [elements[0]] },
-      { id: "visual", anchor: elements[1], elements: [elements[1], elements[2]] },
-      { id: "services", anchor: elements[3], elements: [elements[3]] },
-      { id: "values", anchor: elements[4], elements: [elements[4]] },
-      { id: "testimonials", anchor: elements[5], elements: [elements[5]] },
-      { id: "merch", anchor: elements[6], elements: [elements[6]] },
-      { id: "about", anchor: elements[7], elements: [elements[7]] },
-      { id: "lookbook", anchor: elements[8], elements: [elements[8]] },
-      { id: "social", anchor: elements[9], elements: [elements[9]] },
-    ]
+  const getScenes = useCallback(() => {
+    return Array.from(
+      document.querySelectorAll<HTMLElement>(SCENE_SELECTOR),
+    )
   }, [])
 
-  const getSceneTop = useCallback((scene: HomeScene) => {
-    return scene.anchor.offsetTop - HEADER_HEIGHT
+  const getSceneStart = useCallback((scene: HTMLElement) => {
+    return scene.getBoundingClientRect().top + window.scrollY - HEADER_HEIGHT
   }, [])
 
-  const getClosestSceneIndex = useCallback((scenes: HomeScene[]) => {
-    let closestIndex = 0
-    let closestDistance = Number.POSITIVE_INFINITY
-    scenes.forEach((scene, index) => {
-      const distance = Math.abs(scene.anchor.getBoundingClientRect().top - HEADER_HEIGHT)
-      if (distance < closestDistance) {
-        closestDistance = distance
-        closestIndex = index
-      }
-    })
-    return closestIndex
-  }, [])
+  const getSceneRange = useCallback(
+    (scene: HTMLElement) => {
+      const start = Math.max(0, getSceneStart(scene))
+      const documentTop = start + HEADER_HEIGHT
+      const end = Math.max(
+        start,
+        documentTop + scene.offsetHeight - window.innerHeight,
+      )
 
-  const setActiveScene = useCallback((scenes: HomeScene[], activeId: string) => {
-    scenes.forEach((scene) => {
-      scene.elements.forEach((element) => {
-        element.dataset.homeSceneActive = String(scene.id === activeId)
+      return { start, end }
+    },
+    [getSceneStart],
+  )
+
+  const getCurrentSceneIndex = useCallback(
+    (scenes: HTMLElement[]) => {
+      const probe = window.scrollY + HEADER_HEIGHT + SCENE_EDGE_TOLERANCE
+      let currentIndex = 0
+
+      scenes.forEach((scene, index) => {
+        const documentTop = getSceneStart(scene) + HEADER_HEIGHT
+        if (documentTop <= probe) currentIndex = index
       })
-    })
-  }, [])
 
-  const scrollToScene = useCallback((scenes: HomeScene[], scene: HomeScene) => {
-    const start = window.scrollY
-    const distance = getSceneTop(scene) - start
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    const duration = reduceMotion ? 1 : TRANSITION_DURATION
-    const startedAt = performance.now()
+      return currentIndex
+    },
+    [getSceneStart],
+  )
 
-    isAnimatingRef.current = true
-    setActiveScene(scenes, scene.id)
-    if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current)
-    if (unlockTimerRef.current !== null) clearTimeout(unlockTimerRef.current)
+  const setActiveScene = useCallback(
+    (scenes: HTMLElement[], activeIndex: number) => {
+      scenes.forEach((scene, index) => {
+        scene.dataset.homeSceneActive = String(index === activeIndex)
+      })
+    },
+    [],
+  )
 
-    const step = (now: number) => {
-      const progress = Math.min((now - startedAt) / duration, 1)
-      window.scrollTo(0, start + distance * easeInOutCubic(progress))
-      if (progress < 1) {
-        animationFrameRef.current = requestAnimationFrame(step)
-        return
-      }
-
-      animationFrameRef.current = null
-      unlockTimerRef.current = setTimeout(() => {
-        isAnimatingRef.current = false
-        wheelDeltaRef.current = 0
-      }, 80)
+  const clearTimers = useCallback(() => {
+    if (transitionTimerRef.current !== null) {
+      clearTimeout(transitionTimerRef.current)
+      transitionTimerRef.current = null
     }
 
-    animationFrameRef.current = requestAnimationFrame(step)
-  }, [getSceneTop, setActiveScene])
+    if (unlockTimerRef.current !== null) {
+      clearTimeout(unlockTimerRef.current)
+      unlockTimerRef.current = null
+    }
+  }, [])
+
+  const queueUnlockAfterQuiet = useCallback(() => {
+    if (unlockTimerRef.current !== null) clearTimeout(unlockTimerRef.current)
+
+    const elapsed = performance.now() - lastWheelAtRef.current
+    const delay = Math.max(0, WHEEL_QUIET_PERIOD - elapsed)
+
+    unlockTimerRef.current = setTimeout(() => {
+      unlockTimerRef.current = null
+      if (isAnimatingRef.current) return
+
+      inputLockedRef.current = false
+      wheelDeltaRef.current = 0
+    }, delay)
+  }, [])
+
+  const scrollToScene = useCallback(
+    (scenes: HTMLElement[], targetIndex: number) => {
+      const target = scenes[targetIndex]
+      if (!target) return
+
+      clearTimers()
+      isAnimatingRef.current = true
+      inputLockedRef.current = true
+      wheelDeltaRef.current = 0
+      setActiveScene(scenes, targetIndex)
+
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches
+      const duration = reduceMotion
+        ? REDUCED_TRANSITION_DURATION
+        : TRANSITION_DURATION
+
+      target.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "start",
+      })
+
+      transitionTimerRef.current = setTimeout(() => {
+        transitionTimerRef.current = null
+        isAnimatingRef.current = false
+        queueUnlockAfterQuiet()
+      }, duration)
+    },
+    [clearTimers, queueUnlockAfterQuiet, setActiveScene],
+  )
+
+  const canScrollInsideScene = useCallback(
+    (scene: HTMLElement, direction: number) => {
+      const allowsInternalScroll =
+        window.innerWidth < 1024 || scene.dataset.homeSceneScroll === "inside"
+
+      if (!allowsInternalScroll) return false
+
+      const { start, end } = getSceneRange(scene)
+
+      return direction > 0
+        ? window.scrollY < end - SCENE_EDGE_TOLERANCE
+        : window.scrollY > start + SCENE_EDGE_TOLERANCE
+    },
+    [getSceneRange],
+  )
+
+  const scrollInsideScene = useCallback(
+    (scene: HTMLElement, direction: number, distance: number) => {
+      const { start, end } = getSceneRange(scene)
+      const nextPosition = Math.min(
+        end,
+        Math.max(start, window.scrollY + direction * Math.abs(distance)),
+      )
+
+      window.scrollTo({ top: nextPosition, behavior: "auto" })
+
+      const reachedEdge =
+        direction > 0
+          ? nextPosition >= end - SCENE_EDGE_TOLERANCE
+          : nextPosition <= start + SCENE_EDGE_TOLERANCE
+
+      if (reachedEdge) {
+        inputLockedRef.current = true
+        queueUnlockAfterQuiet()
+      }
+    },
+    [getSceneRange, queueUnlockAfterQuiet],
+  )
 
   useEffect(() => {
     if (!isHome) return
-    const desktopQuery = window.matchMedia(DESKTOP_QUERY)
+
+    const html = document.documentElement
+    html.dataset.homeScrollSnap = "true"
 
     const syncActiveScene = () => {
-      if (!desktopQuery.matches || isAnimatingRef.current) return
+      if (isAnimatingRef.current) return
       const scenes = getScenes()
-      const scene = scenes[getClosestSceneIndex(scenes)]
-      if (scene) setActiveScene(scenes, scene.id)
+      if (!scenes.length) return
+      setActiveScene(scenes, getCurrentSceneIndex(scenes))
     }
 
     const handleWheel = (event: WheelEvent) => {
-      if (!desktopQuery.matches || hasNativeScrollTarget(event.target)) return
-      const scenes = getScenes()
-      if (!scenes.length) return
+      if (hasNativeScrollTarget(event.target)) return
 
-      const firstTop = getSceneTop(scenes[0])
-      const lastTop = getSceneTop(scenes[scenes.length - 1])
-      const aboveExperience = window.scrollY < firstTop - 2
-      const belowExperience = window.scrollY > lastTop + 2
-      if ((aboveExperience && event.deltaY < 0) || (belowExperience && event.deltaY > 0)) return
+      lastWheelAtRef.current = performance.now()
 
-      if (isAnimatingRef.current) {
+      if (inputLockedRef.current) {
         event.preventDefault()
+        queueUnlockAfterQuiet()
         return
       }
 
-      wheelDeltaRef.current += event.deltaY
+      const deltaMultiplier =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? window.innerHeight
+            : 1
+
+      wheelDeltaRef.current += event.deltaY * deltaMultiplier
       if (Math.abs(wheelDeltaRef.current) < WHEEL_THRESHOLD) {
         event.preventDefault()
         return
       }
 
       const direction = wheelDeltaRef.current > 0 ? 1 : -1
-      const currentIndex = belowExperience ? scenes.length : getClosestSceneIndex(scenes)
-      const targetIndex = currentIndex + direction
+      const distance = Math.min(Math.abs(wheelDeltaRef.current), 160)
       wheelDeltaRef.current = 0
+
+      const scenes = getScenes()
+      if (!scenes.length) return
+
+      const currentIndex = getCurrentSceneIndex(scenes)
+      const currentScene = scenes[currentIndex]
+
+      if (canScrollInsideScene(currentScene, direction)) {
+        event.preventDefault()
+        scrollInsideScene(currentScene, direction, distance)
+        return
+      }
+
+      const targetIndex = currentIndex + direction
+      event.preventDefault()
+
       if (targetIndex < 0 || targetIndex >= scenes.length) return
+      scrollToScene(scenes, targetIndex)
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        isInteractiveTarget(event.target)
+      ) {
+        return
+      }
+
+      const direction = getKeyboardDirection(event.key)
+      if (!direction) return
 
       event.preventDefault()
-      scrollToScene(scenes, scenes[targetIndex])
+      if (event.repeat || inputLockedRef.current) return
+
+      const scenes = getScenes()
+      if (!scenes.length) return
+
+      const currentIndex = getCurrentSceneIndex(scenes)
+      const currentScene = scenes[currentIndex]
+
+      if (canScrollInsideScene(currentScene, direction)) {
+        const isPageKey = event.key === "PageDown" || event.key === "PageUp"
+        const distance = isPageKey
+          ? Math.max(120, window.innerHeight - HEADER_HEIGHT - 48)
+          : 96
+
+        inputLockedRef.current = true
+        scrollInsideScene(currentScene, direction, distance)
+        lastWheelAtRef.current = performance.now()
+        queueUnlockAfterQuiet()
+        return
+      }
+
+      const targetIndex = currentIndex + direction
+      if (targetIndex < 0 || targetIndex >= scenes.length) return
+      scrollToScene(scenes, targetIndex)
     }
 
     syncActiveScene()
     window.addEventListener("wheel", handleWheel, { passive: false })
+    window.addEventListener("keydown", handleKeyDown)
     window.addEventListener("scroll", syncActiveScene, { passive: true })
-    desktopQuery.addEventListener("change", syncActiveScene)
+    window.addEventListener("resize", syncActiveScene)
+
     return () => {
+      delete html.dataset.homeScrollSnap
       window.removeEventListener("wheel", handleWheel)
+      window.removeEventListener("keydown", handleKeyDown)
       window.removeEventListener("scroll", syncActiveScene)
-      desktopQuery.removeEventListener("change", syncActiveScene)
-      if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current)
-      if (unlockTimerRef.current !== null) clearTimeout(unlockTimerRef.current)
+      window.removeEventListener("resize", syncActiveScene)
+      clearTimers()
+      isAnimatingRef.current = false
+      inputLockedRef.current = false
+      wheelDeltaRef.current = 0
     }
-  }, [getClosestSceneIndex, getSceneTop, getScenes, isHome, scrollToScene, setActiveScene])
+  }, [
+    canScrollInsideScene,
+    clearTimers,
+    getCurrentSceneIndex,
+    getScenes,
+    isHome,
+    queueUnlockAfterQuiet,
+    scrollInsideScene,
+    scrollToScene,
+    setActiveScene,
+  ])
 
   if (!isHome) return children
 
-  return <div ref={rootRef} className={styles.root}>{children}</div>
+  return (
+    <div ref={rootRef} className={styles.root}>
+      {children}
+    </div>
+  )
 }

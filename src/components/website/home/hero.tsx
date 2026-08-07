@@ -48,12 +48,12 @@
 // }
 
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
+
 import TextType from "@/components/ui/text-type";
 
 export function Hero() {
   return (
-    <section className="relative z-10 bg-[#07110f] text-[#f2f5f3]">
+    <section data-home-scene="hero" className="home-hero-scene relative z-10 bg-[#07110f] text-[#f2f5f3]">
       {/* Sweeping arc */}
       <div
         aria-hidden="true"
@@ -63,8 +63,8 @@ export function Hero() {
         aria-hidden="true"
         className="pointer-events-none absolute -right-40 top-1/2 size-[500px] -translate-y-1/2 rounded-full bg-[#2f7a68]/10 blur-3xl"
       />
-      <div className="relative mx-auto w-full max-w-[1400px] px-4 pb-4 pt-2 md:px-8 md:pb-6 md:pt-4">
-        <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)] lg:gap-8">
+      <div className="home-hero-inner relative mx-auto w-full max-w-[1400px] px-4 pb-4 pt-2 md:px-8 md:pb-6 md:pt-4">
+        <div className="home-hero-grid grid grid-cols-1 items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)] lg:gap-8">
           {/* Left copy */}
           <div className="max-w-xs lg:self-center">
             <span className="mb-6 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">
@@ -89,7 +89,7 @@ export function Hero() {
           </div>
 
           {/* Portrait */}
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
+          <div className="home-hero-media relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
             <Image
               src="/images/hero-portrait-2.jpg"
               alt="Hero_img"  
@@ -103,7 +103,7 @@ export function Hero() {
 
         {/* Giant headline */}
         {/* <div className="relative mt-6 md:mt-8 lg:mt-10"> */}
-        <div className="relative mt-6 pb-8 md:mt-8 md:pb-10 lg:mt-10 lg:pb-14">
+        <div className="home-hero-headline relative mt-6 pb-8 md:mt-8 md:pb-10 lg:mt-10 lg:pb-14">
           {/* <h1 className="font-serif font-medium uppercase leading-[0.86] tracking-tight text-accent text-balance">
             <span className="text-right block text-[19vw] sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]">
               Barber.
@@ -143,22 +143,6 @@ export function Hero() {
             />
           </h1>
 
-          <div className="mt-8 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
-            {/* <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Barbershop · Học viện đào tạo · Grooming &amp; Merchandise mang tinh
-              thần streetwear Sài Gòn.
-            </p> */}
-            {/* <a
-              href="#"
-              className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-sm font-semibold uppercase tracking-[0.12em] text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              Đặt lịch cắt tóc
-              <ArrowUpRight
-                className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                aria-hidden="true"
-              />
-            </a> */}
-          </div>
         </div>
       </div>
     </section>

@@ -16,8 +16,10 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <Marquee />
-      <VisualVideo />
+      <div data-home-scene="campaign">
+        <Marquee />
+        <VisualVideo />
+      </div>
       {/* <QuickInfo /> */}
       <ServicesBento />
       <HomeValues />

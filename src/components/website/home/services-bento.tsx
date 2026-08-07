@@ -35,6 +35,8 @@ const SERVICES = [
 export function ServicesBento() {
   return (
     <section
+      data-home-scene="services"
+
       aria-labelledby="home-services-title"
       className="
         home-services-scene relative isolate overflow-hidden
@@ -78,7 +80,7 @@ export function ServicesBento() {
           <h2
             id="home-services-title"
             className="
-              text-3xl font-semibold uppercase
+              home-section-title text-3xl font-semibold uppercase
               leading-[1.05] tracking-tight
               text-[#f2f5f3]
               sm:text-4xl
@@ -144,7 +146,7 @@ export function ServicesBento() {
               <div className="absolute inset-x-0 bottom-0 z-10 p-6 pb-7 lg:p-8 lg:pb-9">
                 <h3
                   className="
-                    text-xl font-bold uppercase
+                    home-card-title text-xl font-bold uppercase
                     leading-[1.12] tracking-wide text-white
                     lg:text-2xl
                   "
@@ -163,7 +165,7 @@ export function ServicesBento() {
                 >
                   <div className="min-h-0 overflow-hidden">
                     <div className="pt-3 lg:pt-4">
-                      <p className="text-sm leading-relaxed text-white/80">
+                      <p className="home-card-body text-sm leading-relaxed text-white/80">
                         {service.description}
                       </p>
 

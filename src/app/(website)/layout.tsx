@@ -12,7 +12,11 @@ export default function WebsiteLayout({ children }: { children: ReactNode }) {
       <SiteAtmosphere />
       <SiteHeader />
       <main className="relative z-10 flex-1 pt-16">{children}</main>
-      <div className="relative z-10">
+      <div
+        data-home-scene="contact"
+
+        className="relative z-10"
+      >
         <SiteFooter />
       </div>
       <CartDrawer />

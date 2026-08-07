@@ -27,36 +27,37 @@ const testimonials = [
 export function HomeTestimonials() {
   return (
     <section
+      data-home-scene="testimonials"
       aria-labelledby="home-testimonials-title"
       data-testid="home-testimonials-scene"
-      className="relative isolate overflow-hidden bg-[#0b1b18] px-5 py-16 text-[#f2f5f3] md:px-8 md:py-24 lg:px-10 xl:px-14"
+      className="home-testimonials-scene relative isolate overflow-hidden bg-[#0b1b18] px-5 py-16 text-[#f2f5f3] md:px-8 md:py-24 lg:px-10 xl:px-14"
     >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-[18rem] top-0 size-[48rem] -translate-y-1/2 rounded-full border border-[#2f7a68]/20 md:-right-[24rem] md:size-[60rem] lg:-right-[28rem] lg:size-[72rem]"
       />
 
-      <div className="relative mx-auto flex h-full max-w-[1400px] flex-col justify-center">
-        <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
+      <div className="home-scene-inner relative mx-auto flex h-full max-w-[1400px] flex-col justify-center">
+        <div className="home-testimonials-heading max-w-3xl">
+          <p className="home-section-eyebrow text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
             Chuyện khách kể
           </p>
           <h2
             id="home-testimonials-title"
-            className="mt-3 text-3xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.15]"
+            className="home-section-title mt-3 text-3xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.15]"
           >
             ToTo qua lời kể của anh em
           </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/75 md:text-base">
+          <p className="home-section-description mt-4 max-w-2xl text-sm leading-relaxed text-white/75 md:text-base">
             Những chia sẻ chân thật từ những người anh em đã đồng hành cùng ToTo qua từng góc kéo.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 md:mt-14 md:grid-cols-3">
+        <div className="home-scene-card-grid mt-10 grid gap-6 md:mt-14 md:grid-cols-3">
           {testimonials.map((item) => (
             <figure
               key={item.name}
-              className="group relative flex flex-col justify-between rounded-xl border border-white/12 bg-[#07110f]/80 p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[#2f7a68]/60 hover:bg-[#07110f] hover:shadow-[0_16px_40px_rgba(7,17,15,0.6)] md:p-8"
+              className="home-testimonial-card group relative flex flex-col justify-between rounded-xl border border-white/12 bg-[#07110f]/80 p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[#2f7a68]/60 hover:bg-[#07110f] hover:shadow-[0_16px_40px_rgba(7,17,15,0.6)] md:p-8"
             >
               <div>
                 <div className="flex items-center justify-between">
@@ -72,7 +73,7 @@ export function HomeTestimonials() {
                   </div>
                 </div>
 
-                <blockquote className="mt-6 text-base leading-relaxed text-white/90 md:text-lg">
+                <blockquote className="home-testimonial-quote mt-6 text-base leading-relaxed text-white/90 md:text-lg">
                   “{item.quote}”
                 </blockquote>
               </div>
