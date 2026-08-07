@@ -35,7 +35,7 @@ export function CartDrawer() {
         <SheetHeader className="border-b border-border px-5 py-4">
           <SheetTitle className="flex items-center gap-2 font-display uppercase tracking-tight">
             <ShoppingBag className="size-5 text-primary" />
-            Giá» hÃ ng ({items.reduce((n, i) => n + i.quantity, 0)})
+            Giao hàng ({items.reduce((n, i) => n + i.quantity, 0)})
           </SheetTitle>
         </SheetHeader>
 
@@ -60,9 +60,9 @@ export function CartDrawer() {
               {remaining > 0 ? (
                 <div className="mb-4 rounded-sm bg-muted p-3 text-xs">
                   <p>
-                    Mua thÃªm{" "}
+                    Mua thêm{" "}
                     <span className="font-semibold text-primary">{formatCurrency(remaining)}</span>{" "}
-                    Ä‘á»ƒ Ä‘Æ°á»£c <span className="font-semibold">miá»…n phÃ­ váº­n chuyá»ƒn</span>.
+                    để được <span className="font-semibold">miễn phí vận chuyển</span>.
                   </p>
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border">
                     <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
@@ -70,7 +70,7 @@ export function CartDrawer() {
                 </div>
               ) : (
                 <div className="mb-4 rounded-sm bg-primary/10 p-3 text-xs font-medium text-primary">
-                  Báº¡n Ä‘Æ°á»£c miá»…n phÃ­ váº­n chuyá»ƒn!
+                  Bạn được miễn phí vận chuyển!
                 </div>
               )}
 
@@ -97,7 +97,7 @@ export function CartDrawer() {
                           <button
                             className="flex size-7 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
                             onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                            aria-label="Giáº£m sá»‘ lÆ°á»£ng"
+                            aria-label="Giảm số lượng"
                           >
                             <Minus className="size-3.5" />
                           </button>
@@ -106,7 +106,7 @@ export function CartDrawer() {
                             className="flex size-7 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
                             onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
                             disabled={item.quantity >= item.maxStock}
-                            aria-label="TÄƒng sá»‘ lÆ°á»£ng"
+                            aria-label="Tăng số lượng"
                           >
                             <Plus className="size-3.5" />
                           </button>
@@ -114,7 +114,7 @@ export function CartDrawer() {
                         <button
                           className="text-muted-foreground transition-colors hover:text-destructive"
                           onClick={() => removeItem(item.variantId)}
-                          aria-label="XoÃ¡ sáº£n pháº©m"
+                          aria-label="Xoá sán phẩm"
                         >
                           <Trash2 className="size-4" />
                         </button>
@@ -128,13 +128,13 @@ export function CartDrawer() {
             <SheetFooter className="border-t border-border px-5 py-4">
               <div className="flex w-full flex-col gap-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Táº¡m tÃ­nh</span>
+                  <span className="text-muted-foreground">Tạm tính</span>
                   <span className="font-display text-lg font-bold">{formatCurrency(subtotal)}</span>
                 </div>
                 <Separator />
                 <Button asChild variant="outline" className="h-10 w-full" onClick={() => setOpen(false)}><Link href="/cart">Xem giỏ hàng</Link></Button><Button asChild size="lg" className="h-11 w-full text-sm font-semibold uppercase tracking-wide" onClick={() => setOpen(false)}><Link href="/checkout">Thanh toán</Link></Button>
                 <Button variant="outline" className="h-10 w-full" onClick={() => setOpen(false)}>
-                  Tiáº¿p tá»¥c mua sáº¯m
+                  Tiếp tục mua sắm
                 </Button>
               </div>
             </SheetFooter>

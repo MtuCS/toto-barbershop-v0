@@ -73,18 +73,18 @@ export function Hero() {
             </span>
 
             <p className="text-pretty text-sm leading-relaxed text-white/65">
-              Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since 1966, when designers at Letraset and James Mosley, the librarian at St Bride Printing Library in London, took a 1914 Cicero translation and scrambled it to make dummy text for Letraset's Body Type sheets. 
+              Ghé ToTo, bỏ lại một Sài Gòn tấp nập phía sau cánh cửa kính. Ở đây chỉ có chiếc ghế da êm, chiếc tủ lạnh đầy nước mát, và những người thợ gắn bó với cây kéo bằng tất cả tâm huyết cùng sự chỉn chu.
             </p>
 
             <a
               href="#"
               className="group mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#f2f5f3] transition-colors hover:text-[#79b8a7]"
             >
-              Khám phá dịch vụ
-              <ArrowUpRight
+              Mượt đường kéo, sắc phong độ 
+              {/* <ArrowUpRight
                 className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                 aria-hidden="true"
-              />
+              /> */}
             </a>
           </div>
 
@@ -116,7 +116,7 @@ export function Hero() {
             </span>
           </h1> */}
 
-          <h1 className="font-serif font-medium uppercase leading-[0.86] tracking-tight text-[#79b8a7] text-balance">
+          <h1 className="font-agatho font-medium uppercase leading-[0.86] tracking-tight text-[#79b8a7] text-balance">
             <span className="sr-only">ToTo Barbershop</span>
             <TextType
               aria-hidden="true"

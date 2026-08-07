@@ -65,9 +65,9 @@ export function HomeTestimonials() {
                     strokeWidth={1.5}
                     aria-hidden="true"
                   />
-                  <div className="flex gap-1 text-[#79b8a7]" aria-label="Đánh giá 5 sao">
+                  <div className="flex gap-1 text-[#F5FF00]" aria-label="Đánh giá 5 sao">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="size-3.5 fill-[#79b8a7]" />
+                      <Star key={i} className="size-3.5 fill-[#F5FF00]" />
                     ))}
                   </div>
                 </div>

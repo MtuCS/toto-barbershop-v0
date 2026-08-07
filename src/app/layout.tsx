@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Oswald } from 'next/font/google'
+import localFont from 'next/font/local'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -13,6 +14,13 @@ const inter = Inter({
 const oswald = Oswald({
   subsets: ['latin', 'vietnamese'],
   variable: '--font-oswald',
+  display: 'swap',
+})
+
+const agatho = localFont({
+  src: '../../public/font/Agatho_ Medium.otf',
+  weight: '500',
+  variable: '--font-agatho-local',
   display: 'swap',
 })
 
@@ -57,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi" className={`bg-background ${inter.variable} ${oswald.variable}`}>
+    <html lang="vi" className={`bg-background ${inter.variable} ${oswald.variable} ${agatho.variable}`}>
       <body className="font-sans antialiased">
         {children}
         <Toaster position="top-center" richColors closeButton />

@@ -26,7 +26,7 @@ const SERVICES = [
     description:
       "Kết hợp trọn vẹn từ cắt tóc, gội đầu, cạo ráy đến dưỡng da. Thả lỏng hoàn toàn để lấy lại phong độ tinh tươm nhất.",
     link: "/services#combo",
-    image: "/images/service-cut.jpg",
+    image: "/images/combo.jpg",
     heightClass: "h-[360px] sm:h-[380px] md:h-[500px] lg:h-[560px]",
     offsetClass: "md:mt-0",
   },
@@ -37,7 +37,7 @@ export function ServicesBento() {
     <section
       aria-labelledby="home-services-title"
       className="
-        relative isolate overflow-hidden
+        home-services-scene relative isolate overflow-hidden
         bg-[#07110f] text-[#f2f5f3]
         pb-24 pt-16
         md:pb-28 md:pt-20
@@ -74,7 +74,7 @@ export function ServicesBento() {
         "
       >
         {/* Tiêu đề */}
-        <div className="mb-6 md:mb-7 lg:mb-8">
+        <div className="home-services-heading mb-6 md:mb-7 lg:mb-8">
           <h2
             id="home-services-title"
             className="
@@ -94,7 +94,7 @@ export function ServicesBento() {
 
         {/* Gallery tăng dần từ trái sang phải */}
         <div
-          className="
+          className="home-services-grid
             grid grid-cols-1 gap-6
             md:-mt-4 md:grid-cols-3 md:items-start
             lg:-mt-8
@@ -105,7 +105,7 @@ export function ServicesBento() {
               key={service.title}
               href={service.link}
               className={`
-                group relative flex w-full flex-col justify-end
+                home-service-card group relative flex w-full flex-col justify-end
                 overflow-hidden rounded-sm bg-[#0a1512]
                 ${service.heightClass}
                 ${service.offsetClass}
@@ -141,11 +141,11 @@ export function ServicesBento() {
               />
 
               {/* Nội dung */}
-              <div className="relative z-10 p-6 lg:p-8">
+              <div className="absolute inset-x-0 bottom-0 z-10 p-6 pb-7 lg:p-8 lg:pb-9">
                 <h3
                   className="
                     text-xl font-bold uppercase
-                    tracking-wide text-white
+                    leading-[1.12] tracking-wide text-white
                     lg:text-2xl
                   "
                 >
