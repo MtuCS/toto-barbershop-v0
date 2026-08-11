@@ -238,7 +238,7 @@ export default function Page() {
         </div>
       </section>
 
-      <section className="border-y border-white/10 bg-[#0b1b18] px-5 py-16 md:px-8 md:py-24">
+      {/* <section className="border-y border-white/10 bg-[#0b1b18] px-5 py-16 md:px-8 md:py-24">
         <div className="mx-auto max-w-[1400px]">
           <h2 className="font-display text-5xl font-bold uppercase leading-none text-[#f2f5f3] md:text-7xl">
             Nâng cấp diện mạo
@@ -283,7 +283,7 @@ export default function Page() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="bg-[#07110f] px-5 py-16 md:px-8 md:py-24">
         <div className="mx-auto max-w-[1400px]">
