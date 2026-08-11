@@ -10,15 +10,11 @@
   --home-section-description-size: clamp(0.9375rem, 1vw, 1rem);
   --home-card-title-size: clamp(1.35rem, 1.75vw, 1.75rem);
   --home-card-body-size: 0.875rem;
-  scroll-behavior: smooth;
   scroll-padding-top: var(--home-header-height);
-  scroll-snap-type: y mandatory;
 }
 
 :global(html[data-home-scroll-snap="true"]) :global([data-home-scene]) {
   min-height: var(--home-scene-height);
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 :global(html[data-home-scroll-snap="true"]) :global(.home-section-eyebrow) {
@@ -60,10 +56,44 @@
     display: block;
   }
 
+  :global(html[data-home-scroll-snap="true"]) {
+    scroll-snap-type: y mandatory;
+  }
+
+  :global(html[data-home-scroll-snap="true"][data-home-scroll-animating="true"]) {
+    scroll-snap-type: none;
+  }
+
   :global(html[data-home-scroll-snap="true"]) :global([data-home-scene]) {
     box-sizing: border-box;
     height: var(--home-scene-height);
     min-height: var(--home-scene-height);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  :global(html[data-home-scroll-snap="true"])
+    :global([data-home-scene][data-home-scene-scroll="steps"]) {
+    height: auto;
+    min-height: 0;
+    scroll-snap-align: none;
+  }
+
+  :global(html[data-home-scroll-snap="true"])
+    :global([data-home-scene][data-home-scene-scroll="steps"] > [data-home-scroll-step]) {
+    box-sizing: border-box;
+    height: var(--home-scene-height);
+    min-height: var(--home-scene-height);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  :global(html[data-home-scroll-snap="true"])
+    :global(
+      [data-home-scene][data-home-scene-scroll="steps"]
+        > [data-home-scroll-step][data-home-scroll-step-overlap="true"]
+    ) {
+    margin-top: calc(-40svh + 1.6rem);
   }
 
   .root > :global(.home-hero-scene) {
@@ -109,46 +139,6 @@
 
   .root > :global([data-home-scene="campaign"]) > section > div > div {
     aspect-ratio: auto;
-  }
-
-  .root > :global(.home-services-scene) {
-    --services-card-height: clamp(28rem, calc(100svh - 21.25rem), 35rem);
-    padding: clamp(2rem, 5svh, 4.5rem) 0;
-  }
-
-  .root > :global(.home-services-scene) :global(.home-services-heading) {
-    margin-bottom: clamp(0.75rem, 2svh, 1.5rem);
-  }
-
-  .root > :global(.home-services-scene) :global(#home-services-title) {
-    line-height: 1.05;
-  }
-
-  .root > :global(.home-services-scene) :global(.home-services-grid) {
-    margin-top: 0;
-    gap: clamp(1rem, 1.5vw, 1.5rem);
-  }
-
-  .root > :global(.home-services-scene) :global(.home-service-card) {
-    margin-top: 0;
-  }
-
-  .root > :global(.home-services-scene) :global(.home-service-card:nth-child(1)) {
-    height: calc(var(--services-card-height) - 4rem);
-    margin-top: 2rem;
-  }
-
-  .root > :global(.home-services-scene) :global(.home-service-card:nth-child(2)) {
-    height: calc(var(--services-card-height) - 2rem);
-    margin-top: 1rem;
-  }
-
-  .root > :global(.home-services-scene) :global(.home-service-card:nth-child(3)) {
-    height: var(--services-card-height);
-  }
-
-  .root > :global(.home-services-scene) :global(.home-service-card) > div:last-child {
-    padding: clamp(1.25rem, 2vw, 2rem);
   }
 
   .root > :global(.home-values-scene),

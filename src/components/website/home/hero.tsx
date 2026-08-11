@@ -1,3 +1,5 @@
+"use client"
+
 // import Image from "next/image"
 
 // export function Hero() {
@@ -48,12 +50,37 @@
 // }
 
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 
 import TextType from "@/components/ui/text-type";
 
 export function Hero() {
+  const sceneRef = useRef<HTMLElement>(null);
+  const [replayKey, setReplayKey] = useState(0);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    let lastVisit = Number(scene.dataset.homeSceneVisit ?? "0");
+    const observer = new MutationObserver(() => {
+      const visit = Number(scene.dataset.homeSceneVisit ?? "0");
+      if (visit === lastVisit) return;
+
+      lastVisit = visit;
+      setReplayKey((current) => current + 1);
+    });
+
+    observer.observe(scene, {
+      attributes: true,
+      attributeFilter: ["data-home-scene-visit"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section data-home-scene="hero" className="home-hero-scene relative z-10 bg-[#07110f] text-[#f2f5f3]">
+    <section ref={sceneRef} data-home-scene="hero" className="home-hero-scene relative z-10 bg-[#07110f] text-[#f2f5f3]">
       {/* Sweeping arc */}
       <div
         aria-hidden="true"
@@ -116,7 +143,11 @@ export function Hero() {
             </span>
           </h1> */}
 
-          <h1 className="font-agatho font-medium uppercase leading-[0.86] tracking-tight text-[#79b8a7] text-balance">
+          <h1
+            key={replayKey}
+            data-home-hero-replay-key={replayKey}
+            className="font-agatho font-medium uppercase leading-[0.86] tracking-tight text-[#79b8a7] text-balance"
+          >
             <span className="sr-only">ToTo Barbershop</span>
             <TextType
               aria-hidden="true"
