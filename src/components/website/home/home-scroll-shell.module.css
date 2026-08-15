@@ -13,10 +13,6 @@
   scroll-padding-top: var(--home-header-height);
 }
 
-:global(html[data-home-scroll-snap="true"]) :global([data-home-scene]) {
-  min-height: var(--home-scene-height);
-}
-
 :global(html[data-home-scroll-snap="true"]) :global(.home-section-eyebrow) {
   font-size: var(--home-section-eyebrow-size);
   line-height: 1.3;

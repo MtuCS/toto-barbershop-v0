@@ -335,6 +335,26 @@ test("keeps natural scrolling and a single-column Services flow below desktop", 
   page,
 }) => {
   await prepareHome(page, { width: 390, height: 844 })
+
+  const campaignAndVideoBounds = await page.evaluate(() => {
+    const campaign = document.querySelector<HTMLElement>(
+      '[data-home-scene="campaign"]',
+    )
+    const video = campaign?.querySelector<HTMLElement>("section")
+    if (!campaign || !video) throw new Error("Missing campaign video scene")
+
+    return {
+      campaignBottom: campaign.getBoundingClientRect().bottom,
+      videoBottom: video.getBoundingClientRect().bottom,
+    }
+  })
+
+  // Mobile scenes keep their content height, so the next scene begins right
+  // after the video instead of exposing unused wrapper height as a white gap.
+  expect(
+    Math.abs(campaignAndVideoBounds.campaignBottom - campaignAndVideoBounds.videoBottom),
+  ).toBeLessThanOrEqual(1)
+
   await page.mouse.wheel(0, 240)
   await page.waitForTimeout(150)
 
