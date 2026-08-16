@@ -369,6 +369,50 @@ test("keeps natural scrolling and a single-column Services flow below desktop", 
   ).toBe(true)
 })
 
+test("keeps the branded footer marker centered without blocking the map", async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await prepareHome(page, viewport)
+
+    const map = page.locator('iframe[title="Bản đồ ToTo Barbershop"]')
+    const marker = page.getByTestId("footer-map-marker")
+    await map.scrollIntoViewIfNeeded()
+
+    await expect(map).toHaveAttribute(
+      "src",
+      "https://www.google.com/maps?ll=10.793289,106.644723&z=17&output=embed",
+    )
+    await expect(page.getByTestId("footer-map-marker-label")).toHaveText(
+      "ToTo Barbershop",
+    )
+    await expect(marker).toHaveCSS("pointer-events", "none")
+
+    const bounds = await page.evaluate(() => {
+      const map = document.querySelector<HTMLElement>(".home-contact-map")
+      const marker = document.querySelector<HTMLElement>(
+        '[data-testid="footer-map-marker"]',
+      )
+      if (!map || !marker) throw new Error("Missing footer map marker")
+
+      const mapRect = map.getBoundingClientRect()
+      const markerRect = marker.getBoundingClientRect()
+      return {
+        horizontalOffset:
+          markerRect.left + markerRect.width / 2 - (mapRect.left + mapRect.width / 2),
+        verticalOffset:
+          markerRect.top + markerRect.height / 2 - (mapRect.top + mapRect.height / 2),
+      }
+    })
+
+    expect(Math.abs(bounds.horizontalOffset)).toBeLessThanOrEqual(1)
+    expect(Math.abs(bounds.verticalOffset)).toBeLessThanOrEqual(1)
+  }
+})
+
 test("shows Services immediately when reduced motion is enabled", async ({
   page,
 }) => {

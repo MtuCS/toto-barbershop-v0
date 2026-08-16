@@ -49,7 +49,7 @@
 //   )
 // }
 
-import Image from "next/image";
+
 import { useEffect, useRef, useState } from "react";
 
 import TextType from "@/components/ui/text-type";
@@ -117,13 +117,16 @@ export function Hero() {
 
           {/* Portrait */}
           <div className="home-hero-media relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
-            <Image
-              src="/images/hero-portrait-2.jpg"
-              alt="Hero_img"  
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 65vw"
-              className="object-cover"
+            <video
+              src="/images/0806.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster="/images/hero-portrait-2.jpg"
+              aria-label="Visual ToTo Barbershop"
+              className="absolute inset-0 h-full w-full object-cover"
             />
           </div>
         </div>

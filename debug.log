@@ -1,3 +1,4 @@
 [0729/224201.173:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x34c00ac6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
 [0729/224202.001:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x34c00ac6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
 [0729/225100.143:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0xe4400aba400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0815/122137.638:ERROR:third_party\blink\renderer\modules\media\audio\mojo_audio_output_ipc.cc:186] MojoAudioOutputIPC failed to acquire factory

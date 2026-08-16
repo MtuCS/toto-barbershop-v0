@@ -75,7 +75,7 @@ export function SiteFooter() {
                       Địa chỉ
                     </span>
                     <span className="text-white/90">
-                      85 Đồng Đen, Phường 12, Tân Bình, TP.HCM
+                      85 Đồng Đen, Phường 12, Quận Tân Bình, TP.HCM
                     </span>
                   </div>
                 </li>
@@ -126,7 +126,7 @@ export function SiteFooter() {
           <div className="home-contact-map relative min-h-[320px] w-full overflow-hidden rounded-xl border border-white/15 shadow-2xl lg:min-h-[400px]">
             <iframe
               title="Bản đồ ToTo Barbershop"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.2618228383824!2d106.64324227584168!3d10.791244358917804!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3175294a530965d1%3A0xb3e18a9be3b5be5b!2s85%20%C4%90%E1%BB%93ng%20%C4%90en%2C%20Ph%C6%B0%E1%BB%9Dng%2014%2C%20T%C3%A2n%20B%C3%ACnh%2C%20H%E1%BB%93%20Ch%C3%AD%20Minh!5e0!3m2!1svi!2s!4v1700000000000!5m2!1svi!2s"
+              src="https://www.google.com/maps?ll=10.793289,106.644723&z=17&output=embed"
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -135,6 +135,22 @@ export function SiteFooter() {
               referrerPolicy="no-referrer-when-downgrade"
               className="absolute inset-0 size-full contrast-[1.05] grayscale-[0.2]"
             />
+            <div
+              aria-hidden="true"
+              data-testid="footer-map-marker"
+              className="pointer-events-none absolute left-1/2 top-1/2 z-10 size-0"
+            >
+              <div className="relative -translate-x-1/2 -translate-y-full">
+                <span
+                  data-testid="footer-map-marker-label"
+                  className="absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#8d211b]/70 bg-[#c93a30] px-2.5 py-1 text-xs font-bold tracking-wide text-white shadow-md"
+                >
+                  ToTo Barbershop
+                </span>
+                <MapPin className="size-11 fill-[#c93a30] stroke-[#8d211b] stroke-[1.5] drop-shadow-md" />
+                <span className="absolute bottom-[9px] left-1/2 size-2.5 -translate-x-1/2 rounded-full bg-white" />
+              </div>
+            </div>
           </div>
         </div>
 
