@@ -1,0 +1,93 @@
+.container {
+  position: relative;
+}
+
+.list {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  border-radius: 9999px;
+  color: color-mix(in srgb, var(--foreground) 66%, transparent);
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.item a {
+  display: block;
+  padding: 0.52rem 0.72rem;
+  border-radius: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  outline: none;
+}
+
+.item:not(.active):hover {
+  color: var(--foreground);
+  transform: translateY(-1px);
+}
+
+.item a:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.active { color: var(--primary); }
+
+.highlight {
+  color: var(--primary-foreground);
+  background: var(--primary);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--primary) 26%, transparent);
+}
+
+.highlight:hover {
+  color: var(--primary-foreground);
+  background: color-mix(in srgb, var(--primary) 88%, black);
+}
+
+.effect {
+  position: absolute;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+  border-radius: 9999px 9999px 0 0;
+  background: var(--primary);
+  transition: left 460ms cubic-bezier(0.16, 1, 0.3, 1), top 460ms cubic-bezier(0.16, 1, 0.3, 1), width 460ms cubic-bezier(0.16, 1, 0.3, 1), height 460ms cubic-bezier(0.16, 1, 0.3, 1), opacity 180ms ease;
+}
+
+.effectHidden {
+  opacity: 0;
+}
+
+.particle {
+  position: absolute;
+  top: calc(50% - 5px);
+  left: calc(50% - 5px);
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--primary);
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(0);
+  animation: scatter 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--delay) both;
+}
+
+@keyframes scatter {
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--x), var(--y), 0) scale(var(--scale)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item, .effect { transition: none; }
+  .particle { display: none; }
+}

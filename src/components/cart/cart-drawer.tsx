@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Image from "next/image"
 import Link from "next/link"
@@ -35,7 +35,7 @@ export function CartDrawer() {
         <SheetHeader className="border-b border-border px-5 py-4">
           <SheetTitle className="flex items-center gap-2 font-display uppercase tracking-tight">
             <ShoppingBag className="size-5 text-primary" />
-            Giỏ hàng ({items.reduce((n, i) => n + i.quantity, 0)})
+            Giao hàng ({items.reduce((n, i) => n + i.quantity, 0)})
           </SheetTitle>
         </SheetHeader>
 
@@ -45,13 +45,13 @@ export function CartDrawer() {
               <ShoppingBag className="size-7 text-muted-foreground" />
             </div>
             <div>
-              <p className="font-medium">Giỏ hàng trống</p>
+              <p className="font-medium">Giá» hÃ ng trá»‘ng</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Khám phá grooming và merchandise của Toto.
+                KhÃ¡m phÃ¡ grooming vÃ  merchandise cá»§a Toto.
               </p>
             </div>
             <Button asChild onClick={() => setOpen(false)}>
-              <Link href="/shop">Mua sắm ngay</Link>
+              <Link href="/shop">Mua sáº¯m ngay</Link>
             </Button>
           </div>
         ) : (
@@ -114,7 +114,7 @@ export function CartDrawer() {
                         <button
                           className="text-muted-foreground transition-colors hover:text-destructive"
                           onClick={() => removeItem(item.variantId)}
-                          aria-label="Xoá sản phẩm"
+                          aria-label="Xoá sán phẩm"
                         >
                           <Trash2 className="size-4" />
                         </button>
@@ -132,9 +132,7 @@ export function CartDrawer() {
                   <span className="font-display text-lg font-bold">{formatCurrency(subtotal)}</span>
                 </div>
                 <Separator />
-                <Button asChild size="lg" className="h-11 w-full text-sm font-semibold uppercase tracking-wide" onClick={() => setOpen(false)}>
-                  <Link href="/checkout">Thanh toán</Link>
-                </Button>
+                <Button asChild variant="outline" className="h-10 w-full" onClick={() => setOpen(false)}><Link href="/cart">Xem giỏ hàng</Link></Button><Button asChild size="lg" className="h-11 w-full text-sm font-semibold uppercase tracking-wide" onClick={() => setOpen(false)}><Link href="/checkout">Thanh toán</Link></Button>
                 <Button variant="outline" className="h-10 w-full" onClick={() => setOpen(false)}>
                   Tiếp tục mua sắm
                 </Button>

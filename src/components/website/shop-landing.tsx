@@ -1,16 +1,51 @@
 "use client"
-import Image from "next/image"
+
+import { Suspense } from "react"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { useDataStore } from "@/store/data-store"
 import { ProductCard } from "@/components/website/product-card"
-import { SectionTitle } from "@/components/website/page-hero"
-const groups=[{key:"grooming" as const,label:"01 / Grooming",title:"Chuẩn tiệm tại nhà",copy:"Pomade, clay, chăm sóc râu và dụng cụ được chọn bởi barber TOTO.",image:"/images/grooming-kit.png",href:"/shop/grooming"},{key:"merchandise" as const,label:"02 / Thời trang",title:"Mặc tinh thần TOTO",copy:"Áo, mũ và phụ kiện streetwear mang dấu ấn xanh rêu của tiệm.",image:"/images/merch-lifestyle.png",href:"/shop/merchandise"}]
-export function ShopLanding(){
-  const products = useDataStore((s) => s.products)
-  return <><section className="mx-auto grid max-w-7xl gap-4 px-5 py-12 md:grid-cols-2 md:px-8">{groups.map(g=><Link href={g.href} key={g.key} className="group relative min-h-[430px] overflow-hidden bg-neutral-950 text-white"><Image src={g.image} alt={g.title} fill className="object-cover opacity-55 transition duration-700 group-hover:scale-105 group-hover:opacity-45"/><div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/85 to-transparent p-7"><p className="text-xs font-bold uppercase tracking-[.25em] text-emerald-300">{g.label}</p><h2 className="mt-3 font-display text-4xl font-bold uppercase md:text-5xl">{g.title}</h2><p className="mt-3 max-w-md text-sm leading-6 text-white/65">{g.copy}</p><span className="mt-6 flex items-center gap-2 text-sm font-bold uppercase">Khám phá danh mục <ArrowRight className="size-4 transition-transform group-hover:translate-x-1"/></span></div></Link>)}</section>{groups.map(g=><section key={g.key} className="mx-auto max-w-7xl px-5 py-12 md:px-8"><div className="flex items-end justify-between"><SectionTitle label={g.label} title={g.key==="grooming"?"Grooming essentials":"TOTO apparel"}/><Link href={g.href} className="mb-10 hidden border-b border-primary pb-1 text-sm font-bold uppercase md:block">Khám phá danh mục</Link></div>    <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4">
-      {products.filter(p=>p.category===g.key).slice(0,4).map((p, idx)=>
-        <ProductCard key={p.id} product={p} priority={idx < 4} />
-      )}
+import { ShopCatalog } from "@/components/website/shop-catalog"
+import { ShopFaq } from "@/components/website/shop-faq"
+import { ShopGroomingGuide } from "@/components/website/shop-grooming-guide"
+import { ShopHero } from "@/components/website/shop-hero"
+import { useDataStore } from "@/store/data-store"
+import type { ProductCategory } from "@/types"
+
+const featuredRows: { category: ProductCategory; eyebrow: string; title: string; href: string }[] = [
+  { category: "merchandise", eyebrow: "TOTO Supply", title: "TOTO Merchandise", href: "/shop/merchandise" },
+  { category: "grooming", eyebrow: "TOTO Grooming", title: "Grooming essentials", href: "/shop/grooming" },
+]
+
+export function ShopLanding() {
+  const products = useDataStore((state) => state.products)
+
+  return (
+    <div className="bg-[#f5f9f7]">
+      <ShopHero />
+      {featuredRows.map((row) => (
+        <section key={row.category} className="py-16 text-[#101715] md:py-20">
+          <div className="mx-auto max-w-[1400px] px-5 md:px-8">
+            <div className="flex items-end justify-between gap-5 border-b-2 border-[#101715] pb-5">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary">{row.eyebrow}</p>
+                <h2 className="mt-2 font-display text-4xl font-bold uppercase leading-none md:text-6xl">{row.title}</h2>
+              </div>
+              <Link href={row.href} className="inline-flex min-h-11 items-center gap-2 border border-[#101715] px-4 text-xs font-bold uppercase tracking-[0.1em] transition-colors hover:bg-[#101715] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                Xem tất cả <ArrowRight className="size-4" />
+              </Link>
+            </div>
+            <div className="mt-7 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4 md:gap-x-6">
+              {products
+                .filter((product) => product.category === row.category)
+                .slice(0, 4)
+                .map((product, index) => <ProductCard key={product.id} product={product} priority={index < 4} />)}
+            </div>
+          </div>
+        </section>
+      ))}
+      <Suspense fallback={null}><ShopCatalog /></Suspense>
+      <ShopFaq />
+      <ShopGroomingGuide />
     </div>
-  </section>)}</>}
+  )
+}

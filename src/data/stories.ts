@@ -6,7 +6,7 @@ export const merchandiseStories: MerchandiseStory[] = [
     slug: 'the-origin',
     title: 'The Origin',
     subtitle: 'Từ ghế cắt đến tủ đồ',
-    heroImage: '/images/merch-story-hero.png',
+    heroImage: '/images/merch-story-hero.jpg',
     manifesto:
       'Toto Merchandise sinh ra từ văn hóa barber — nơi mỗi đường kéo, mỗi lần fade đều là một tuyên ngôn phong cách. Chúng tôi biến tinh thần đó thành những món đồ bạn mặc mỗi ngày.',
     blocks: [
@@ -33,7 +33,7 @@ export const merchandiseStories: MerchandiseStory[] = [
       { id: 'b-6', type: 'gallery', images: ['/images/merch-jacket.png', '/images/behind-scenes.png'] },
       { id: 'b-7', type: 'text', heading: 'Màu của tiệm', body: 'Xanh rêu — màu đặc trưng của Toto, xuất hiện xuyên suốt bộ sưu tập như một chữ ký.' },
     ],
-    gallery: ['/images/merch-jacket.png', '/images/behind-scenes.png', '/images/merch-story-hero.png'],
+    gallery: ['/images/merch-jacket.png', '/images/behind-scenes.png', '/images/merch-story-hero.jpg'],
     relatedProductIds: ['p-jacket', 'p-hoodie', 'p-cap'],
     status: 'published',
     order: 2,

@@ -1,83 +1,49 @@
-"use client";
-import { useState } from "react";
-import { toast } from "sonner";
-import { useDataStore } from "@/store/data-store";
-import { Button } from "@/components/ui/button";
+"use client"
+
+import { useState } from "react"
+import { toast } from "sonner"
+import { useDataStore } from "@/store/data-store"
+import { Button } from "@/components/ui/button"
+
+const fieldClassName = "min-h-12 border border-black/20 bg-white px-4 text-[#101715] outline-none transition-colors placeholder:text-neutral-500 focus:border-primary"
+
 export function TrainingForm() {
-  const add = useDataStore((s) => s.addLead);
-  const [loading, setLoading] = useState(false);
+  const add = useDataStore((state) => state.addLead)
+  const [loading, setLoading] = useState(false)
+
   return (
     <form
       className="grid gap-4 md:grid-cols-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setLoading(true);
-        const f = new FormData(e.currentTarget);
+      onSubmit={(event) => {
+        event.preventDefault()
+        setLoading(true)
+        const form = new FormData(event.currentTarget)
         add({
-          name: String(f.get("name")),
-          phone: String(f.get("phone")),
-          email: String(f.get("email")),
-          courseId: String(f.get("course")) || null,
-          message: String(f.get("message")),
-        });
+          name: String(form.get("name")),
+          phone: String(form.get("phone")),
+          email: String(form.get("email")),
+          courseId: String(form.get("course")) || null,
+          message: String(form.get("message")),
+        })
         setTimeout(() => {
-          setLoading(false);
-          toast.success("Đã gửi đăng ký tư vấn");
-          (e.target as HTMLFormElement).reset();
-        }, 300);
+          setLoading(false)
+          toast.success("Đã gửi đăng ký tư vấn")
+          ;(event.target as HTMLFormElement).reset()
+        }, 300)
       }}
     >
-      <input
-        required
-        name="name"
-        placeholder="Họ và tên"
-        className="border bg-transparent px-4 py-3"
-      />
-      <input
-        required
-        name="phone"
-        pattern="[0-9 +]{9,15}"
-        placeholder="Số điện thoại"
-        className="border bg-transparent px-4 py-3"
-      />
-      <input
-        required
-        type="email"
-        name="email"
-        placeholder="Email"
-        className="border bg-transparent px-4 py-3"
-      />
-      {/* <select name="course" className="border bg-background px-4 py-3">
+      <input required name="name" placeholder="Họ và tên" className={fieldClassName} />
+      <input required name="phone" pattern="[0-9 +]{9,15}" placeholder="Số điện thoại" className={fieldClassName} />
+      <input required type="email" name="email" placeholder="Email" className={fieldClassName} />
+      <select name="course" defaultValue="" className={fieldClassName}>
+        <option value="" disabled>Chọn khóa học</option>
         <option value="t-foundation">Barber Foundation</option>
-        <option value="t-pro">Advanced Fade & Styling</option>
-      </select> */}
-
-      <select
-        name="course"
-        defaultValue=""
-        className="w-full border border-white/70 bg-transparent px-4 py-3 text-white outline-none transition-colors focus:border-emerald-400"
-      >
-        <option value="" disabled className="bg-neutral-950 text-white">
-          Chọn khóa học
-        </option>
-
-        <option value="t-foundation" className="bg-neutral-950 text-white">
-          Barber Foundation
-        </option>
-
-        <option value="t-pro" className="bg-neutral-950 text-white">
-          Advanced Fade & Styling
-        </option>
+        <option value="t-pro">Advanced Fade &amp; Styling</option>
       </select>
-
-      <textarea
-        name="message"
-        placeholder="Bạn muốn được tư vấn điều gì?"
-        className="min-h-32 border bg-transparent px-4 py-3 md:col-span-2"
-      />
+      <textarea name="message" placeholder="Bạn muốn được tư vấn điều gì?" className={`${fieldClassName} min-h-32 py-3 md:col-span-2`} />
       <Button disabled={loading} className="h-12 md:col-span-2">
         {loading ? "Đang gửi..." : "Đăng ký tư vấn"}
       </Button>
     </form>
-  );
+  )
 }

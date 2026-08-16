@@ -1,5 +1,10 @@
 import type { Service } from '@/types'
 
+export type ServiceFaq = {
+  question: string
+  answer: string
+}
+
 export const services: Service[] = [
   {
     id: 's-classic',
@@ -77,6 +82,7 @@ export const services: Service[] = [
     name: 'Hair Color',
     category: 'Nhuộm',
     price: 450000,
+    priceLabel: 'Từ',
     duration: 120,
     description: 'Nhuộm màu thời trang hoặc phủ bạc, chăm sóc màu bền đẹp.',
     process: ['Tư vấn màu', 'Tẩy/nhuộm', 'Dưỡng màu', 'Tạo kiểu'],
@@ -84,5 +90,28 @@ export const services: Service[] = [
     featured: false,
     order: 6,
     status: 'active',
+  },
+]
+
+export const serviceFaqs: ServiceFaq[] = [
+  {
+    question: 'Tôi chưa biết mình hợp kiểu tóc nào, ToTo có tư vấn không?',
+    answer: 'Có. Barber sẽ trao đổi về gương mặt, chất tóc, nhịp sinh hoạt và phong cách bạn muốn theo đuổi trước khi bắt đầu.',
+  },
+  {
+    question: 'Một buổi cắt tóc thường mất bao lâu?',
+    answer: 'Tuỳ dịch vụ, thời lượng từ 30 đến 120 phút. Thời gian cụ thể được ghi ở từng gói để bạn dễ sắp xếp lịch.',
+  },
+  {
+    question: 'Giá nhuộm tóc được tính như thế nào?',
+    answer: 'Dịch vụ nhuộm bắt đầu từ 450.000đ. Mức giá cuối cùng phụ thuộc vào độ dài tóc, nền tóc hiện tại và màu cần thực hiện.',
+  },
+  {
+    question: 'Tôi có cần đặt lịch trước không?',
+    answer: 'Nên liên hệ trước để ToTo giữ đúng khung giờ và chuẩn bị thời lượng phù hợp cho dịch vụ của bạn.',
+  },
+  {
+    question: 'Nên chuẩn bị gì trước khi đến tiệm?',
+    answer: 'Bạn chỉ cần đến với mái tóc ở trạng thái tự nhiên và chia sẻ thói quen tạo kiểu hằng ngày. Nếu có ảnh tham khảo, hãy mang theo để barber tư vấn chính xác hơn.',
   },
 ]

@@ -77,7 +77,10 @@ export interface Service {
   slug: string
   name: string
   category: string
+  /** price in VND */
   price: number
+  /** Optional display label for starting prices. */
+  priceLabel?: string
   /** minutes */
   duration: number
   description: string

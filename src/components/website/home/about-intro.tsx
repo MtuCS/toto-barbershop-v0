@@ -11,9 +11,13 @@ export function AboutIntro() {
           <Image src="/images/about.png" alt="Câu chuyện Toto" fill sizes="(max-width:768px) 100vw, 45vw" className="object-cover" />
         </div>
         <div>
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-primary">
-            <span className="h-px w-6 bg-primary" /> Về Toto
-          </span>
+          <p className="mb-3 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">
+            <span className="h-px w-7 bg-[#2f7a68]" aria-hidden="true" />
+            Về Toto
+          </p>
+          {/* <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-primary">
+            <span className="h-px w-6 bg-primary bg-[#2f7a68]" /> Về Toto
+          </span> */}
           <h2 className="mt-4 font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight text-balance md:text-5xl">
             It’s not just a cut. It’s a culture.
           </h2>
