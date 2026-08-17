@@ -36,6 +36,7 @@ const labels: Record<string, string> = {
   customers: "Khách hàng",
   staff: "Nhân viên",
   media: "Tệp media",
+  "promo-codes": "Mã giảm giá",
   settings: "Cài đặt",
 }
 
@@ -72,6 +73,13 @@ const fieldLabels: Record<string, string> = {
   size: "Kích thước",
   parent: "Danh mục cha",
   productCount: "Số lượng sản phẩm",
+  code: "Mã giảm giá",
+  discountType: "Loại giảm giá",
+  discountValue: "Giá trị giảm",
+  minOrderValue: "Giá trị đơn tối thiểu",
+  maxDiscount: "Giảm tối đa (Tùy chọn)",
+  usageLimit: "Giới hạn số lần dùng",
+  isActive: "Hoạt động",
 }
 
 // ============================================================================
@@ -655,6 +663,7 @@ function generateDefaultForm(section: string) {
     case "lookbook": return { caption: "", category: "", image: "", featured: false, published: true, order: 1 }
     case "customers": return { name: "", email: "", password: "", phone: "", role: "CUSTOMER" }
     case "staff": return { name: "", email: "", password: "", phone: "", role: "ADMIN" }
+    case "promo-codes": return { code: "", discountType: "PERCENT", discountValue: 0, minOrderValue: 0, maxDiscount: 0, usageLimit: 100, isActive: true, expiresAt: null }
     default: return { name: "" }
   }
 }
@@ -678,11 +687,12 @@ export function CrudPage({ section }: { section: string }) {
   if (section === "products") rows = d.products
   if (section === "categories") rows = d.categories
   if (section === "services") rows = d.services
-  if (section === "training") rows = [...d.courses, ...d.leads]
+  if (section === "training") rows = d.courses
   if (section === "merchandise-stories") rows = d.stories
   if (section === "lookbook") rows = d.lookbook
   if (section === "orders") rows = d.orders
   if (section === "media") rows = d.media
+  if (section === "promo-codes") rows = d.promoCodes
   if (section === "customers" || section === "staff") {
     const customerMap = new Map();
     d.customers.forEach(c => {
@@ -727,6 +737,7 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "training") d.deleteCourse(item.id)
     if (section === "merchandise-stories") d.deleteStory(item.id)
     if (section === "lookbook") d.deleteLookbook(item.id)
+    if (section === "promo-codes") await d.deletePromoCode(item.id)
     setItemToDelete(null)
   }
 
@@ -741,6 +752,7 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "training") d.upsertCourse(formData as any)
     if (section === "merchandise-stories") d.upsertStory(formData as any)
     if (section === "lookbook") d.upsertLookbook(formData as any)
+    if (section === "promo-codes") await d.upsertPromoCode(formData as any)
     setModalOpen(false)
   }
 
@@ -751,7 +763,7 @@ export function CrudPage({ section }: { section: string }) {
   if (section === "settings") {
     return (
       <div>
-        <header className="flex items-end justify-between">
+        <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div><p className="text-xs font-bold uppercase tracking-widest text-primary">Quản trị nội dung</p><h1 className="mt-2 font-display text-4xl font-bold uppercase">Cài đặt</h1></div>
         </header>
         <div className="mt-8 grid max-w-3xl gap-5 border bg-white p-6 sm:grid-cols-2">
@@ -766,79 +778,128 @@ export function CrudPage({ section }: { section: string }) {
 
   return (
     <div>
-      <header className="flex items-end justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-primary">Quản trị nội dung</p>
           <h1 className="mt-2 font-display text-4xl font-bold uppercase">{labels[section] ?? section}</h1>
         </div>
         {section !== "settings" && section !== "orders" && (
-          <Button onClick={handleAdd}><Plus className="mr-2 size-4" />Thêm mới</Button>
+          <Button onClick={handleAdd} className="w-full sm:w-auto"><Plus className="mr-2 size-4" />Thêm mới</Button>
         )}
       </header>
 
-      <div className="mt-8 border bg-white">
+      <div className="mt-8 border bg-white max-w-full overflow-hidden">
         <div className="flex items-center gap-2 border-b p-4">
           <Search className="size-4 text-neutral-400" />
           <input placeholder="Tìm kiếm..." className="flex-1 outline-none" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full">
           <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
-              <tr>
-                <th className="p-4">Tên / Mã</th>
-                <th>Loại</th>
-                <th>{section === "media" ? "" : section === "categories" ? "Mô tả" : "Trạng thái"}</th>
-                {section !== "merchandise-stories" && <th>{section === "categories" ? "Số lượng SP" : section === "media" ? "Kích thước" : section === "lookbook" ? "Thứ tự" : "Giá trị"}</th>}
-                <th />
-              </tr>
+              {section === "promo-codes" ? (
+                <tr>
+                  <th className="p-4">Mã giảm giá</th>
+                  <th>Điều kiện</th>
+                  <th>Thời hạn (TTL)</th>
+                  <th>Trạng thái</th>
+                  <th />
+                </tr>
+              ) : (
+                <tr>
+                  <th className="p-4">Tên / Mã</th>
+                  <th>Loại</th>
+                  <th>{section === "media" ? "" : section === "categories" ? "Mô tả" : "Trạng thái"}</th>
+                  {section !== "merchandise-stories" && <th>{section === "categories" ? "Số lượng SP" : section === "media" ? "Kích thước" : section === "lookbook" ? "Thứ tự" : "Giá trị"}</th>}
+                  <th />
+                </tr>
+              )}
             </thead>
             <tbody>
               {filtered.length ? filtered.slice((page - 1) * pageSize, page * pageSize).map((r, i) => (
                 <tr key={String(r.id ?? i)} className="border-t">
-                  <td className="p-4 font-medium">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-3">
-                        {(typeof r.image === "string" || (Array.isArray(r.images) && r.images[0])) && (
-                          <div className="relative size-10 bg-neutral-100 overflow-hidden rounded-md">
-                            <Image src={typeof r.image === "string" ? r.image : r.images[0]} alt="" fill className="object-cover" />
+                  {section === "promo-codes" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-bold text-base">{r.code}</span>
+                          <span className="text-xs text-neutral-500">{r.discountType === "PERCENT" ? `Giảm ${r.discountValue}%` : `Giảm ${formatCurrency(r.discountValue)}`}</span>
+                        </div>
+                      </td>
+                      <td className="text-sm text-neutral-600 space-y-1 py-3">
+                        <div>Đơn tối thiểu: {formatCurrency(r.minOrderValue)}</div>
+                        {r.maxDiscount ? <div>Giảm tối đa: {formatCurrency(r.maxDiscount)}</div> : null}
+                        <div className="text-xs text-neutral-400">Lượt dùng: {r.usedCount} / {r.usageLimit ?? "Không giới hạn"}</div>
+                      </td>
+                      <td className="text-sm">
+                        {r.expiresAt ? (
+                          <div className="flex flex-col gap-1">
+                            <span>{new Date(r.expiresAt).toLocaleDateString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })}</span>
+                            {new Date(r.expiresAt) > new Date() ? (
+                              <span className="text-xs text-emerald-600 font-medium">Còn {Math.ceil((new Date(r.expiresAt).getTime() - new Date().getTime()) / (1000 * 3600 * 24))} ngày</span>
+                            ) : (
+                              <span className="text-xs text-red-600 font-medium">Đã hết hạn</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-neutral-500">Không thời hạn</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded ${!r.isActive ? "bg-neutral-100 text-neutral-500" : (r.expiresAt && new Date(r.expiresAt) < new Date() ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700")}`}>
+                          {!r.isActive ? "Bị khóa" : (r.expiresAt && new Date(r.expiresAt) < new Date() ? "Hết hạn" : "Hoạt động")}
+                        </span>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-3">
+                            {(typeof r.url === "string" || typeof r.image === "string" || (Array.isArray(r.images) && r.images[0])) && (
+                              <div className="relative size-10 shrink-0 bg-neutral-100 overflow-hidden rounded-md border">
+                                <Image src={typeof r.url === "string" ? r.url : typeof r.image === "string" ? r.image : r.images[0]} alt="" fill className="object-cover" />
+                              </div>
+                            )}
+                            {String(r.title || r.name || r.caption || r.code || r.email || `Bản ghi ${i + 1}`)}
+                          </div>
+                          {r.slug && <span className="text-xs text-neutral-400 font-normal">{r.slug}</span>}
+                        </div>
+                      </td>
+                      <td>{String(section === "orders" ? r.paymentMethod : section === "merchandise-stories" ? "Bài viết" : (r.role ?? r.category ?? r.parent ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
+                      <td>
+                        {section === "media" ? "—" : section === "categories" ? (
+                          <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
+                        ) : (
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true || r.isActive === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false || r.isActive === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
+                              {r.status === "active" ? ((section === "customers" || section === "staff") ? "Đang HĐ" : "Đang bán") : 
+                               r.status === "draft" ? "Nháp" : 
+                               (r.status === "published" || r.published === true) ? "Hiển thị" : 
+                               r.published === false ? "Ẩn" :
+                               r.isActive === true ? "Hoạt động" :
+                               r.isActive === false ? "Bị khóa" :
+                               (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
+                               r.status === "PROCESSING" ? "Đang chuẩn bị" :
+                               r.status === "SHIPPED" ? "Đang giao" :
+                               r.status === "CANCELLED" ? "Đã hủy" :
+                               (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
+                            </span>
+                            {section === "orders" && (
+                              <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
+                                {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
+                              </span>
+                            )}
                           </div>
                         )}
-                        {String(r.title ?? r.name ?? r.caption ?? r.code ?? r.email ?? `Bản ghi ${i + 1}`)}
-                      </div>
-                      {r.slug && <span className="text-xs text-neutral-400 font-normal">{r.slug}</span>}
-                    </div>
-                  </td>
-                  <td>{String(section === "orders" ? r.paymentMethod : section === "merchandise-stories" ? "Bài viết" : (r.role ?? r.category ?? r.parent ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
-                  <td>
-                    {section === "media" ? "—" : section === "categories" ? (
-                      <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
-                    ) : (
-                      <div className="flex flex-col gap-1 items-start">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
-                          {r.status === "active" ? ((section === "customers" || section === "staff") ? "Đang HĐ" : "Đang bán") : 
-                           r.status === "draft" ? "Nháp" : 
-                           (r.status === "published" || r.published === true) ? "Hiển thị" : 
-                           r.published === false ? "Ẩn" :
-                           (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
-                           r.status === "PROCESSING" ? "Đang chuẩn bị" :
-                           r.status === "SHIPPED" ? "Đang giao" :
-                           r.status === "CANCELLED" ? "Đã hủy" :
-                           (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
-                        </span>
-                        {section === "orders" && (
-                          <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
-                            {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                  {section !== "merchandise-stories" && <td>
-                    {section === "lookbook" ? (r.order ?? "—") :
-                     section === "categories" ? (r.productCount ?? 0) :
-                     section === "media" ? (typeof r.size === "string" ? r.size : "—") :
-                     typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
-                  </td>}
+                      </td>
+                      {section !== "merchandise-stories" && <td>
+                        {section === "lookbook" ? (r.order ?? "—") :
+                         section === "categories" ? (r.productCount ?? 0) :
+                         section === "media" ? (typeof r.size === "string" ? r.size : "—") :
+                         typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
+                      </td>}
+                    </>
+                  )}
                   <td>
                     {section !== "customers" && section !== "staff" && (
                       <DropdownMenu>
@@ -975,15 +1036,30 @@ export function CrudPage({ section }: { section: string }) {
                         <option value="published">Hiển thị</option>
                         <option value="draft">Nháp</option>
                       </select>
+                    ) : key === "discountType" ? (
+                      <select 
+                        value={formData[key] || "PERCENT"} 
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="PERCENT">Phần trăm (%)</option>
+                        <option value="FIXED">Số tiền cố định (VNĐ)</option>
+                      </select>
                     ) : key === "url" || key === "image" || key === "heroImage" ? (
-                      <div className="flex gap-2 items-center">
-                        <Input
-                          value={formData[key] || ""}
-                          onChange={e => handleChange(key, e.target.value)}
-                          placeholder="Hoặc nhập URL trực tiếp..."
-                          className="flex-1"
-                        />
-                        <label className="flex h-10 px-3 shrink-0 items-center justify-center rounded-md border bg-neutral-100 hover:bg-neutral-200 cursor-pointer text-sm font-medium transition-colors">
+                      <div className="flex flex-col gap-2">
+                        {formData[key] && (
+                          <div className="relative h-32 w-full bg-neutral-100 rounded-md overflow-hidden border">
+                            <Image src={formData[key]} alt="Preview" fill className="object-contain" />
+                          </div>
+                        )}
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            value={formData[key] || ""}
+                            onChange={e => handleChange(key, e.target.value)}
+                            placeholder="Hoặc nhập URL trực tiếp..."
+                            className="flex-1"
+                          />
+                          <label className="flex h-10 px-3 shrink-0 items-center justify-center rounded-md border bg-neutral-100 hover:bg-neutral-200 cursor-pointer text-sm font-medium transition-colors">
                           <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                             const file = e.target.files?.[0]
                             if (!file) return
@@ -1008,6 +1084,7 @@ export function CrudPage({ section }: { section: string }) {
                           }} />
                           Tải ảnh lên
                         </label>
+                        </div>
                       </div>
                     ) : key === "size" && section === "media" ? (
                       <Input value={formData[key] || ""} disabled className="bg-neutral-50" />
@@ -1048,6 +1125,12 @@ export function CrudPage({ section }: { section: string }) {
                         value={formData[key] || ""}
                         onChange={e => handleChange(key, e.target.value)}
                         className="w-full flex min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y"
+                      />
+                    ) : key === "expiresAt" ? (
+                      <Input
+                        type="datetime-local"
+                        value={formData[key] ? new Date(new Date(formData[key]).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,16) : ""}
+                        onChange={e => handleChange(key, e.target.value ? new Date(e.target.value).toISOString() : null)}
                       />
                     ) : (
                       <Input

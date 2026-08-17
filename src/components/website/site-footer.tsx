@@ -103,18 +103,18 @@ export function SiteFooter() {
                       Social của tiệm
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90">
+                      <a href="https://www.facebook.com/totobarbershopHCM" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
                         <FacebookIcon className="size-4 text-[#79b8a7]" />
                         FB
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90">
+                      </a>
+                      <a href="https://www.instagram.com/totobarbershop_/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
                         <InstagramIcon className="size-4 text-[#79b8a7]" />
                         IG
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90">
+                      </a>
+                      <a href="https://www.tiktok.com/@totobarbershop85" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
                         <TikTokIcon className="size-4 text-[#79b8a7]" />
                         TT
-                      </span>
+                      </a>
                     </div>
                   </div>
                 </li>
@@ -132,6 +132,7 @@ export function SiteFooter() {
               style={{ border: 0 }}
               allowFullScreen
               loading="lazy"
+              tabIndex={-1}
               referrerPolicy="no-referrer-when-downgrade"
               className="absolute inset-0 size-full contrast-[1.05] grayscale-[0.2]"
             />

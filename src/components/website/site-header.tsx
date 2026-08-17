@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, ShoppingBag, Search, User, X, LogIn } from "lucide-react"
+import { Menu, ShoppingBag, Search, User, X, LogIn, LogOut } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { MAIN_NAV, SITE_NAME } from "@/lib/constants"
@@ -12,9 +12,10 @@ import { useCartStore } from "@/store/cart-store"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { useDataStore } from "@/store/data-store"
 import { useMounted } from "@/hooks/use-mounted"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu"
 import { CustomerAuthModal } from "@/components/website/customer-auth-modal"
 
 function Logo() {
@@ -46,7 +47,7 @@ export function SiteHeader() {
   const mounted = useMounted()
 
   // Stores
-  const { user, isAuthModalOpen: authOpen, setAuthModalOpen: setAuthOpen } = useCustomerUserStore()
+  const { user, isAuthModalOpen: authOpen, setAuthModalOpen: setAuthOpen, logout } = useCustomerUserStore()
   const { products } = useDataStore()
   const totalItems = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
@@ -208,25 +209,50 @@ export function SiteHeader() {
           
 
           {/* User Auth Icon Button (Đăng nhập / Đăng ký) */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
-            aria-label={user ? `Tài khoản (${user.name})` : "Đăng nhập / Đăng ký"}
-            onClick={() => {
-              if (user) router.push("/profile")
-              else setAuthOpen(true)
-            }}
-            title={user ? `Hồ sơ, ${user.name}` : "Đăng nhập / Đăng ký"}
-          >
-            <User className="size-5" />
-            {mounted && user && (
-              <span
-                className="absolute right-0 top-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                title="Đã đăng nhập"
-              />
-            )}
-          </Button>
+          {mounted && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
+                    aria-label={`Tài khoản (${user.name})`}
+                  />
+                }
+              >
+                <User className="size-5" />
+                <span className="absolute right-0 top-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white" title="Đã đăng nhập" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 font-display">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer">
+                    <User className="size-4 mr-2" /> Hồ sơ cá nhân
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer">
+                    <ShoppingBag className="size-4 mr-2" /> Đơn hàng
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { logout(); router.push("/"); }} className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
+                  <LogOut className="size-4 mr-2" /> Đăng xuất
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
+              aria-label="Đăng nhập / Đăng ký"
+              onClick={() => setAuthOpen(true)}
+              title="Đăng nhập / Đăng ký"
+            >
+              <User className="size-5" />
+            </Button>
+          )}
 
           {/* Cart Icon Button */}
           <Button
@@ -247,14 +273,11 @@ export function SiteHeader() {
           {/* Mobile Menu Trigger */}
           <Sheet>
             <SheetTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-none hover:bg-primary/8 hover:text-primary xl:hidden"
-                  aria-label="Mở menu"
-                />
-              }
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "rounded-none hover:bg-primary/8 hover:text-primary xl:hidden"
+              )}
+              aria-label="Mở menu"
             >
               <Menu className="size-5" />
             </SheetTrigger>
@@ -303,6 +326,7 @@ export function SiteHeader() {
                 {HEADER_NAV.map((link) => (
                   <SheetClose
                     key={link.href}
+                    {...({ nativeButton: false } as any)}
                     render={
                       <Link
                         href={link.href}
