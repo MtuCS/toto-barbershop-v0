@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { useCartStore } from "@/store/cart-store"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { formatCurrency } from "@/lib/format"
-import { FREE_SHIPPING_THRESHOLD, MOCK_COUPONS, SHIPPING_FLAT_FEE } from "@/lib/constants"
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_FLAT_FEE } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 import { useMounted } from "@/hooks/use-mounted"
 
@@ -22,6 +22,7 @@ export function CheckoutForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [couponInput, setCouponInput] = useState("")
   const [coupon, setCoupon] = useState<string | null>(null)
+  const [discount, setDiscount] = useState(0)
   const [couponError, setCouponError] = useState("")
   const [provinces, setProvinces] = useState<any[]>([])
   const [districts, setDistricts] = useState<any[]>([])
@@ -65,11 +66,48 @@ export function CheckoutForm() {
   }, [user])
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items])
+  
+  useEffect(() => {
+    if (coupon) {
+      setCoupon(null)
+      setDiscount(0)
+      setCouponInput("")
+      toast.info("Giỏ hàng thay đổi, vui lòng áp dụng lại mã giảm giá.")
+    }
+  }, [subtotal])
+
   const shipping = subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_FEE
-  const discount = coupon ? (() => { const rule = MOCK_COUPONS[coupon]; return rule.type === "percent" ? Math.round(subtotal * rule.value / 100) : rule.value })() : 0
   const total = Math.max(0, subtotal + shipping - discount)
   const setField = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }))
-  const applyCoupon = () => { const value = couponInput.trim().toUpperCase(); if (MOCK_COUPONS[value]) { setCoupon(value); setCouponError("") } else { setCoupon(null); setCouponError("Mã giảm giá không hợp lệ.") } }
+  
+  const applyCoupon = async () => { 
+    const value = couponInput.trim().toUpperCase()
+    if (!value) return
+    setIsSubmitting(true)
+    try {
+      const res = await fetch("/api/promos/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ code: value, subtotal })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setCoupon(data.code)
+        setDiscount(data.discount)
+        setCouponError("")
+      } else {
+        setCoupon(null)
+        setDiscount(0)
+        setCouponError(data.error || "Mã giảm giá không hợp lệ.")
+      }
+    } catch (e) {
+      setCoupon(null)
+      setDiscount(0)
+      setCouponError("Lỗi kết nối. Vui lòng thử lại.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -78,7 +116,7 @@ export function CheckoutForm() {
     const fullAddress = `${form.street}, ${form.wardName}, ${form.districtName}, ${form.provinceName}`
     setIsSubmitting(true)
     try {
-      const response = await fetch("/api/orders/checkout", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity, price: item.price })), customer: { name: form.name, phone: form.phone, email: form.email, address: fullAddress, note: form.note }, email: form.email, address: fullAddress, note: form.note, total, discount, promoCode: coupon ?? undefined, paymentMethod: form.payment, idempotencyKey: crypto.randomUUID() }) })
+      const response = await fetch("/api/orders/checkout", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity, price: item.price })), customer: { name: form.name, phone: form.phone, email: form.email, address: fullAddress, note: form.note }, email: form.email, address: { full: fullAddress, province: form.provinceName, district: form.districtName, ward: form.wardName, street: form.street }, note: form.note, total, discount, promoCode: coupon ?? undefined, paymentMethod: form.payment, idempotencyKey: crypto.randomUUID() }) })
       if (!response.ok) { const error = await response.json().catch(() => ({})); throw new Error(error.error || "Không thể tạo đơn hàng. Vui lòng thử lại.") }
       const order = await response.json()
       clear()

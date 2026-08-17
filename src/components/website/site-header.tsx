@@ -231,7 +231,7 @@ export function SiteHeader() {
                   <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer">
                     <User className="size-4 mr-2" /> Hồ sơ cá nhân
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer">
+                  <DropdownMenuItem onClick={() => router.push("/profile?tab=orders")} className="cursor-pointer">
                     <ShoppingBag className="size-4 mr-2" /> Đơn hàng
                   </DropdownMenuItem>
                 </DropdownMenuGroup>

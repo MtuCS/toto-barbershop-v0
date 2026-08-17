@@ -3,7 +3,7 @@ import { Cormorant_Garamond } from "next/font/google"
 import { Facebook, Instagram } from "lucide-react"
 import CircularText from "@/components/ui/circular-text"
 import FloatingLines from "@/components/ui/floating-lines"
-import { defaultSettings } from "@/data/settings"
+import { getSettings } from "@/lib/api"
 
 const socialScript = Cormorant_Garamond({
   subsets: ["latin"],
@@ -12,7 +12,10 @@ const socialScript = Cormorant_Garamond({
   display: "swap",
 })
 
-export function SocialSection() {
+export async function SocialSection() {
+  const settings = await getSettings()
+  const socials = settings?.socials || { instagram: '#', facebook: '#' }
+
   return (
     <section
       aria-labelledby="home-social-title"
@@ -48,7 +51,7 @@ export function SocialSection() {
 
           <div className="grid w-full md:grid-cols-2">
             <Link
-              href={defaultSettings.social.instagram}
+              href={socials.instagram}
               target="_blank"
               rel="noreferrer"
               aria-label="Theo dõi Toto Barbershop trên Instagram"
@@ -65,7 +68,7 @@ export function SocialSection() {
             </Link>
 
             <Link
-              href={defaultSettings.social.facebook}
+              href={socials.facebook}
               target="_blank"
               rel="noreferrer"
               aria-label="Theo dõi Toto Barbershop trên Facebook"

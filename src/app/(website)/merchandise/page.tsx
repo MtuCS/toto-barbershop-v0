@@ -4,8 +4,7 @@ import Link from "next/link"
 import { ArrowDown, ArrowRight, ArrowUpRight } from "lucide-react"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { ProductCard } from "@/components/website/product-card"
-import { products } from "@/data/products"
-import { merchandiseStories } from "@/data/stories"
+import { getProducts, getStories } from "@/lib/api"
 import { PageHero, SectionTitle } from "@/components/website/page-hero"
 
 export const metadata: Metadata = {
@@ -14,11 +13,12 @@ export const metadata: Metadata = {
     "Khám phá TOTO Merchandise: những thiết kế streetwear được tạo nên từ văn hóa barber, tay nghề và tinh thần của tiệm.",
 }
 
-const featuredMerchandise = products
-  .filter((product) => product.category === "merchandise")
-  .slice(0, 4)
+export default async function Page() {
+  const products = await getProducts()
+  const merchandiseStories = await getStories()
+  const merchandiseProducts = products.filter((product) => product.category === "merchandise")
+  const featuredMerchandise = merchandiseProducts.slice(0, 4)
 
-export default function Page() {
   return (
     <MarketingPageShell>
       <section className="relative min-h-[calc(100dvh-4rem)] overflow-hidden bg-[#07110f]">

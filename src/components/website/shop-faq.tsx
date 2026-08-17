@@ -4,10 +4,12 @@ import { useState } from "react"
 import Link from "next/link"
 import { Minus, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { shopFaqs } from "@/data/shop-faq"
+import { useDataStore } from "@/store/data-store"
 
 export function ShopFaq() {
   const [openId, setOpenId] = useState<string | null>(null)
+  const allFaqs = useDataStore((s) => s.faqs) || []
+  const shopFaqs = allFaqs.filter((f) => f.category === "shop")
 
   return (
     <section className="bg-white py-16 text-[#101715] md:py-24" aria-labelledby="shop-faq-title">
