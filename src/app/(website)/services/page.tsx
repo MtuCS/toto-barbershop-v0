@@ -334,7 +334,7 @@ export default async function Page() {
           <Accordion className="border-t border-white/10 md:col-span-8">
             {serviceFaqs.map((faq, index) => (
               <AccordionItem
-                key={faq.question}
+                key={faq.id || index}
                 value={`faq-${index}`}
                 className="border-b border-white/10"
               >

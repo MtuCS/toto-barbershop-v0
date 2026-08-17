@@ -125,87 +125,7 @@ export function SiteHeader() {
 
         {/* Right Section: Inline Search Input + Icons */}
         <div className="flex items-center gap-3">
-          {/* Direct Search Input Box */}
-          {/* <div ref={searchRef} className="relative hidden md:block w-48 lg:w-64">
-            <div className="relative flex items-center">
-              <Search className="absolute left-3 size-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Tìm kiếm sản phẩm..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  setIsSearchOpen(true)
-                }}
-                onFocus={() => setIsSearchOpen(true)}
-                className="h-9 w-full rounded-full border-black/15 bg-neutral-100/80 pl-9 pr-8 text-xs placeholder:text-neutral-500 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => {
-                    setSearchQuery("")
-                    setSearchResults([])
-                  }}
-                  className="absolute right-2.5 text-neutral-400 hover:text-neutral-700"
-                >
-                  <X className="size-3.5" />
-                </button>
-              )}
-            </div> */}
 
-            {/* Live Search Results Dropdown */}
-            {/* {isSearchOpen && searchQuery.trim() !== "" && (
-              <div className="absolute left-0 right-0 top-full mt-2 z-50 overflow-hidden rounded-xl border border-border bg-background p-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150">
-                {isSearching ? (
-                  <p className="p-3 text-center text-xs text-muted-foreground">Đang tìm kiếm...</p>
-                ) : searchResults.length > 0 ? (
-                  <div className="max-h-72 overflow-y-auto space-y-1">
-                    {searchResults.map((product: any) => {
-                      const name = product.title || product.name || "Sản phẩm ToTo"
-                      const img =
-                        (product.images && product.images[0]) ||
-                        product.image ||
-                        "https://images.unsplash.com/photo-1599305090598-fe179d501227?q=80&w=300"
-                      const catName =
-                        typeof product.category === "object"
-                          ? product.category?.name
-                          : product.category === "grooming"
-                          ? "Sáp & Chăm sóc"
-                          : product.category === "merchandise"
-                          ? "Thời trang"
-                          : product.category || "Sản phẩm"
-                      const priceVal =
-                        product.basePrice ||
-                        product.price ||
-                        (product.variants && product.variants[0]?.price) ||
-                        0
-
-                      return (
-                        <Link
-                          key={product.id || product.slug}
-                          href={`/shop/${product.slug}`}
-                          onClick={() => setIsSearchOpen(false)}
-                          className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/60 transition-colors"
-                        >
-                          <div className="relative size-10 shrink-0 overflow-hidden rounded border border-border bg-neutral-100">
-                            <Image src={img} alt={name} fill className="object-cover" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="truncate text-xs font-bold text-foreground">{name}</h4>
-                            <p className="text-[10px] text-muted-foreground">
-                              {catName} • {priceVal.toLocaleString("vi-VN")} ₫
-                            </p>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="p-3 text-center text-xs text-muted-foreground">Không tìm thấy sản phẩm nào.</p>
-                )}
-              </div>
-            )}
-          </div> */}
           
 
           {/* User Auth Icon Button (Đăng nhập / Đăng ký) */}
@@ -286,19 +206,7 @@ export function SiteHeader() {
                 <SheetTitle className="font-display uppercase">Menu</SheetTitle>
               </SheetHeader>
 
-              {/* Mobile Inline Search */}
-              {/* <div className="px-2 pt-2 pb-4">
-                <div className="relative flex items-center">
-                  <Search className="absolute left-3 size-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Tìm kiếm sản phẩm..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-10 w-full rounded-full border-black/15 bg-neutral-100 pl-9 text-xs"
-                  />
-                </div>
-              </div> */}
+
 
               {/* Mobile Auth Button */}
               <div className="px-2 pb-4 border-b border-border">

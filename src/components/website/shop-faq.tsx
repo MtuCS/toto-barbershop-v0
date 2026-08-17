@@ -30,7 +30,7 @@ export function ShopFaq() {
             const open = openId === id
             return (
               <article
-                key={item.question}
+                key={item.id || index}
                 className={cn(
                   "rounded-lg border bg-white px-4 transition-colors md:px-5",
                   open ? "border-[#101715]" : "border-black/15",
