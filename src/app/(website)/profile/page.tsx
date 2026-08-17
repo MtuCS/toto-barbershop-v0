@@ -332,9 +332,6 @@ export default function ProfilePage() {
           <h1 className="font-display text-4xl font-bold uppercase tracking-tight">Hồ sơ của tôi</h1>
           <p className="mt-2 text-neutral-500">Quản lý thông tin cá nhân và đơn hàng</p>
         </div>
-        <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700" onClick={() => { logout(); router.push('/') }}>
-          <LogOut className="size-4 mr-2" /> Đăng xuất
-        </Button>
       </div>
 
       <Tabs defaultValue="profile" className="w-full">

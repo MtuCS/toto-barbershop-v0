@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
@@ -39,6 +39,7 @@ const uid = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2,
 
 interface DataState {
   products: Product[]
+
   categories: Category[]
   services: Service[]
   courses: TrainingCourse[]
@@ -46,6 +47,7 @@ interface DataState {
   stories: MerchandiseStory[]
   lookbook: LookbookItem[]
   orders: Order[]
+  promoCodes: any[]
   customers: any[] // we use users as customers
   media: MediaItem[]
   settings: SettingsData
@@ -53,7 +55,13 @@ interface DataState {
   fetchProducts: () => Promise<void>
   fetchCategories: () => Promise<void>
   fetchServices: () => Promise<void>
+  fetchCourses: () => Promise<void>
+  fetchLeads: () => Promise<void>
+  fetchStories: () => Promise<void>
+  fetchLookbook: () => Promise<void>
+  fetchMedia: () => Promise<void>
   fetchOrders: () => Promise<void>
+  fetchPromoCodes: () => Promise<void>
   fetchUsers: () => Promise<void>
   createUser: (userData: any) => Promise<void>
   updateOrderStatus: (id: string, data: { status?: string, paymentStatus?: string }) => Promise<void>
@@ -87,17 +95,12 @@ interface DataState {
   upsertLookbook: (item: LookbookItem) => void
   deleteLookbook: (id: string) => void
 
+  // Promo Codes
+  upsertPromoCode: (promo: any) => Promise<void>
+  deletePromoCode: (id: string | number) => Promise<void>
+
   // Orders
-  placeOrder: (input: {
-    customer: Order["customer"]
-    items: CartItem[]
-    subtotal: number
-    shippingFee: number
-    discount: number
-    total: number
-    couponCode?: string
-    paymentMethod: Order["paymentMethod"]
-  }) => Order
+  
   setOrderStatusInStore: (id: string | number, status: OrderStatus, paymentStatus: PaymentStatus) => void
 
   // Media
@@ -118,6 +121,7 @@ const seed = {
   leads: [] as TrainingLead[],
   stories: seedStories,
   lookbook: seedLookbook,
+  promoCodes: [] as any[],
   orders: [] as Order[],
   customers: [] as any[],
   media: seedMedia,
@@ -169,29 +173,35 @@ export const useDataStore = create<DataState>()(
           console.error("Failed to fetch services:", error);
         }
       },
-
-      fetchCategories: async () => {
+      fetchCourses: async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/categories`);
-          if (res.ok) {
-            const data = await res.json();
-            set({ categories: data });
-          }
-        } catch (error) {
-          console.error("Failed to fetch categories:", error);
-        }
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses`);
+          if (res.ok) set({ courses: await res.json() });
+        } catch (error) { console.error(error); }
       },
-
-      fetchServices: async () => {
+      fetchLeads: async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/services`);
-          if (res.ok) {
-            const data = await res.json();
-            set({ services: data });
-          }
-        } catch (error) {
-          console.error("Failed to fetch services:", error);
-        }
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads`);
+          if (res.ok) set({ leads: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+      fetchStories: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories`);
+          if (res.ok) set({ stories: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+      fetchLookbook: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks`);
+          if (res.ok) set({ lookbook: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+      fetchMedia: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/media`);
+          if (res.ok) set({ media: await res.json() });
+        } catch (error) { console.error(error); }
       },
 
       fetchOrders: async () => {
@@ -204,6 +214,16 @@ export const useDataStore = create<DataState>()(
         } catch (error) {
           console.error("Failed to fetch orders:", error);
         }
+      },
+
+      fetchPromoCodes: async () => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/promo`, {
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) set({ promoCodes: await res.json() });
+        } catch (error) { console.error(error); }
       },
 
       fetchUsers: async () => {
@@ -425,53 +445,123 @@ export const useDataStore = create<DataState>()(
         }
       },
 
-      upsertCourse: (course) =>
-        set((s) => ({
-          courses: s.courses.some((x) => x.id === course.id)
-            ? s.courses.map((x) => (x.id === course.id ? course : x))
-            : [...s.courses, { ...course, id: course.id || uid("t") }],
-        })),
-      deleteCourse: (id) => set((s) => ({ courses: s.courses.filter((x) => x.id !== id) })),
+      
+      upsertCourse: async (course) => {
+        const token = useAuthStore.getState().session?.token;
+        const isUpdate = !!course.id && !String(course.id).startsWith('t-');
+        const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses/${course.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses`;
+        await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(course) });
+        get().fetchCourses();
+      },
+      deleteCourse: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        get().fetchCourses();
+      },
 
-      addLead: (lead) =>
-        set((s) => ({
-          leads: [
-            {
-              ...lead,
-              id: uid("lead"),
-              status: "new",
-              createdAt: new Date().toISOString(),
-            } as TrainingLead,
-            ...s.leads,
-          ],
-        })),
-      updateLeadStatus: (id, status) =>
-        set((s) => ({ leads: s.leads.map((l) => (l.id === id ? { ...l, status } : l)) })),
-      deleteLead: (id) => set((s) => ({ leads: s.leads.filter((l) => l.id !== id) })),
 
-      upsertStory: (story) =>
-        set((s) => ({
-          stories: s.stories.some((x) => x.id === story.id)
-            ? s.stories.map((x) => (x.id === story.id ? story : x))
-            : [...s.stories, { ...story, id: story.id || uid("st") }],
-        })),
-      deleteStory: (id) => set((s) => ({ stories: s.stories.filter((x) => x.id !== id) })),
+      
+      addLead: async (lead) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(lead) });
+        get().fetchLeads();
+      },
+      updateLeadStatus: async (id, status) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status }) });
+        get().fetchLeads();
+      },
+      deleteLead: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        get().fetchLeads();
+      },
 
-      upsertLookbook: (item) =>
-        set((s) => ({
-          lookbook: s.lookbook.some((x) => x.id === item.id)
-            ? s.lookbook.map((x) => (x.id === item.id ? item : x))
-            : [...s.lookbook, { ...item, id: item.id || uid("lb") }],
-        })),
-      deleteLookbook: (id) => set((s) => ({ lookbook: s.lookbook.filter((x) => x.id !== id) })),
 
-      placeOrder: (input) => {
+      
+      upsertStory: async (story) => {
+        const token = useAuthStore.getState().session?.token;
+        const isUpdate = !!story.id && !String(story.id).startsWith('st-');
+        const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories/${story.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories`;
+        await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(story) });
+        get().fetchStories();
+      },
+      deleteStory: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        get().fetchStories();
+      },
+
+
+      
+      upsertLookbook: async (item) => {
+        const token = useAuthStore.getState().session?.token;
+        const isUpdate = !!item.id && !String(item.id).startsWith('lb-');
+        const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks/${item.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks`;
+        await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(item) });
+        get().fetchLookbook();
+      },
+      deleteLookbook: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        get().fetchLookbook();
+      },
+
+      upsertPromoCode: async (promo) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const isUpdate = !!promo.id;
+          const url = isUpdate 
+            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/promo/${promo.id}`
+            : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/promo`;
+          const method = isUpdate ? 'PUT' : 'POST';
+          
+          const res = await fetch(url, {
+            method,
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(promo)
+          });
+          
+          if (res.ok) {
+            get().fetchPromoCodes();
+          } else {
+            const err = await res.json();
+            toast.error(err.error || 'Lỗi lưu mã giảm giá');
+          }
+        } catch (error) {
+          console.error(error);
+          toast.error('Lỗi lưu mã giảm giá');
+        }
+      },
+      
+      deletePromoCode: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/promo/${id}`, {
+            method: 'DELETE',
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) {
+            get().fetchPromoCodes();
+          } else {
+            toast.error('Lỗi xóa mã giảm giá');
+          }
+        } catch (error) {
+          console.error(error);
+          toast.error('Lỗi xóa mã giảm giá');
+        }
+      },
+
+      placeOrder: (input: any) => {
         const now = new Date().toISOString()
         const order: Order = {
           id: uid("ord"),
           code: `TOTO-${Math.floor(1000 + Math.random() * 9000)}`,
           customer: input.customer,
-          items: input.items.map((i) => ({
+          items: input.items.map((i: any) => ({
             variantId: i.variantId,
             productId: i.productId,
             title: i.title,
@@ -496,14 +586,18 @@ export const useDataStore = create<DataState>()(
       },
 
 
-      addMedia: (item) =>
-        set((s) => ({
-          media: [
-            { ...item, id: uid("med"), createdAt: new Date().toISOString().slice(0, 10) } as MediaItem,
-            ...s.media,
-          ],
-        })),
-      deleteMedia: (id) => set((s) => ({ media: s.media.filter((m) => m.id !== id) })),
+      
+      addMedia: async (item) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/media`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(item) });
+        get().fetchMedia();
+      },
+      deleteMedia: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/media/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        get().fetchMedia();
+      },
+
 
       updateSettings: (settings) => set({ settings }),
 
