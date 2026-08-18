@@ -8,6 +8,7 @@ export function AdminShell({children}:{children:React.ReactNode}){
   const unreadCount = d.messages?.filter((m) => m.status === 'unread').length || 0;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     if (session) {
       d.fetchMessages();

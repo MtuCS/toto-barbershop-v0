@@ -104,6 +104,7 @@ export default function ProfilePage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
     const urlParams = new URLSearchParams(window.location.search)
     const tab = urlParams.get('tab')
@@ -112,6 +113,36 @@ export default function ProfilePage() {
     }
   }, [])
 
+  const handleTokenExpired = () => {
+    toast.error("Phiên đăng nhập đã hết hạn", {
+      description: "Vui lòng đăng nhập lại để tiếp tục.",
+      duration: 5000,
+    })
+    logout()
+    router.push("/")
+  }
+
+  const fetchProfile = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/users/profile", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.status === 401) { handleTokenExpired(); return; }
+      if (res.ok) {
+        const data = await res.json()
+        setFormData({
+          name: data.name || "",
+          phone: data.phone || ""
+        })
+        setUser(data, token)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
   useEffect(() => {
     if (mounted && !user) router.push("/")
   }, [mounted, user, router])
@@ -193,36 +224,6 @@ export default function ProfilePage() {
     };
   }, [orderIds])
 
-  const handleTokenExpired = () => {
-    toast.error("Phiên đăng nhập đã hết hạn", {
-      description: "Vui lòng đăng nhập lại để tiếp tục.",
-      duration: 5000,
-    })
-    logout()
-    router.push("/")
-  }
-
-  const fetchProfile = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch("/api/users/profile", {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.status === 401) { handleTokenExpired(); return; }
-      if (res.ok) {
-        const data = await res.json()
-        setFormData({
-          name: data.name || "",
-          phone: data.phone || ""
-        })
-        setUser(data, token)
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()

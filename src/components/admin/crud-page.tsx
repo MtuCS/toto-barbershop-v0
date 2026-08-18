@@ -848,9 +848,7 @@ function MessagesForm({ d }: { d: any }) {
 export function CrudPage({ section }: { section: string }) {
   const d = useDataStore()
 
-  if (section === 'messages') {
-    return <MessagesForm d={d} />
-  }
+
   const [search, setSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Row | null>(null)
@@ -859,6 +857,10 @@ export function CrudPage({ section }: { section: string }) {
   const pageSize = 10
   const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+
+  if (section === 'messages') {
+    return <MessagesForm d={d} />
+  }
 
   let rows: Row[] = []
   if (section === "products") rows = d.products
