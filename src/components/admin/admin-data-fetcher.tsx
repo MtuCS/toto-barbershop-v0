@@ -7,7 +7,6 @@ export function AdminDataFetcher() {
   const fetchPromoCodes = useDataStore((s) => s.fetchPromoCodes)
   const fetchOrders = useDataStore((s) => s.fetchOrders)
   const fetchUsers = useDataStore((s) => s.fetchUsers)
-  const fetchLeads = useDataStore((s) => s.fetchLeads)
 
   const token = useAuthStore((s) => s.session?.token)
 
@@ -16,9 +15,8 @@ export function AdminDataFetcher() {
       fetchPromoCodes()
       fetchOrders()
       fetchUsers()
-      fetchLeads()
     }
-  }, [token, fetchPromoCodes, fetchOrders, fetchUsers, fetchLeads])
+  }, [token, fetchPromoCodes, fetchOrders, fetchUsers])
 
   return null
 }

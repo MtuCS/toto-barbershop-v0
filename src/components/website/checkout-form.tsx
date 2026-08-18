@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { useCartStore } from "@/store/cart-store"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { formatCurrency } from "@/lib/format"
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FLAT_FEE } from "@/lib/constants"
+import { SHIPPING_FLAT_FEE } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 import { useMounted } from "@/hooks/use-mounted"
 
@@ -76,7 +76,7 @@ export function CheckoutForm() {
     }
   }, [subtotal])
 
-  const shipping = subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_FEE
+  const shipping = subtotal === 0 || form.payment === 'payos' ? 0 : SHIPPING_FLAT_FEE
   const total = Math.max(0, subtotal + shipping - discount)
   const setField = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }))
   
@@ -85,7 +85,7 @@ export function CheckoutForm() {
     if (!value) return
     setIsSubmitting(true)
     try {
-      const res = await fetch("/api/promos/validate", {
+      const res = await fetch("/api/promo/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ code: value, subtotal })
@@ -152,8 +152,24 @@ export function CheckoutForm() {
       </div>
 
       <label className="text-sm font-medium sm:col-span-2">Ghi chú (tùy chọn)<textarea value={form.note} onChange={(e) => setField("note", e.target.value)} className="mt-2 min-h-20 w-full border border-black/20 px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Thời gian nhận hàng, lưu ý cho shipper..." /></label></div></section>
-      <section className="border border-black/10 bg-white p-5"><h2 className="flex items-center gap-2 font-display text-xl font-bold uppercase"><Truck className="size-5 text-primary" />Giao hàng</h2><div className="mt-4 border border-primary bg-primary/5 p-4 text-sm"><strong>Tiêu chuẩn (1–3 ngày)</strong><p className="mt-1 text-neutral-600">{shipping ? formatCurrency(shipping) : "Miễn phí vận chuyển"}</p></div></section>
-      <section className="border border-black/10 bg-white p-5"><h2 className="flex items-center gap-2 font-display text-xl font-bold uppercase"><CreditCard className="size-5 text-primary" />Thanh toán</h2><div className="mt-4 grid gap-3"><label className={`flex cursor-pointer items-center gap-3 border p-4 ${form.payment === "cod" ? "border-primary bg-primary/5" : "border-black/15"}`}><input checked={form.payment === "cod"} onChange={() => setField("payment", "cod")} type="radio" name="payment" /><span><strong>Thanh toán khi nhận hàng (COD)</strong><small className="mt-1 block text-neutral-500">Thanh toán tiền mặt cho shipper.</small></span></label><label className={`flex cursor-pointer items-center gap-3 border p-4 ${form.payment === "payos" ? "border-primary bg-primary/5" : "border-black/15"}`}><input checked={form.payment === "payos"} onChange={() => setField("payment", "payos")} type="radio" name="payment" /><span><strong>Chuyển khoản / VietQR</strong><small className="mt-1 block text-neutral-500">Bạn sẽ được chuyển đến trang thanh toán an toàn.</small></span></label></div></section>
-    </form><aside className="h-fit border border-black/10 bg-white p-5 lg:sticky lg:top-24"><h2 className="font-display text-2xl font-bold uppercase">Đơn hàng của bạn</h2><div className="mt-5 max-h-72 space-y-4 overflow-y-auto border-y border-black/10 py-4">{items.map((item) => <div key={item.variantId} className="flex gap-3"><div className="relative size-16 shrink-0 overflow-hidden border border-black/10"><Image src={item.image} alt={item.title} fill sizes="64px" className="object-cover" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{item.title}</p><p className="text-xs text-neutral-500">{item.variantName} × {item.quantity}</p><p className="mt-1 text-sm font-bold">{formatCurrency(item.price * item.quantity)}</p></div></div>)}</div><div className="py-4"><label className="text-xs font-bold uppercase tracking-wide"><Tag className="mr-1 inline size-3.5" />Mã giảm giá</label><div className="mt-2 flex gap-2"><input value={couponInput} onChange={(e) => setCouponInput(e.target.value)} className="min-w-0 flex-1 border border-black/20 px-3 text-sm" placeholder="Nhập mã" /><Button type="button" onClick={applyCoupon}>Áp dụng</Button></div>{couponError ? <p className="mt-2 text-xs text-destructive">{couponError}</p> : coupon ? <p className="mt-2 text-xs text-primary">Đã áp dụng {coupon}</p> : null}</div><dl className="space-y-3 border-t border-black/10 py-4 text-sm"><div className="flex justify-between"><dt>Tạm tính</dt><dd>{formatCurrency(subtotal)}</dd></div><div className="flex justify-between"><dt>Phí vận chuyển</dt><dd>{shipping ? formatCurrency(shipping) : "Miễn phí"}</dd></div>{discount ? <div className="flex justify-between text-primary"><dt>Giảm giá</dt><dd>-{formatCurrency(discount)}</dd></div> : null}</dl><div className="flex justify-between border-t border-black/10 pt-4"><strong>Tổng cộng</strong><strong className="font-display text-2xl text-[#d71920]">{formatCurrency(total)}</strong></div><Button type="submit" form="checkout-form" disabled={isSubmitting} className="mt-5 h-12 w-full bg-[#101715] uppercase hover:bg-[#101715]/80">{isSubmitting ? <Loader2 className="animate-spin" /> : <Check />} {isSubmitting ? "Đang xử lý..." : "Đặt hàng"}</Button><Link href="/cart" className="mt-4 block text-center text-xs text-neutral-500 hover:text-primary">← Quay lại giỏ hàng</Link></aside></div>
+      
+      <section className="border border-black/10 bg-white p-5">
+        <h2 className="flex items-center gap-2 font-display text-xl font-bold uppercase"><CreditCard className="size-5 text-primary" />Thanh toán</h2>
+        <div className="pt-2">
+            <h3 className="font-display text-lg font-bold uppercase mb-3">Phương thức thanh toán</h3>
+            <div className="space-y-2">
+                <label className="flex items-center gap-3 border border-black/10 p-3 cursor-pointer hover:bg-black/5">
+                    <input type="radio" name="payment" value="cod" checked={form.payment === "cod"} onChange={(e) => setField("payment", e.target.value)} className="size-4" />
+                    <span>Thanh toán khi nhận hàng (COD) <span className="text-muted-foreground text-xs ml-1">- Phí vận chuyển 30.000 ₫</span></span>
+                </label>
+                <label className="flex items-center gap-3 border border-black/10 p-3 cursor-pointer hover:bg-black/5">
+                    <input type="radio" name="payment" value="payos" checked={form.payment === "payos"} onChange={(e) => setField("payment", e.target.value)} className="size-4" />
+                    <span>Chuyển khoản / Quét mã QR PayOS <span className="text-primary text-xs ml-1 font-bold">- Miễn phí vận chuyển</span></span>
+                </label>
+            </div>
+        </div>
+      </section>
+      
+      </form><aside className="h-fit border border-black/10 bg-white p-5 lg:sticky lg:top-24"><h2 className="font-display text-2xl font-bold uppercase">Tóm tắt đơn hàng</h2><div className="mt-5 max-h-72 space-y-4 overflow-y-auto border-y border-black/10 py-4">{items.map((item) => <div key={item.variantId} className="flex gap-3"><div className="relative size-16 shrink-0 overflow-hidden border border-black/10"><Image src={item.image} alt={item.title} fill sizes="64px" className="object-cover" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{item.title}</p><p className="text-xs text-neutral-500">{item.variantName} × {item.quantity}</p><p className="mt-1 text-sm font-bold">{formatCurrency(item.price * item.quantity)}</p></div></div>)}</div><div className="py-4"><label className="text-xs font-bold uppercase tracking-wide"><Tag className="mr-1 inline size-3.5" />Mã giảm giá</label><div className="mt-2 flex gap-2"><input value={couponInput} onChange={(e) => setCouponInput(e.target.value)} className="min-w-0 flex-1 border border-black/20 px-3 text-sm" placeholder="Nhập mã" /><Button type="button" onClick={applyCoupon}>Áp dụng</Button></div>{couponError ? <p className="mt-2 text-xs text-destructive">{couponError}</p> : coupon ? <p className="mt-2 text-xs text-primary">Đã áp dụng {coupon}</p> : null}</div><dl className="space-y-3 border-t border-black/10 py-4 text-sm"><div className="flex justify-between"><dt>Tạm tính</dt><dd>{formatCurrency(subtotal)}</dd></div><div className="flex justify-between"><dt>Phí vận chuyển</dt><dd>{shipping === 0 ? <span className="text-primary">Miễn phí</span> : formatCurrency(shipping)}</dd></div>{discount ? <div className="flex justify-between text-primary"><dt>Giảm giá</dt><dd>-{formatCurrency(discount)}</dd></div> : null}</dl><div className="flex justify-between border-t border-black/10 pt-4"><strong>Tổng cộng</strong><strong className="font-display text-2xl text-[#d71920]">{formatCurrency(total)}</strong></div><Button type="submit" form="checkout-form" disabled={isSubmitting} className="mt-5 h-12 w-full bg-[#101715] uppercase hover:bg-[#101715]/80">{isSubmitting ? <Loader2 className="animate-spin" /> : <Check />} {isSubmitting ? "Đang xử lý..." : "Đặt hàng"}</Button><div className="mt-4 flex gap-2 text-xs text-neutral-500"><Truck className="mt-0.5 size-4 text-primary shrink-0" />Miễn phí vận chuyển khi thanh toán trước qua PayOS.</div></aside></div>
   </div></main>
 }
