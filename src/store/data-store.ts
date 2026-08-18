@@ -81,7 +81,7 @@ interface DataState {
   deleteCourse: (id: string) => void
 
   // Leads
-  addLead: (lead: Omit<TrainingLead, "id" | "createdAt" | "status">) => void
+  addLead: (lead: Omit<TrainingLead, "id" | "createdAt" | "status">) => Promise<void>
   updateLeadStatus: (id: string, status: TrainingLead["status"]) => void
   deleteLead: (id: string) => void
 
@@ -470,8 +470,19 @@ export const useDataStore = create<DataState>()(
 
       
       addLead: async (lead) => {
-        const token = useAuthStore.getState().session?.token;
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(lead) });
+        const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads`, { 
+          method: 'POST', 
+          headers: { 
+            'Content-Type': 'application/json', 
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}) 
+          }, 
+          body: JSON.stringify(lead) 
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to submit lead');
+        }
         get().fetchLeads();
       },
       updateLeadStatus: async (id, status) => {
