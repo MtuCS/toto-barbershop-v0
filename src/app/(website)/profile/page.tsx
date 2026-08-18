@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { User, Phone, MapPin, Mail, Loader2, Save, ShoppingBag, Plus, Trash2, LogOut, Package } from "lucide-react"
+import { User, Phone, MapPin, Mail, Loader2, Save, ShoppingBag, Plus, Trash2, LogOut, Package, Eye, EyeOff } from "lucide-react"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -71,6 +71,7 @@ export default function ProfilePage() {
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState("profile")
 
   const [formData, setFormData] = useState({
     name: "",
@@ -94,10 +95,54 @@ export default function ProfilePage() {
   const [addressToDelete, setAddressToDelete] = useState<number | null>(null)
   const [orderToCancel, setOrderToCancel] = useState<string | number | null>(null)
 
+  // Password Modal State
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" })
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
+    const urlParams = new URLSearchParams(window.location.search)
+    const tab = urlParams.get('tab')
+    if (tab === 'orders') {
+      setActiveTab('orders')
+    }
   }, [])
 
+  const handleTokenExpired = () => {
+    toast.error("Phiên đăng nhập đã hết hạn", {
+      description: "Vui lòng đăng nhập lại để tiếp tục.",
+      duration: 5000,
+    })
+    logout()
+    router.push("/")
+  }
+
+  const fetchProfile = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/users/profile", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.status === 401) { handleTokenExpired(); return; }
+      if (res.ok) {
+        const data = await res.json()
+        setFormData({
+          name: data.name || "",
+          phone: data.phone || ""
+        })
+        setUser(data, token)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
   useEffect(() => {
     if (mounted && !user) router.push("/")
   }, [mounted, user, router])
@@ -179,36 +224,6 @@ export default function ProfilePage() {
     };
   }, [orderIds])
 
-  const handleTokenExpired = () => {
-    toast.error("Phiên đăng nhập đã hết hạn", {
-      description: "Vui lòng đăng nhập lại để tiếp tục.",
-      duration: 5000,
-    })
-    logout()
-    router.push("/")
-  }
-
-  const fetchProfile = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch("/api/users/profile", {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.status === 401) { handleTokenExpired(); return; }
-      if (res.ok) {
-        const data = await res.json()
-        setFormData({
-          name: data.name || "",
-          phone: data.phone || ""
-        })
-        setUser(data, token)
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -234,6 +249,40 @@ export default function ProfilePage() {
       toast.error(err.message || "Lỗi kết nối máy chủ")
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleChangePassword = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("Mật khẩu mới không khớp")
+      return
+    }
+    if (passwordForm.newPassword.length < 6) {
+      toast.error("Mật khẩu mới phải có ít nhất 6 ký tự")
+      return
+    }
+    
+    setChangingPassword(true)
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success("Đổi mật khẩu thành công. Vui lòng đăng nhập lại.")
+        setPasswordModalOpen(false)
+        logout()
+        router.push("/")
+      } else {
+        toast.error(data.error || "Đổi mật khẩu thất bại")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Lỗi kết nối máy chủ")
+    } finally {
+      setChangingPassword(false)
     }
   }
 
@@ -334,13 +383,13 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="mb-8 p-1 h-auto flex w-full justify-start overflow-x-auto bg-neutral-100/50 rounded-xl">
-          <TabsTrigger value="profile" className="h-10 px-6 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <User className="size-4 mr-2" /> Thông tin cá nhân
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); router.push(`/profile?tab=${v}`); }} className="w-full">
+        <TabsList className="mb-8 grid w-full grid-cols-2 gap-4 bg-transparent p-0">
+          <TabsTrigger value="profile" className="flex h-14 sm:h-16 items-center justify-center gap-2 rounded-2xl border-2 border-transparent bg-neutral-100 text-sm sm:text-base font-bold text-neutral-500 transition-all hover:bg-neutral-200/50 data-[state=active]:border-primary data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:shadow-none">
+            <User className="size-5 sm:size-6" /> <span className="hidden sm:inline">Thông tin cá nhân</span><span className="sm:hidden">Hồ sơ</span>
           </TabsTrigger>
-          <TabsTrigger value="orders" className="h-10 px-6 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <Package className="size-4 mr-2" /> Đơn hàng của tôi
+          <TabsTrigger value="orders" className="flex h-14 sm:h-16 items-center justify-center gap-2 rounded-2xl border-2 border-transparent bg-neutral-100 text-sm sm:text-base font-bold text-neutral-500 transition-all hover:bg-neutral-200/50 data-[state=active]:border-primary data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:shadow-none">
+            <Package className="size-5 sm:size-6" /> <span className="hidden sm:inline">Đơn hàng của tôi</span><span className="sm:hidden">Đơn hàng</span>
           </TabsTrigger>
         </TabsList>
 
@@ -371,9 +420,14 @@ export default function ProfilePage() {
                     <Input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="h-12 rounded-xl pl-11 focus-visible:ring-primary/20" />
                   </div>
                 </div>
-                <Button type="submit" disabled={saving} className="h-12 rounded-xl w-full sm:w-auto px-8">
-                  {saving ? <Loader2 className="mr-2 size-4 animate-spin"/> : <Save className="mr-2 size-4"/>} Lưu thông tin
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button type="submit" disabled={saving} className="h-12 rounded-xl w-full sm:w-auto px-8">
+                    {saving ? <Loader2 className="mr-2 size-4 animate-spin"/> : <Save className="mr-2 size-4"/>} Lưu thông tin
+                  </Button>
+                  <Button type="button" variant="outline" className="h-12 rounded-xl w-full sm:w-auto px-8 border-neutral-300" onClick={() => { setPasswordForm({currentPassword: "", newPassword: "", confirmPassword: ""}); setPasswordModalOpen(true); }}>
+                    Đổi mật khẩu
+                  </Button>
+                </div>
               </form>
             </div>
 
@@ -530,6 +584,67 @@ export default function ProfilePage() {
               disabled={addingAddress || !newAddress.provinceCode || !newAddress.districtCode || !newAddress.wardCode || !newAddress.street}
             >
               {addingAddress ? "Đang lưu..." : "Lưu địa chỉ"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Đổi mật khẩu</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Mật khẩu hiện tại</label>
+              <div className="relative">
+                <Input 
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={passwordForm.currentPassword}
+                  onChange={e => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                  className="pr-10"
+                />
+                <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600">
+                  {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Mật khẩu mới</label>
+              <div className="relative">
+                <Input 
+                  type={showNewPassword ? "text" : "password"}
+                  value={passwordForm.newPassword}
+                  onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                  className="pr-10"
+                />
+                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600">
+                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Xác nhận mật khẩu mới</label>
+              <div className="relative">
+                <Input 
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={passwordForm.confirmPassword}
+                  onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                  className="pr-10"
+                />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600">
+                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordModalOpen(false)}>Hủy</Button>
+            <Button 
+              onClick={handleChangePassword} 
+              disabled={changingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+            >
+              {changingPassword ? "Đang xử lý..." : "Cập nhật"}
             </Button>
           </DialogFooter>
         </DialogContent>

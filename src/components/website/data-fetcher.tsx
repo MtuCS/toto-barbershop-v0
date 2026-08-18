@@ -10,6 +10,8 @@ export function DataFetcher() {
   const fetchStories = useDataStore((s) => s.fetchStories)
   const fetchLookbook = useDataStore((s) => s.fetchLookbook)
   const fetchMedia = useDataStore((s) => s.fetchMedia)
+  const fetchFaqs = useDataStore((s) => s.fetchFaqs)
+  const fetchSettings = useDataStore((s) => s.fetchSettings)
 
   useEffect(() => {
     fetchProducts()
@@ -19,7 +21,19 @@ export function DataFetcher() {
     fetchStories()
     fetchLookbook()
     fetchMedia()
-  }, [fetchProducts, fetchCategories, fetchServices, fetchCourses, fetchStories, fetchLookbook, fetchMedia])
+    fetchFaqs()
+    fetchSettings()
+  }, [
+    fetchProducts,
+    fetchCategories,
+    fetchServices,
+    fetchCourses,
+    fetchStories,
+    fetchLookbook,
+    fetchMedia,
+    fetchFaqs,
+    fetchSettings,
+  ])
 
   return null
 }

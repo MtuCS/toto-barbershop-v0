@@ -170,3 +170,10 @@
     transform: translateX(-50%);
   }
 }
+
+/* Ẩn icon hiện mật khẩu mặc định của Edge/IE */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+

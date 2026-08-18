@@ -5,11 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { lookbookItems } from "@/data/lookbook";
-
-const publishedItems = lookbookItems.filter((item) => item.published);
+import { useDataStore } from "@/store/data-store";
 
 export function LookbookPreview() {
+  const lookbookItems = useDataStore((s) => s.lookbook) || [];
+  const publishedItems = lookbookItems.filter((item: any) => item.published !== false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const shouldReduceMotion = useReducedMotion();

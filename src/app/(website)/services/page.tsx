@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { MarketingPageShell } from "@/components/website/marketing-page-shell";
-import { serviceFaqs, services } from "@/data/services";
+import { getServices, getFaqs } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 
 
@@ -57,11 +57,11 @@ const lookbook = [
   ["Clean cut", "/images/barber-3.png"],
 ] as const;
 
-const upgrades = ["s-fade", "s-color", "s-beard"].map(
-  (id) => services.find((service) => service.id === id)!,
-);
+export default async function Page() {
+  const services = await getServices();
+  const allFaqs = await getFaqs();
+  const serviceFaqs = allFaqs.filter(f => f.category === 'service');
 
-export default function Page() {
   return (
     <MarketingPageShell className="bg-[#07110f]">
       <section className="overflow-hidden border-b border-white/10 bg-[#07110f] text-[#f2f5f3]">
@@ -334,7 +334,7 @@ export default function Page() {
           <Accordion className="border-t border-white/10 md:col-span-8">
             {serviceFaqs.map((faq, index) => (
               <AccordionItem
-                key={faq.question}
+                key={faq.id || index}
                 value={`faq-${index}`}
                 className="border-b border-white/10"
               >

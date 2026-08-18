@@ -1,19 +1,36 @@
 "use client"
-import Link from "next/link"; import { usePathname, useRouter } from "next/navigation"; import { LayoutDashboard, Package, Tags, Scissors, GraduationCap, BookOpen, Images, ShoppingBag, Users, UserCog, ImageIcon, Settings, LogOut, Menu, Ticket, X } from "lucide-react"; import { useState, useEffect } from "react"; import { useAuthStore } from "@/store/auth-store"
-const nav=[['dashboard','Tổng quan',LayoutDashboard],['products','Sản phẩm',Package],['categories','Danh mục',Tags],['services','Dịch vụ',Scissors],['training','Đào tạo',GraduationCap],['merchandise-stories','Stories',BookOpen],['lookbook','Lookbook',Images],['orders','Đơn hàng',ShoppingBag],['customers','Khách hàng',Users],['staff','Nhân viên',UserCog],['media','Media',ImageIcon],['promo-codes','Mã giảm giá',Ticket],['settings','Cài đặt',Settings]] as const
+import { LayoutDashboard, Package, Tags, Scissors, GraduationCap, BookOpen, Images, ShoppingBag, Users, UserCog, ImageIcon, Settings, LogOut, Menu, Ticket, X, HelpCircle, MessageSquare } from "lucide-react"; import { useState, useEffect } from "react"; import { useAuthStore } from "@/store/auth-store"; import { usePathname, useRouter } from "next/navigation"; import Link from "next/link"; import { useDataStore } from "@/store/data-store"; import { toast } from "sonner";
+const nav=[['dashboard','Tổng quan',LayoutDashboard],['messages','Tin nhắn',MessageSquare],['products','Sản phẩm',Package],['categories','Danh mục',Tags],['services','Dịch vụ',Scissors],['training','Đào tạo',GraduationCap],['merchandise-stories','Stories',BookOpen],['lookbook','Lookbook',Images],['orders','Đơn hàng',ShoppingBag],['customers','Khách hàng',Users],['staff','Nhân viên',UserCog],['media','Media',ImageIcon],['promo-codes','Mã giảm giá',Ticket],['faqs','FAQ',HelpCircle],['settings','Cài đặt',Settings]] as const
 export function AdminShell({children}:{children:React.ReactNode}){
   const path=usePathname(),router=useRouter(),logout=useAuthStore(s=>s.logout),session=useAuthStore(s=>s.session),[open,setOpen]=useState(false);
   const [mounted, setMounted] = useState(false);
-  
+  const d = useDataStore();
+  const unreadCount = d.messages?.filter((m) => m.status === 'unread').length || 0;
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-  }, []);
+    if (session) {
+      d.fetchMessages();
+    }
+  }, [session]);
 
   useEffect(() => {
     if (mounted && path !== '/admin/login' && !session) {
       router.push('/admin/login');
     }
   }, [mounted, path, session, router]);
+
+  // Show toast notification ONCE when user logs in and there are unread messages
+  useEffect(() => {
+    if (mounted && session && unreadCount > 0) {
+      const shown = sessionStorage.getItem('unreadToastShown');
+      if (!shown) {
+        toast.info(`Bạn có ${unreadCount} tin nhắn liên hệ chưa đọc!`);
+        sessionStorage.setItem('unreadToastShown', 'true');
+      }
+    }
+  }, [mounted, session, unreadCount]);
 
   if (!mounted) return null;
   if (path === '/admin/login') return children;
@@ -42,16 +59,19 @@ export function AdminShell({children}:{children:React.ReactNode}){
         </div>
         <p className="mt-1 text-[10px] uppercase tracking-[.2em] text-white/40">Quản trị viên</p>
         <nav className="mt-8 space-y-1">
-          {nav.map(([slug, label, Icon]) => (
-            <Link 
-              onClick={() => setOpen(false)} 
-              key={slug} 
-              href={`/admin/${slug}`} 
-              className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg ${path.includes(`/admin/${slug}`) ? 'bg-primary text-white' : 'text-white/65 hover:bg-white/10 hover:text-white transition-colors cursor-pointer'}`}
-            >
-              <Icon className="size-4" />{label}
-            </Link>
-          ))}
+          {nav.map(([id, label, Icon]) => {
+            const isMessages = id === 'messages';
+            return (
+              <Link key={id} href={`/admin/${id}`} onClick={() => setOpen(false)} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${path === `/admin/${id}` ? 'bg-primary font-bold text-white' : 'text-neutral-400 hover:bg-neutral-900 hover:text-white'}`}>
+                <Icon className="size-4" />{label}
+                {isMessages && unreadCount > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
         </nav>
         <button 
           onClick={() => { logout(); router.push('/admin/login'); }} 

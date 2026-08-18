@@ -16,18 +16,11 @@ import type {
   OrderStatus,
   PaymentStatus,
   CartItem,
+  ContactMessage,
 } from "@/types"
 
 
-import { categories as seedCategories } from "@/data/categories"
-import { products as seedProducts } from "@/data/products"
-import { services as seedServices } from "@/data/services"
-import { trainingCourses as seedCourses } from "@/data/training"
-import { merchandiseStories as seedStories } from "@/data/stories"
-import { lookbookItems as seedLookbook } from "@/data/lookbook"
-import { media as seedMedia } from "@/data/media"
 import { toast } from "sonner"
-import { defaultSettings } from "@/data/settings"
 import { useAuthStore } from "./auth-store"
 
 // ============================================================================
@@ -48,9 +41,11 @@ interface DataState {
   lookbook: LookbookItem[]
   orders: Order[]
   promoCodes: any[]
-  customers: any[] // we use users as customers
+  customers: any[]
   media: MediaItem[]
+  faqs: any[]
   settings: SettingsData
+  messages: ContactMessage[]
 
   fetchProducts: () => Promise<void>
   fetchCategories: () => Promise<void>
@@ -63,6 +58,9 @@ interface DataState {
   fetchOrders: () => Promise<void>
   fetchPromoCodes: () => Promise<void>
   fetchUsers: () => Promise<void>
+  fetchFaqs: () => Promise<void>
+  fetchSettings: () => Promise<void>
+  fetchMessages: () => Promise<void>
   createUser: (userData: any) => Promise<void>
   updateOrderStatus: (id: string, data: { status?: string, paymentStatus?: string }) => Promise<void>
   cancelOrder: (id: string, token: string) => Promise<boolean>
@@ -83,7 +81,7 @@ interface DataState {
   deleteCourse: (id: string) => void
 
   // Leads
-  addLead: (lead: Omit<TrainingLead, "id" | "createdAt" | "status">) => void
+  addLead: (lead: Omit<TrainingLead, "id" | "createdAt" | "status">) => Promise<void>
   updateLeadStatus: (id: string, status: TrainingLead["status"]) => void
   deleteLead: (id: string) => void
 
@@ -107,25 +105,35 @@ interface DataState {
   addMedia: (item: Omit<MediaItem, "id" | "createdAt">) => void
   deleteMedia: (id: string) => void
 
+  // FAQ
+  upsertFaq: (faq: any) => Promise<void>
+  deleteFaq: (id: string | number) => Promise<void>
+
   // Settings
-  updateSettings: (settings: SettingsData) => void
+  updateSettings: (settings: SettingsData) => Promise<void>
+
+  // Messages
+  updateMessageStatus: (id: string, status: string) => Promise<void>
+  deleteMessage: (id: string) => Promise<void>
 
   resetAll: () => void
 }
 
 const seed = {
-  products: seedProducts,
-  categories: seedCategories,
-  services: seedServices,
-  courses: seedCourses,
+  products: [] as Product[],
+  categories: [] as Category[],
+  services: [] as Service[],
+  courses: [] as TrainingCourse[],
   leads: [] as TrainingLead[],
-  stories: seedStories,
-  lookbook: seedLookbook,
+  stories: [] as MerchandiseStory[],
+  lookbook: [] as LookbookItem[],
   promoCodes: [] as any[],
   orders: [] as Order[],
   customers: [] as any[],
-  media: seedMedia,
-  settings: defaultSettings,
+  media: [] as MediaItem[],
+  faqs: [] as any[],
+  settings: {} as SettingsData,
+  messages: [] as ContactMessage[],
 }
 
 export const useDataStore = create<DataState>()(
@@ -462,8 +470,19 @@ export const useDataStore = create<DataState>()(
 
       
       addLead: async (lead) => {
-        const token = useAuthStore.getState().session?.token;
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(lead) });
+        const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads`, { 
+          method: 'POST', 
+          headers: { 
+            'Content-Type': 'application/json', 
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}) 
+          }, 
+          body: JSON.stringify(lead) 
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to submit lead');
+        }
         get().fetchLeads();
       },
       updateLeadStatus: async (id, status) => {
@@ -599,7 +618,106 @@ export const useDataStore = create<DataState>()(
       },
 
 
-      updateSettings: (settings) => set({ settings }),
+      fetchFaqs: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/faqs`);
+          if (res.ok) set({ faqs: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+      
+      upsertFaq: async (faq) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const isUpdate = !!faq.id;
+          const url = isUpdate 
+            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/faqs/${faq.id}`
+            : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/faqs`;
+          const res = await fetch(url, {
+            method: isUpdate ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            body: JSON.stringify(faq)
+          });
+          if (res.ok) get().fetchFaqs();
+        } catch (error) { console.error(error); toast.error('Failed to save FAQ'); }
+      },
+      
+      deleteFaq: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/faqs/${id}`, {
+            method: 'DELETE',
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) get().fetchFaqs();
+        } catch (error) { console.error(error); toast.error('Failed to delete FAQ'); }
+      },
+
+      fetchSettings: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/settings`);
+          if (res.ok) set({ settings: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+
+      updateSettings: async (settings) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/settings`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            body: JSON.stringify(settings)
+          });
+          if (res.ok) {
+            set({ settings: await res.json() });
+            toast.success("Đã lưu Cài đặt!");
+          } else {
+            toast.error("Lưu cài đặt thất bại (Lỗi server)!");
+          }
+        } catch (error) { console.error(error); toast.error('Failed to update settings'); }
+      },
+
+      fetchMessages: async () => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/messages`, {
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) set({ messages: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+
+      updateMessageStatus: async (id, status) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/messages/${id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            body: JSON.stringify({ status })
+          });
+          if (res.ok) {
+            get().fetchMessages();
+            toast.success("Đã cập nhật trạng thái tin nhắn!");
+          } else {
+            toast.error("Cập nhật thất bại!");
+          }
+        } catch (error) { console.error(error); toast.error('Failed to update message'); }
+      },
+
+      deleteMessage: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/messages/${id}`, {
+            method: 'DELETE',
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) {
+            get().fetchMessages();
+            toast.success("Đã xóa tin nhắn!");
+          } else {
+            toast.error("Xóa thất bại!");
+          }
+        } catch (error) { console.error(error); toast.error('Failed to delete message'); }
+      },
 
       resetAll: () => set({ ...seed }),
     }),
@@ -609,7 +727,7 @@ export const useDataStore = create<DataState>()(
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<DataState>
         if (version < 2 && !state.products?.length) {
-          return { ...state, products: seedProducts }
+          return { ...state }
         }
         return state as DataState
       },
@@ -620,6 +738,3 @@ export const useDataStore = create<DataState>()(
 export function getOrderByCode(orders: Order[], code: string) {
   return orders.find((o) => o.code === code)
 }
-
-
-

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { X, User, Lock, Mail, LogOut, CheckCircle2, Loader2, ArrowLeft } from "lucide-react"
+import { X, User, Lock, Mail, LogOut, CheckCircle2, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,8 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [name, setName] = useState("")
   const [otp, setOtp] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [countdown, setCountdown] = useState(0)
   
   // Forgot password flow state
@@ -42,6 +44,8 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
     setActiveTab(tab)
     setErrorMsg("")
     setSuccessMsg("")
+    setShowPassword(false)
+    setShowConfirmPassword(false)
     if (tab === "forgot") {
       setForgotStep(1)
       setOtp("")
@@ -281,14 +285,20 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
                   <label className="text-sm font-medium text-neutral-700">Mật khẩu mới</label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input type="password" required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <Input type={showPassword ? "text" : "password"} required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 pr-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 transition-colors">
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-neutral-700">Nhập lại mật khẩu mới</label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input type="password" required placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <Input type={showConfirmPassword ? "text" : "password"} required placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 pr-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 transition-colors">
+                      {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
                   </div>
                 </div>
                 <Button type="submit" disabled={loading} className="mt-6 h-12 w-full rounded-xl bg-neutral-900 text-white font-semibold shadow hover:bg-neutral-800 transition-all">
@@ -375,7 +385,10 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input type="password" required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <Input type={showPassword ? "text" : "password"} required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 pr-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 transition-colors">
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
                   </div>
                 </div>
 
@@ -403,14 +416,20 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
                   <label className="text-sm font-medium text-neutral-700">Mật khẩu</label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input type="password" required placeholder="Tối thiểu 6 ký tự" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <Input type={showPassword ? "text" : "password"} required placeholder="Tối thiểu 6 ký tự" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 pr-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 transition-colors">
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-neutral-700">Nhập lại mật khẩu</label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input type="password" required placeholder="Nhập lại mật khẩu ở trên" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <Input type={showConfirmPassword ? "text" : "password"} required placeholder="Nhập lại mật khẩu ở trên" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="h-12 rounded-xl bg-neutral-50/50 pl-11 pr-11 text-neutral-900 border-neutral-200 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 transition-all" />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 transition-colors">
+                      {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
                   </div>
                 </div>
                 <Button type="submit" disabled={loading} className="mt-6 h-12 w-full rounded-xl bg-neutral-900 text-white font-semibold shadow hover:bg-neutral-800 transition-all">

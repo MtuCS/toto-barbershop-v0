@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { MerchandiseStoryPage } from "@/components/website/merchandise-story-page"
-import { getStoryBySlug, merchandiseStories } from "@/data/stories"
+import { getStories, getStoryBySlug } from "@/lib/api"
 
 type StoryPageProps = {
   params: Promise<{ slug: string }>
@@ -11,7 +11,7 @@ export async function generateMetadata({
   params,
 }: StoryPageProps): Promise<Metadata> {
   const { slug } = await params
-  const story = getStoryBySlug(slug)
+  const story = await getStoryBySlug(slug)
 
   if (!story) return {}
 
@@ -26,10 +26,14 @@ export async function generateMetadata({
   }
 }
 
-export default async function Page({ params }: StoryPageProps) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
   const { slug } = await params
-  const story = getStoryBySlug(slug)
-
+  const merchandiseStories = await getStories()
+  const story = merchandiseStories.find((s) => s.slug === slug)
   if (!story) notFound()
 
   const storyIndex = merchandiseStories.findIndex(

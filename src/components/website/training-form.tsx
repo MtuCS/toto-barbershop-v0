@@ -14,22 +14,25 @@ export function TrainingForm() {
   return (
     <form
       className="grid gap-4 md:grid-cols-2"
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault()
         setLoading(true)
         const form = new FormData(event.currentTarget)
-        add({
-          name: String(form.get("name")),
-          phone: String(form.get("phone")),
-          email: String(form.get("email")),
-          courseId: String(form.get("course")) || null,
-          message: String(form.get("message")),
-        })
-        setTimeout(() => {
-          setLoading(false)
+        try {
+          await add({
+            name: String(form.get("name")),
+            phone: String(form.get("phone")),
+            email: String(form.get("email")),
+            courseId: String(form.get("course")) || null,
+            message: String(form.get("message")),
+          })
           toast.success("Đã gửi đăng ký tư vấn")
           ;(event.target as HTMLFormElement).reset()
-        }, 300)
+        } catch (error: any) {
+          toast.error(error.message || "Đăng ký thất bại. Vui lòng thử lại sau.")
+        } finally {
+          setLoading(false)
+        }
       }}
     >
       <input required name="name" placeholder="Họ và tên" className={fieldClassName} />

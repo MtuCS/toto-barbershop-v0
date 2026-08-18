@@ -1,10 +1,11 @@
 import Image from "next/image"
-import { lookbookItems } from "@/data/lookbook"
+import { getLookbooks } from "@/lib/api"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { PageHero } from "@/components/website/page-hero"
 import { ShopCarousel } from "./shop-carousel"
 
-export default function Page() {
+export default async function Page() {
+  const lookbookItems = await getLookbooks()
   const shopItems = lookbookItems.filter((item) => item.published && item.category === "Shop")
   const hairItems = lookbookItems.filter((item) => item.published && item.category !== "Shop")
 

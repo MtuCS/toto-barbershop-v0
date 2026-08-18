@@ -1,6 +1,6 @@
 "use client"
 import Image from "next/image"
-import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react"
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
@@ -37,6 +37,8 @@ const labels: Record<string, string> = {
   staff: "Nhân viên",
   media: "Tệp media",
   "promo-codes": "Mã giảm giá",
+  faqs: "Câu hỏi thường gặp",
+  messages: "Tin nhắn liên hệ",
   settings: "Cài đặt",
 }
 
@@ -275,6 +277,7 @@ function ProductForm({ initial, onSave, onCancel }: {
     return opts
   })
   const [customOptionInputs, setCustomOptionInputs] = useState<Record<string, string>>({})
+
   const [variantPrices, setVariantPrices] = useState<Record<string, number>>(() => {
     const p: Record<string, number> = {}; initial.variants?.forEach(v => { p[v.name] = v.price }); return p
   })
@@ -650,6 +653,70 @@ function ProductForm({ initial, onSave, onCancel }: {
 }
 
 // ============================================================================
+// Settings Form Component
+// ============================================================================
+function SettingsForm() {
+  const d = useDataStore()
+  const [form, setForm] = useState(d.settings || {})
+  
+  const handleChange = (section: string, key: string, value: any) => {
+    setForm((prev: any) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [key]: value
+      }
+    }))
+  }
+
+  return (
+    <div>
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div><p className="text-xs font-bold uppercase tracking-widest text-primary">Quản trị nội dung</p><h1 className="mt-2 font-display text-4xl font-bold uppercase">Cài đặt</h1></div>
+      </header>
+      
+      <div className="mt-8 grid max-w-3xl gap-5 border bg-white p-6 sm:grid-cols-2">
+        <h2 className="sm:col-span-2 font-bold text-lg border-b pb-2">Thông tin doanh nghiệp</h2>
+        <div className="space-y-1.5 sm:col-span-2">
+          <label className="text-xs font-semibold text-neutral-600">Tên doanh nghiệp</label>
+          <Input value={form.business?.name || ""} onChange={e => handleChange('business', 'name', e.target.value)} />
+        </div>
+        
+        <h2 className="sm:col-span-2 font-bold text-lg border-b pb-2 mt-4">Liên hệ</h2>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Email</label>
+          <Input value={form.contact?.email || ""} onChange={e => handleChange('contact', 'email', e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Điện thoại</label>
+          <Input value={form.contact?.phone || ""} onChange={e => handleChange('contact', 'phone', e.target.value)} />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <label className="text-xs font-semibold text-neutral-600">Địa chỉ</label>
+          <Input value={form.contact?.address || ""} onChange={e => handleChange('contact', 'address', e.target.value)} />
+        </div>
+
+        <h2 className="sm:col-span-2 font-bold text-lg border-b pb-2 mt-4">Mạng xã hội</h2>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Facebook</label>
+          <Input value={form.social?.facebook || ""} onChange={e => handleChange('social', 'facebook', e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Instagram</label>
+          <Input value={form.social?.instagram || ""} onChange={e => handleChange('social', 'instagram', e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Tiktok</label>
+          <Input value={form.social?.tiktok || ""} onChange={e => handleChange('social', 'tiktok', e.target.value)} />
+        </div>
+
+        <Button onClick={() => d.updateSettings(form)} className="sm:col-span-2 mt-4">Lưu thay đổi</Button>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
 // Generic form for other sections
 // ============================================================================
 const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "blocks", "gallery", "relatedProductIds", "timeline", "items", "process", "modules", "roadmap", "benefits", "audience", "productCount"]
@@ -664,6 +731,7 @@ function generateDefaultForm(section: string) {
     case "customers": return { name: "", email: "", password: "", phone: "", role: "CUSTOMER" }
     case "staff": return { name: "", email: "", password: "", phone: "", role: "ADMIN" }
     case "promo-codes": return { code: "", discountType: "PERCENT", discountValue: 0, minOrderValue: 0, maxDiscount: 0, usageLimit: 100, isActive: true, expiresAt: null }
+    case "faqs": return { question: "", answer: "", category: "shop", order: 0 }
     default: return { name: "" }
   }
 }
@@ -671,10 +739,116 @@ function generateDefaultForm(section: string) {
 type Row = Record<string, any>
 
 // ============================================================================
+// Messages Form Component
+// ============================================================================
+function MessagesForm({ d }: { d: any }) {
+  const [selectedMsg, setSelectedMsg] = useState<any>(null);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-semibold">Tin nhắn liên hệ</h2>
+          <p className="text-sm text-neutral-500">Quản lý tin nhắn từ khách hàng</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border overflow-hidden">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-neutral-50 text-neutral-500 border-b">
+            <tr>
+              <th className="px-6 py-4 font-medium">Khách hàng</th>
+              <th className="px-6 py-4 font-medium">Email</th>
+              <th className="px-6 py-4 font-medium">Trạng thái</th>
+              <th className="px-6 py-4 font-medium">Ngày gửi</th>
+              <th className="px-6 py-4 font-medium text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {d.messages?.map((msg: any) => (
+              <tr key={msg.id} className={msg.status === 'unread' ? 'bg-blue-50/30' : ''}>
+                <td className="px-6 py-4 font-medium">{msg.name}</td>
+                <td className="px-6 py-4">{msg.email}</td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${msg.status === 'unread' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                    {msg.status === 'unread' ? 'Chưa đọc' : 'Đã đọc'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-neutral-500">
+                  {new Date(msg.createdAt).toLocaleDateString('vi-VN')}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setSelectedMsg(msg)}>
+                      <Eye className="size-4 mr-2" /> Xem
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => {
+                      if (confirm('Xóa tin nhắn này?')) d.deleteMessage(msg.id);
+                    }}>
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {(!d.messages || d.messages.length === 0) && (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-neutral-500">Không có tin nhắn nào.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {selectedMsg && (
+        <Dialog open={!!selectedMsg} onOpenChange={(open) => !open && setSelectedMsg(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Chi tiết tin nhắn</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-semibold text-neutral-500 uppercase">Khách hàng</p>
+                  <p className="font-medium mt-1">{selectedMsg.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-neutral-500 uppercase">Email</p>
+                  <p className="font-medium mt-1">{selectedMsg.email}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-neutral-500 uppercase">Nội dung lời nhắn</p>
+                <div className="mt-2 p-4 bg-neutral-50 rounded-md border text-sm whitespace-pre-wrap">
+                  {selectedMsg.message}
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="mt-6">
+              <Button variant="outline" onClick={() => setSelectedMsg(null)}>Đóng</Button>
+              {selectedMsg.status === 'unread' && (
+                <Button onClick={() => {
+                  d.updateMessageStatus(selectedMsg.id, 'read');
+                  setSelectedMsg(null);
+                }}>
+                  Đánh dấu đã đọc
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  )
+}
+
+// ============================================================================
 // Main CrudPage Component
 // ============================================================================
 export function CrudPage({ section }: { section: string }) {
   const d = useDataStore()
+
+
   const [search, setSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Row | null>(null)
@@ -682,6 +856,11 @@ export function CrudPage({ section }: { section: string }) {
   const [page, setPage] = useState(1)
   const pageSize = 10
   const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+
+  if (section === 'messages') {
+    return <MessagesForm d={d} />
+  }
 
   let rows: Row[] = []
   if (section === "products") rows = d.products
@@ -693,6 +872,7 @@ export function CrudPage({ section }: { section: string }) {
   if (section === "orders") rows = d.orders
   if (section === "media") rows = d.media
   if (section === "promo-codes") rows = d.promoCodes
+  if (section === "faqs") rows = d.faqs || []
   if (section === "customers" || section === "staff") {
     const customerMap = new Map();
     d.customers.forEach(c => {
@@ -738,6 +918,7 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "merchandise-stories") d.deleteStory(item.id)
     if (section === "lookbook") d.deleteLookbook(item.id)
     if (section === "promo-codes") await d.deletePromoCode(item.id)
+    if (section === "faqs") await d.deleteFaq(item.id)
     setItemToDelete(null)
   }
 
@@ -753,6 +934,7 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "merchandise-stories") d.upsertStory(formData as any)
     if (section === "lookbook") d.upsertLookbook(formData as any)
     if (section === "promo-codes") await d.upsertPromoCode(formData as any)
+    if (section === "faqs") await d.upsertFaq(formData as any)
     setModalOpen(false)
   }
 
@@ -762,17 +944,7 @@ export function CrudPage({ section }: { section: string }) {
 
   if (section === "settings") {
     return (
-      <div>
-        <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div><p className="text-xs font-bold uppercase tracking-widest text-primary">Quản trị nội dung</p><h1 className="mt-2 font-display text-4xl font-bold uppercase">Cài đặt</h1></div>
-        </header>
-        <div className="mt-8 grid max-w-3xl gap-5 border bg-white p-6 sm:grid-cols-2">
-          <Field label="Tên doanh nghiệp" value={d.settings.business.name} />
-          <Field label="Điện thoại" value={d.settings.contact.phone} />
-          <Field label="Địa chỉ" value={d.settings.contact.address} wide />
-          <Button className="sm:col-span-2">Lưu thay đổi</Button>
-        </div>
-      </div>
+      <SettingsForm />
     )
   }
 
@@ -808,7 +980,7 @@ export function CrudPage({ section }: { section: string }) {
                 <tr>
                   <th className="p-4">Tên / Mã</th>
                   <th>Loại</th>
-                  <th>{section === "media" ? "" : section === "categories" ? "Mô tả" : "Trạng thái"}</th>
+                  {section !== "customers" && section !== "staff" && <th>{section === "media" ? "" : section === "categories" ? "Mô tả" : "Trạng thái"}</th>}
                   {section !== "merchandise-stories" && <th>{section === "categories" ? "Số lượng SP" : section === "media" ? "Kích thước" : section === "lookbook" ? "Thứ tự" : "Giá trị"}</th>}
                   <th />
                 </tr>
@@ -866,32 +1038,34 @@ export function CrudPage({ section }: { section: string }) {
                         </div>
                       </td>
                       <td>{String(section === "orders" ? r.paymentMethod : section === "merchandise-stories" ? "Bài viết" : (r.role ?? r.category ?? r.parent ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
-                      <td>
-                        {section === "media" ? "—" : section === "categories" ? (
-                          <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
-                        ) : (
-                          <div className="flex flex-col gap-1 items-start">
-                            <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true || r.isActive === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false || r.isActive === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
-                              {r.status === "active" ? ((section === "customers" || section === "staff") ? "Đang HĐ" : "Đang bán") : 
-                               r.status === "draft" ? "Nháp" : 
-                               (r.status === "published" || r.published === true) ? "Hiển thị" : 
-                               r.published === false ? "Ẩn" :
-                               r.isActive === true ? "Hoạt động" :
-                               r.isActive === false ? "Bị khóa" :
-                               (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
-                               r.status === "PROCESSING" ? "Đang chuẩn bị" :
-                               r.status === "SHIPPED" ? "Đang giao" :
-                               r.status === "CANCELLED" ? "Đã hủy" :
-                               (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
-                            </span>
-                            {section === "orders" && (
-                              <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
-                                {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
+                      {section !== "customers" && section !== "staff" && (
+                        <td>
+                          {section === "media" ? "—" : section === "categories" ? (
+                            <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
+                          ) : (
+                            <div className="flex flex-col gap-1 items-start">
+                              <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true || r.isActive === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false || r.isActive === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
+                                {r.status === "active" ? "Đang bán" : 
+                                 r.status === "draft" ? "Nháp" : 
+                                 (r.status === "published" || r.published === true) ? "Hiển thị" : 
+                                 r.published === false ? "Ẩn" :
+                                 r.isActive === true ? "Hoạt động" :
+                                 r.isActive === false ? "Bị khóa" :
+                                 (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
+                                 r.status === "PROCESSING" ? "Đang chuẩn bị" :
+                                 r.status === "SHIPPED" ? "Đang giao" :
+                                 r.status === "CANCELLED" ? "Đã hủy" :
+                                 (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
                               </span>
-                            )}
-                          </div>
-                        )}
-                      </td>
+                              {section === "orders" && (
+                                <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
+                                  {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      )}
                       {section !== "merchandise-stories" && <td>
                         {section === "lookbook" ? (r.order ?? "—") :
                          section === "categories" ? (r.productCount ?? 0) :
@@ -1130,13 +1304,25 @@ export function CrudPage({ section }: { section: string }) {
                       <Input
                         type="datetime-local"
                         value={formData[key] ? new Date(new Date(formData[key]).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,16) : ""}
-                        onChange={e => handleChange(key, e.target.value ? new Date(e.target.value).toISOString() : null)}
+                        onChange={e => handleChange(key, e.target.value ? new Date(e.target.value).toISOString() : "")}
                       />
+                    ) : key === "password" ? (
+                      <div className="relative">
+                        <Input
+                          value={formData[key] || ""}
+                          onChange={e => handleChange(key, e.target.value)}
+                          type={showPassword ? "text" : "password"}
+                          className="pr-10"
+                        />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600">
+                          {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        </button>
+                      </div>
                     ) : (
                       <Input
                         value={formData[key] || ""}
                         onChange={e => handleChange(key, typeof formData[key] === "number" ? Number(e.target.value) : e.target.value)}
-                        type={key === "password" ? "password" : typeof formData[key] === "number" ? "number" : "text"}
+                        type={typeof formData[key] === "number" ? "number" : "text"}
                       />
                     )}
                   </div>

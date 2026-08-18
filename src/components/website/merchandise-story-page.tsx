@@ -42,7 +42,7 @@ export function MerchandiseStoryPage({
         </section>
 
         <div className="mx-auto max-w-[1400px] px-5 pb-24 md:px-8 md:pb-36">
-          {story.blocks.map((block, index) => (
+          {(story.blocks || []).map((block, index) => (
             <StoryBlockSection
               key={block.id}
               block={block}
@@ -105,7 +105,7 @@ function StoryHero({ story }: { story: MerchandiseStory }) {
           className="relative aspect-[4/3] min-w-0 overflow-hidden bg-[#10231e] md:col-span-7 md:aspect-auto md:min-h-[calc(100dvh-4rem)]"
         >
           <Image
-            src={story.heroImage}
+            src={story.heroImage || (story as any).image || "/images/hero.png"}
             alt={`Hình ảnh mở đầu câu chuyện ${story.title}`}
             fill
             loading="eager"
