@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { X, User, Lock, Mail, LogOut, CheckCircle2, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { useCustomerUserStore } from "@/store/customer-user-store"
+import { isValidEmail } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -69,6 +70,8 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
     setErrorMsg("")
     setSuccessMsg("")
 
+    if (!isValidEmail(email.trim())) { setErrorMsg("Email không hợp lệ. Vui lòng kiểm tra lại."); setLoading(false); return }
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -98,6 +101,7 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
     setSuccessMsg("")
 
     if (!name.trim()) { setErrorMsg("Vui lòng nhập họ và tên của bạn"); setLoading(false); return }
+    if (!isValidEmail(email.trim())) { setErrorMsg("Email không hợp lệ. Vui lòng kiểm tra lại."); setLoading(false); return }
     if (password !== confirmPassword) { setErrorMsg("Mật khẩu nhập lại không khớp"); setLoading(false); return }
 
     try {
@@ -127,6 +131,8 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
     setLoading(true)
     setErrorMsg("")
     setSuccessMsg("")
+
+    if (!isValidEmail(email.trim())) { setErrorMsg("Email không hợp lệ. Vui lòng kiểm tra lại."); setLoading(false); return }
 
     try {
       const res = await fetch("/api/auth/forgot-password", {

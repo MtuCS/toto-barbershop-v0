@@ -10,6 +10,7 @@ import { useCartStore } from "@/store/cart-store"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { formatCurrency } from "@/lib/format"
 import { SHIPPING_FLAT_FEE } from "@/lib/constants"
+import { isValidEmail, isValidPhone } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import { useMounted } from "@/hooks/use-mounted"
 
@@ -112,6 +113,8 @@ export function CheckoutForm() {
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!items.length || isSubmitting) return
+    if (!isValidEmail(form.email)) { toast.error("Email không hợp lệ. Vui lòng kiểm tra lại."); return }
+    if (!isValidPhone(form.phone)) { toast.error("Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 số bắt đầu bằng số 0."); return }
     if (!form.provinceName || !form.districtName || !form.wardName || !form.street) { toast.error("Vui lòng nhập đầy đủ địa chỉ giao hàng"); return }
     const fullAddress = `${form.street}, ${form.wardName}, ${form.districtName}, ${form.provinceName}`
     setIsSubmitting(true)

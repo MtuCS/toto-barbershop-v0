@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
+import { isValidEmail, isValidPhone } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 
 const fieldClassName = "min-h-12 border border-black/20 bg-white px-4 text-[#101715] outline-none transition-colors placeholder:text-neutral-500 focus:border-primary"
@@ -20,6 +21,10 @@ export function TrainingForm() {
           const courseId = String(form.get("course")) || "Không xác định";
           const courseName = courseId === "t-foundation" ? "Barber Foundation" : courseId === "t-pro" ? "Advanced Fade & Styling" : courseId;
           const phone = String(form.get("phone"));
+          const email = String(form.get("email"));
+          if (!isValidEmail(email)) { toast.error("Email không hợp lệ. Vui lòng kiểm tra lại."); setLoading(false); return; }
+          if (!isValidPhone(phone)) { toast.error("Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 số."); setLoading(false); return; }
+          
           const userMsg = String(form.get("message") || "Không có");
           const subject = courseName !== "Không xác định" ? `Đăng ký khóa học: ${courseName}` : undefined;
 
@@ -28,7 +33,7 @@ export function TrainingForm() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               name: String(form.get("name")),
-              email: String(form.get("email")),
+              email,
               phone,
               subject,
               message: userMsg
