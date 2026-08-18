@@ -120,11 +120,24 @@ export function CheckoutForm() {
     setIsSubmitting(true)
     try {
       const response = await fetch("/api/orders/checkout", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity, price: item.price })), customer: { name: form.name, phone: form.phone, email: form.email, address: fullAddress, note: form.note }, email: form.email, address: { full: fullAddress, province: form.provinceName, district: form.districtName, ward: form.wardName, street: form.street }, note: form.note, total, discount, promoCode: coupon ?? undefined, paymentMethod: form.payment, idempotencyKey: crypto.randomUUID() }) })
-      if (!response.ok) { const error = await response.json().catch(() => ({})); throw new Error(error.error || "Không thể tạo đơn hàng. Vui lòng thử lại.") }
+      
+      if (response.status === 202) {
+        // Xử lý 202 từ Backend khi click đúp / lag mạng
+        clear()
+        toast.success("Đơn hàng đang được xử lý, bạn sẽ nhận được email ngay!");
+        router.push(`/order-success`)
+        return;
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({})); 
+        throw new Error(error.error || "Không thể tạo đơn hàng. Vui lòng thử lại.") 
+      }
+      
       const order = await response.json()
       clear()
       if (order.checkoutUrl) { window.location.href = order.checkoutUrl; return }
-      router.push(`/order-success?code=${order.id}`)
+      router.push(`/order-success?code=${order.orderCode}`)
     } catch (error) { toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra") } finally { setIsSubmitting(false) }
   }
 
