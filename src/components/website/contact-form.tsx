@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { isValidEmail, isValidPhone } from "@/lib/validation";
 
 export function ContactForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,17 +13,24 @@ export function ContactForm() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      message: formData.get("message"),
-    };
 
     try {
+      const email = String(formData.get("email"));
+      const phone = String(formData.get("phone"));
+      
+      if (!isValidEmail(email)) { toast.error("Email không hợp lệ. Vui lòng kiểm tra lại."); setIsLoading(false); return; }
+      if (!isValidPhone(phone)) { toast.error("Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 số."); setIsLoading(false); return; }
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          name: formData.get("name"),
+          email,
+          phone,
+          subject: formData.get("subject"),
+          message: formData.get("message"),
+        }),
       });
 
       if (!res.ok) throw new Error("Gửi thất bại");
