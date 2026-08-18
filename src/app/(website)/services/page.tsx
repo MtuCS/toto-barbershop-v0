@@ -77,16 +77,7 @@ export default async function Page() {
               Từ form cổ điển đến texture hiện đại, mỗi lần ngồi ghế là một cuộc
               trao đổi để tìm ra kiểu tóc thuộc về bạn.
             </p>
-            <Link
-              href="/contact"
-              className="group mt-8 inline-flex min-h-12 items-center gap-3 bg-[#79b8a7] px-5 text-xs font-bold uppercase tracking-[0.15em] text-[#07110f] transition-colors hover:bg-[#a8d6c9] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79b8a7] active:translate-y-px"
-            >
-              Liên hệ đặt lịch
-              <ArrowUpRight
-                className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                aria-hidden="true"
-              />
-            </Link>
+
           </div>
 
           <div className="grid grid-cols-12 gap-3 md:col-span-7 md:pl-4">

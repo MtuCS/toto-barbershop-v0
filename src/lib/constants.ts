@@ -51,16 +51,24 @@ export const ADMIN_NAV = [
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   pending: 'Chờ xác nhận',
+  PENDING: 'Chờ xác nhận',
   confirmed: 'Đã xác nhận',
+  PROCESSING: 'Đã xác nhận',
   shipping: 'Đang giao',
+  SHIPPED: 'Đang giao',
   completed: 'Hoàn thành',
+  COMPLETED: 'Hoàn thành',
   cancelled: 'Đã huỷ',
+  CANCELLED: 'Đã huỷ',
 }
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   unpaid: 'Chưa thanh toán',
+  UNPAID: 'Chưa thanh toán',
   paid: 'Đã thanh toán',
+  PAID: 'Đã thanh toán',
   refunded: 'Đã hoàn tiền',
+  REFUNDED: 'Đã hoàn tiền',
 }
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
@@ -70,12 +78,6 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   rejected: 'Từ chối',
 }
 
-// MOCK coupons for checkout demo.
-export const MOCK_COUPONS: Record<string, { type: 'percent' | 'fixed'; value: number }> = {
-  TOTO10: { type: 'percent', value: 10 },
-  FREESHIP: { type: 'fixed', value: 30000 },
-  BARBER50K: { type: 'fixed', value: 50000 },
-}
 
 export const SHIPPING_FLAT_FEE = 30000
 export const FREE_SHIPPING_THRESHOLD = 500000

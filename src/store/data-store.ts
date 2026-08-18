@@ -7,7 +7,6 @@ import type {
   Category,
   Service,
   TrainingCourse,
-  TrainingLead,
   MerchandiseStory,
   LookbookItem,
   Order,
@@ -36,7 +35,6 @@ interface DataState {
   categories: Category[]
   services: Service[]
   courses: TrainingCourse[]
-  leads: TrainingLead[]
   stories: MerchandiseStory[]
   lookbook: LookbookItem[]
   orders: Order[]
@@ -51,7 +49,6 @@ interface DataState {
   fetchCategories: () => Promise<void>
   fetchServices: () => Promise<void>
   fetchCourses: () => Promise<void>
-  fetchLeads: () => Promise<void>
   fetchStories: () => Promise<void>
   fetchLookbook: () => Promise<void>
   fetchMedia: () => Promise<void>
@@ -79,11 +76,6 @@ interface DataState {
   // Courses
   upsertCourse: (course: TrainingCourse) => void
   deleteCourse: (id: string) => void
-
-  // Leads
-  addLead: (lead: Omit<TrainingLead, "id" | "createdAt" | "status">) => Promise<void>
-  updateLeadStatus: (id: string, status: TrainingLead["status"]) => void
-  deleteLead: (id: string) => void
 
   // Stories
   upsertStory: (story: MerchandiseStory) => void
@@ -124,7 +116,6 @@ const seed = {
   categories: [] as Category[],
   services: [] as Service[],
   courses: [] as TrainingCourse[],
-  leads: [] as TrainingLead[],
   stories: [] as MerchandiseStory[],
   lookbook: [] as LookbookItem[],
   promoCodes: [] as any[],
@@ -185,12 +176,6 @@ export const useDataStore = create<DataState>()(
         try {
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses`);
           if (res.ok) set({ courses: await res.json() });
-        } catch (error) { console.error(error); }
-      },
-      fetchLeads: async () => {
-        try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads`);
-          if (res.ok) set({ leads: await res.json() });
         } catch (error) { console.error(error); }
       },
       fetchStories: async () => {
@@ -468,36 +453,6 @@ export const useDataStore = create<DataState>()(
       },
 
 
-      
-      addLead: async (lead) => {
-        const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads`, { 
-          method: 'POST', 
-          headers: { 
-            'Content-Type': 'application/json', 
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}) 
-          }, 
-          body: JSON.stringify(lead) 
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to submit lead');
-        }
-        get().fetchLeads();
-      },
-      updateLeadStatus: async (id, status) => {
-        const token = useAuthStore.getState().session?.token;
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status }) });
-        get().fetchLeads();
-      },
-      deleteLead: async (id) => {
-        const token = useAuthStore.getState().session?.token;
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/leads/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-        get().fetchLeads();
-      },
-
-
-      
       upsertStory: async (story) => {
         const token = useAuthStore.getState().session?.token;
         const isUpdate = !!story.id && !String(story.id).startsWith('st-');
@@ -573,37 +528,6 @@ export const useDataStore = create<DataState>()(
           toast.error('Lỗi xóa mã giảm giá');
         }
       },
-
-      placeOrder: (input: any) => {
-        const now = new Date().toISOString()
-        const order: Order = {
-          id: uid("ord"),
-          code: `TOTO-${Math.floor(1000 + Math.random() * 9000)}`,
-          customer: input.customer,
-          items: input.items.map((i: any) => ({
-            variantId: i.variantId,
-            productId: i.productId,
-            title: i.title,
-            variantName: i.variantName,
-            image: i.image,
-            price: i.price,
-            quantity: i.quantity,
-          })),
-          subtotal: input.subtotal,
-          shippingFee: input.shippingFee,
-          discount: input.discount,
-          total: input.total,
-          couponCode: input.couponCode,
-          paymentMethod: input.paymentMethod,
-          paymentStatus: "unpaid",
-          status: "pending",
-          timeline: [{ status: "pending", at: now, note: "KhÃ¡ch Ä‘áº·t hÃ ng" }],
-          createdAt: now,
-        }
-        set((s) => ({ orders: [order, ...s.orders] }))
-        return order
-      },
-
 
       
       addMedia: async (item) => {

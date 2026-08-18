@@ -2,13 +2,11 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { useDataStore } from "@/store/data-store"
 import { Button } from "@/components/ui/button"
 
 const fieldClassName = "min-h-12 border border-black/20 bg-white px-4 text-[#101715] outline-none transition-colors placeholder:text-neutral-500 focus:border-primary"
 
 export function TrainingForm() {
-  const add = useDataStore((state) => state.addLead)
   const [loading, setLoading] = useState(false)
 
   return (
@@ -19,13 +17,26 @@ export function TrainingForm() {
         setLoading(true)
         const form = new FormData(event.currentTarget)
         try {
-          await add({
-            name: String(form.get("name")),
-            phone: String(form.get("phone")),
-            email: String(form.get("email")),
-            courseId: String(form.get("course")) || null,
-            message: String(form.get("message")),
-          })
+          const courseId = String(form.get("course")) || "Không xác định";
+          const courseName = courseId === "t-foundation" ? "Barber Foundation" : courseId === "t-pro" ? "Advanced Fade & Styling" : courseId;
+          const phone = String(form.get("phone"));
+          const userMsg = String(form.get("message") || "Không có");
+          const subject = courseName !== "Không xác định" ? `Đăng ký khóa học: ${courseName}` : undefined;
+
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: String(form.get("name")),
+              email: String(form.get("email")),
+              phone,
+              subject,
+              message: userMsg
+            })
+          });
+
+          if (!res.ok) throw new Error("Gửi form thất bại");
+
           toast.success("Đã gửi đăng ký tư vấn")
           ;(event.target as HTMLFormElement).reset()
         } catch (error: any) {
@@ -44,7 +55,7 @@ export function TrainingForm() {
         <option value="t-pro">Advanced Fade &amp; Styling</option>
       </select>
       <textarea name="message" placeholder="Bạn muốn được tư vấn điều gì?" className={`${fieldClassName} min-h-32 py-3 md:col-span-2`} />
-      <Button disabled={loading} className="h-12 md:col-span-2">
+      <Button type="submit" disabled={loading} className="h-12 md:col-span-2">
         {loading ? "Đang gửi..." : "Đăng ký tư vấn"}
       </Button>
     </form>

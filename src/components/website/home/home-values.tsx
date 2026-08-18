@@ -1,4 +1,4 @@
-import { HeartHandshake, ScanLine, Sparkles } from "lucide-react"
+import { HeartHandshake, ScanLine, Droplets } from "lucide-react"
 
 const values = [
   {
@@ -17,7 +17,7 @@ const values = [
   },
   {
     number: "03",
-    icon: Sparkles,
+    icon: Droplets,
     title: "Sạch sẽ",
     description:
       "Từ chiếc khăn giặt sạch đến bộ dụng cụ tiệt trùng kỹ càng. ToTo tin rằng sự tôn trọng khách hàng luôn bắt đầu từ những điều nhỏ nhất.",
