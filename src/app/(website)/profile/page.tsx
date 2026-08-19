@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import type { OrderStatus, PaymentStatus } from "@/types"
+import { createClient } from "@/utils/supabase/client"
 
 function OrderStepper({ status }: { status: string }) {
   const normStatus = (status || "PENDING").toUpperCase()
@@ -155,75 +156,37 @@ export default function ProfilePage() {
     }
   }, [user?.id, token])
 
-  // Lấy danh sách ID đơn hàng để chạy lại effect nếu có đơn mới
-  const orderIds = JSON.stringify(orders.map(o => o.id))
-
+  // Realtime: Lắng nghe thay đổi trạng thái đơn hàng từ Supabase
   useEffect(() => {
-    const activeOrders = orders.filter(o => !['completed', 'cancelled', 'delivered'].includes((o.status || '').toLowerCase()));
-    if (activeOrders.length === 0) return;
+    if (!user?.id) return;
 
-    let intervalId: NodeJS.Timeout;
-    let controller: AbortController | null = null;
-    let pollCount = 0;
-    let currentMs = 5000;
+    const supabase = createClient();
 
-    const checkOrderStatus = async () => {
-      controller?.abort();
-      controller = new AbortController();
-
-      try {
-        const currentActive = useDataStore.getState().orders.filter(
-          o => o.customer.email === user?.email && !['completed', 'cancelled', 'delivered'].includes((o.status || '').toLowerCase())
-        );
-        
-        if (currentActive.length === 0) {
-          stopPolling();
-          return;
+    const channel = supabase
+      .channel(`orders-user-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'Order',
+          filter: `userId=eq.${user.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as { id: number; status: string; paymentStatus: string };
+          useDataStore.getState().setOrderStatusInStore(
+            updated.id,
+            updated.status.toUpperCase() as OrderStatus,
+            updated.paymentStatus.toUpperCase() as PaymentStatus
+          );
         }
-
-        await Promise.all(currentActive.map(async (order) => {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${order.id}/status`, { signal: controller?.signal });
-          if (res.ok) {
-            const data = await res.json();
-            useDataStore.getState().setOrderStatusInStore(data.id, (data.status.toUpperCase()) as OrderStatus, (data.paymentStatus.toUpperCase()) as PaymentStatus);
-          }
-        }));
-
-        pollCount++;
-        if (pollCount === 12 && currentMs === 5000) {
-          stopPolling(); startPolling(10000);
-        } else if (pollCount === 24 && currentMs === 10000) {
-          stopPolling(); startPolling(30000);
-        } else if (pollCount === 34 && currentMs === 30000) {
-          stopPolling(); startPolling(60000);
-        }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') console.error('Polling error:', err);
-      }
-    };
-
-    const startPolling = (ms = 5000) => {
-      currentMs = ms;
-      intervalId = setInterval(checkOrderStatus, ms);
-    };
-
-    const stopPolling = () => {
-      clearInterval(intervalId);
-      controller?.abort();
-    };
-
-    const handleVisibilityChange = () => {
-      document.visibilityState === 'visible' ? startPolling(currentMs) : stopPolling();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    startPolling(currentMs);
+      )
+      .subscribe();
 
     return () => {
-      stopPolling();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      supabase.removeChannel(channel);
     };
-  }, [orderIds])
+  }, [user?.id])
 
 
   const handleSave = async (e: React.FormEvent) => {
