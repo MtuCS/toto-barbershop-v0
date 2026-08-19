@@ -2,7 +2,7 @@ import Image from "next/image"
 import { lookbookItems } from "@/data/lookbook"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { PageHero } from "@/components/website/page-hero"
-import { ShopCarousel } from "./shop-carousel"
+import { ShopCarousel } from "@/components/website/lookbook/shop-carousel"
 
 export default function Page() {
   const shopItems = lookbookItems.filter((item) => item.published && item.category === "Shop")
