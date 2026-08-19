@@ -1,5 +1,5 @@
 "use client"
-import { LayoutDashboard, Package, Tags, Scissors, GraduationCap, BookOpen, Images, ShoppingBag, Users, UserCog, ImageIcon, Settings, LogOut, Menu, Ticket, X, HelpCircle, MessageSquare, BookOpenCheck } from "lucide-react"; import { useState, useEffect } from "react"; import { useAuthStore } from "@/store/auth-store"; import { usePathname, useRouter } from "next/navigation"; import Link from "next/link"; import { useDataStore } from "@/store/data-store"; import { toast } from "sonner";
+import { LayoutDashboard, Package, Tags, Scissors, GraduationCap, BookOpen, Images, ShoppingBag, Users, UserCog, ImageIcon, Settings, LogOut, Menu, Ticket, X, HelpCircle, MessageSquare, BookOpenCheck, Dices } from "lucide-react"; import { useState, useEffect } from "react"; import { useAuthStore } from "@/store/auth-store"; import { usePathname, useRouter } from "next/navigation"; import Link from "next/link"; import { useDataStore } from "@/store/data-store"; import { toast } from "sonner";
 const navGroups = [
   {
     title: 'Hệ thống',
@@ -14,6 +14,7 @@ const navGroups = [
       ['orders', 'Đơn hàng', ShoppingBag],
       ['customers', 'Khách hàng', Users],
       ['promo-codes', 'Mã giảm giá', Ticket],
+      ['lucky-wheel', 'Vòng quay', Dices],
     ]
   },
   {

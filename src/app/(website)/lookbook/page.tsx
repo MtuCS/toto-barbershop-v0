@@ -6,8 +6,8 @@ import { ShopCarousel } from "./shop-carousel"
 
 export default async function Page() {
   const lookbookItems = await getLookbooks()
-  const shopItems = lookbookItems.filter((item) => item.published && item.category === "Shop")
-  const hairItems = lookbookItems.filter((item) => item.published && item.category !== "Shop")
+  const shopItems = lookbookItems.filter((item) => item.category === "Shop")
+  const hairItems = lookbookItems.filter((item) => item.category !== "Shop")
 
   return (
     <MarketingPageShell>
@@ -43,14 +43,14 @@ export default async function Page() {
               <figure key={item.id} className="group relative aspect-square overflow-hidden rounded-sm bg-black/30">
                 <Image
                   src={item.image}
-                  alt={item.caption}
+                  alt={item.title || "Lookbook"}
                   fill
                   sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-[1.025] motion-reduce:transition-none"
                 />
                 <figcaption className="absolute inset-x-0 bottom-0 bg-[#07110f]/88 p-4 opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none">
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#79b8a7]">{item.category}</span>
-                  <p className="mt-1 text-sm font-medium text-white">{item.caption}</p>
+                  <p className="mt-1 text-sm font-medium text-white">{item.title}</p>
                 </figcaption>
               </figure>
             ))}

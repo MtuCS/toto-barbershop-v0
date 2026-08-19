@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Image from "next/image"
 import Link from "next/link"
@@ -45,13 +45,13 @@ export function CartDrawer() {
               <ShoppingBag className="size-7 text-muted-foreground" />
             </div>
             <div>
-              <p className="font-medium">Giá» hÃ ng trá»‘ng</p>
+              <p className="font-medium">Giỏ hàng trống</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                KhÃ¡m phÃ¡ grooming vÃ  merchandise cá»§a Toto.
+                Khám phá grooming và merchandise của Toto.
               </p>
             </div>
             <Button asChild onClick={() => setOpen(false)}>
-              <Link href="/shop">Mua sáº¯m ngay</Link>
+              <Link href="/shop">Mua sắm ngay</Link>
             </Button>
           </div>
         ) : (
