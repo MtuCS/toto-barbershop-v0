@@ -1,8 +1,8 @@
 import Image from "next/image"
-import { getLookbooks } from "@/lib/api"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { PageHero } from "@/components/website/page-hero"
-import { ShopCarousel } from "./shop-carousel"
+import { ShopCarousel } from "@/components/website/lookbook/shop-carousel"
+import { getLookbooks } from "@/lib/api"
 
 export default async function Page() {
   const lookbookItems = await getLookbooks()
@@ -33,7 +33,6 @@ export default async function Page() {
       <section className="border-t border-white/10 py-16 md:py-24">
         <div className="mx-auto max-w-[1400px] px-5 md:px-8">
           <SectionHeader
-            // label="Selected work"
             label=""
             title="Những kiểu tóc nổi bật"
             copy="Những tác phẩm được thực hiện tại TOTO, từ các thiết kế texture, fade đến màu sắc cá tính."

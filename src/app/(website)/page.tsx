@@ -4,6 +4,7 @@ import { VisualVideo } from "@/components/website/home/visual-video"
 import { QuickInfo } from "@/components/website/home/quick-info"
 import { ServicesBento } from "@/components/website/home/services-bento"
 import { HomeTestimonials } from "@/components/website/home/home-testimonials"
+import { HomeLookbook } from "@/components/website/home/home-lookbook"
 import { HomeValues } from "@/components/website/home/home-values"
 import { AboutIntro } from "@/components/website/home/about-intro"
 import { LookbookPreview } from "@/components/website/home/lookbook-preview"
@@ -24,6 +25,7 @@ export default function HomePage() {
       <ServicesBento />
       <HomeValues />
       <HomeTestimonials />
+      <HomeLookbook />
 
       {/* Tạm thời ẩn các scene theo yêu cầu */}
       {/* <MerchTeaser /> */}

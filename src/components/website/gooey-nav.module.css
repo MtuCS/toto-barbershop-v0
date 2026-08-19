@@ -82,6 +82,18 @@
   animation: scatter 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--delay) both;
 }
 
+@media (min-width: 48rem) and (max-width: 79.9375rem) {
+  .list {
+    gap: 0;
+  }
+
+  .item a {
+    padding: 0.42rem 0.4rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.045em;
+  }
+}
+
 @keyframes scatter {
   18% { opacity: 1; }
   100% { opacity: 0; transform: translate3d(var(--x), var(--y), 0) scale(var(--scale)); }
