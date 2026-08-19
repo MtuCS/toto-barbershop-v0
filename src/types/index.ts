@@ -245,6 +245,24 @@ export interface Order {
   createdAt: string
 }
 
+export interface Faq {
+  id: string | number
+  question: string
+  answer: string
+  category: string
+  order: number
+}
+
+export interface ContactMessage {
+  id: string
+  name: string
+  email: string
+  message: string
+  status: string
+  createdAt: string
+  updatedAt?: string
+}
+
 export interface Customer {
   id: ID
   name: string

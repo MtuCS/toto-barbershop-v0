@@ -3,9 +3,16 @@
 import { useEffect, useState } from "react"
 import { ArrowUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { usePathname } from "next/navigation"
 
 export function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false)
+  const pathname = usePathname()
+
+  // Ensure scroll to top on route change
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" })
+  }, [pathname])
 
   // Toggle visibility based on scroll position
   useEffect(() => {

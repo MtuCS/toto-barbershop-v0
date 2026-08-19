@@ -1,6 +1,6 @@
 "use client"
 import Image from "next/image"
-import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react"
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useState, useMemo } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,9 @@ const labels: Record<string, string> = {
   customers: "Khách hàng",
   staff: "Nhân viên",
   media: "Tệp media",
+  "promo-codes": "Mã giảm giá",
+  faqs: "Câu hỏi thường gặp",
+  messages: "Tin nhắn liên hệ",
   settings: "Cài đặt",
 }
 
@@ -66,12 +70,22 @@ const fieldLabels: Record<string, string> = {
   subtitle: "Phụ đề",
   heroImage: "Ảnh bìa",
   manifesto: "Tuyên ngôn",
+  blocks: "Nội dung (JSON Array)",
+  gallery: "Thư viện ảnh (JSON Array)",
   published: "Trạng thái hiển thị",
   order: "Thứ tự",
   url: "Đường dẫn file (URL)",
   size: "Kích thước",
   parent: "Danh mục cha",
   productCount: "Số lượng sản phẩm",
+  code: "Mã giảm giá",
+  discountType: "Loại giảm giá",
+  discountValue: "Giá trị giảm",
+  minOrderValue: "Giá trị đơn tối thiểu",
+  maxDiscount: "Giảm tối đa (Tùy chọn)",
+  usageLimit: "Giới hạn số lần dùng",
+  isActive: "Hoạt động",
+  message: "Lời nhắn",
 }
 
 // ============================================================================
@@ -267,6 +281,7 @@ function ProductForm({ initial, onSave, onCancel }: {
     return opts
   })
   const [customOptionInputs, setCustomOptionInputs] = useState<Record<string, string>>({})
+
   const [variantPrices, setVariantPrices] = useState<Record<string, number>>(() => {
     const p: Record<string, number> = {}; initial.variants?.forEach(v => { p[v.name] = v.price }); return p
   })
@@ -642,19 +657,85 @@ function ProductForm({ initial, onSave, onCancel }: {
 }
 
 // ============================================================================
+// Settings Form Component
+// ============================================================================
+function SettingsForm() {
+  const d = useDataStore()
+  const [form, setForm] = useState(d.settings || {})
+  
+  const handleChange = (section: string, key: string, value: any) => {
+    setForm((prev: any) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [key]: value
+      }
+    }))
+  }
+
+  return (
+    <div>
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div><p className="text-xs font-bold uppercase tracking-widest text-primary">Quản trị nội dung</p><h1 className="mt-2 font-display text-4xl font-bold uppercase">Cài đặt</h1></div>
+      </header>
+      
+      <div className="mt-8 grid max-w-3xl gap-5 border bg-white p-6 sm:grid-cols-2">
+        <h2 className="sm:col-span-2 font-bold text-lg border-b pb-2">Thông tin doanh nghiệp</h2>
+        <div className="space-y-1.5 sm:col-span-2">
+          <label className="text-xs font-semibold text-neutral-600">Tên doanh nghiệp</label>
+          <Input value={form.business?.name || ""} onChange={e => handleChange('business', 'name', e.target.value)} />
+        </div>
+        
+        <h2 className="sm:col-span-2 font-bold text-lg border-b pb-2 mt-4">Liên hệ</h2>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Email</label>
+          <Input value={form.contact?.email || ""} onChange={e => handleChange('contact', 'email', e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Điện thoại</label>
+          <Input value={form.contact?.phone || ""} onChange={e => handleChange('contact', 'phone', e.target.value)} />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <label className="text-xs font-semibold text-neutral-600">Địa chỉ</label>
+          <Input value={form.contact?.address || ""} onChange={e => handleChange('contact', 'address', e.target.value)} />
+        </div>
+
+        <h2 className="sm:col-span-2 font-bold text-lg border-b pb-2 mt-4">Mạng xã hội</h2>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Facebook</label>
+          <Input value={form.social?.facebook || ""} onChange={e => handleChange('social', 'facebook', e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Instagram</label>
+          <Input value={form.social?.instagram || ""} onChange={e => handleChange('social', 'instagram', e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Tiktok</label>
+          <Input value={form.social?.tiktok || ""} onChange={e => handleChange('social', 'tiktok', e.target.value)} />
+        </div>
+
+        <Button onClick={() => d.updateSettings(form)} className="sm:col-span-2 mt-4">Lưu thay đổi</Button>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
 // Generic form for other sections
 // ============================================================================
-const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "blocks", "gallery", "relatedProductIds", "timeline", "items", "process", "modules", "roadmap", "benefits", "audience", "productCount"]
+const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "relatedProductIds", "timeline", "items", "process", "modules", "roadmap", "benefits", "audience", "productCount"]
 
 function generateDefaultForm(section: string) {
   switch (section) {
     case "categories": return { name: "", slug: "", parent: "", description: "" }
     case "services": return { name: "", duration: "", price: 0, category: "" }
     case "training": return { title: "", duration: "", price: 0 }
-    case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", status: "draft", order: 1 }
+    case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", blocks: [], gallery: [], status: "draft", order: 1 }
     case "lookbook": return { caption: "", category: "", image: "", featured: false, published: true, order: 1 }
     case "customers": return { name: "", email: "", password: "", phone: "", role: "CUSTOMER" }
     case "staff": return { name: "", email: "", password: "", phone: "", role: "ADMIN" }
+    case "promo-codes": return { code: "", discountType: "PERCENT", discountValue: 0, minOrderValue: 0, maxDiscount: 0, usageLimit: 100, isActive: true, expiresAt: null }
+    case "faqs": return { question: "", answer: "", category: "shop", order: 0 }
     default: return { name: "" }
   }
 }
@@ -662,10 +743,170 @@ function generateDefaultForm(section: string) {
 type Row = Record<string, any>
 
 // ============================================================================
+// Messages Form Component
+// ============================================================================
+function MessagesForm({ d }: { d: any }) {
+  const [selectedMsg, setSelectedMsg] = useState<any>(null);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Tin nhắn liên hệ</h2>
+          <p className="text-sm text-muted-foreground mt-1">Quản lý các yêu cầu và tin nhắn từ khách hàng.</p>
+        </div>
+      </div>
+
+      <div className="bg-background rounded-xl border border-border/40 overflow-hidden shadow-sm">
+        <table className="w-full text-sm text-left">
+          <thead className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border/40">
+            <tr>
+              <th className="px-6 py-4 font-medium">Khách hàng</th>
+              <th className="px-6 py-4 font-medium">Loại</th>
+              <th className="px-6 py-4 font-medium">Email</th>
+              <th className="px-6 py-4 font-medium">Trạng thái</th>
+              <th className="px-6 py-4 font-medium">Ngày gửi</th>
+              <th className="px-6 py-4 font-medium text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/40">
+            {d.messages?.map((msg: any) => (
+              <tr key={msg.id} className={`group transition-colors hover:bg-muted/50 ${msg.status === 'unread' ? 'bg-muted/20' : ''}`}>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    {msg.status === 'unread' && <div className="size-2 rounded-full bg-primary" />}
+                    <span className={`font-medium ${msg.status === 'unread' ? 'text-foreground' : 'text-muted-foreground'}`}>{msg.name}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  {msg.subject && msg.subject.includes('Đăng ký khóa học') ? (
+                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 tracking-wider uppercase border border-blue-200/50">
+                      Đăng ký học
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-1 text-[10px] font-medium text-neutral-600 tracking-wider uppercase border border-neutral-200">
+                      Liên hệ
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-muted-foreground">{msg.email}</td>
+                <td className="px-6 py-4">
+                  {msg.status === 'unread' ? (
+                    <span className="inline-flex items-center rounded-md bg-neutral-900 px-2 py-1 text-[10px] font-medium text-neutral-50 tracking-wider uppercase">
+                      Chưa đọc
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-md border border-neutral-200 bg-transparent px-2 py-1 text-[10px] font-medium text-neutral-500 tracking-wider uppercase">
+                      Đã đọc
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-muted-foreground">
+                  {new Date(msg.createdAt).toLocaleDateString('vi-VN')}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" onClick={() => setSelectedMsg(msg)} className="size-8 text-muted-foreground hover:text-foreground">
+                      <Eye className="size-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => {
+                      if (confirm('Xóa tin nhắn này?')) d.deleteMessage(msg.id);
+                    }} className="size-8 text-muted-foreground hover:bg-red-50 hover:text-red-600">
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {(!d.messages || d.messages.length === 0) && (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">Không có tin nhắn nào.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {selectedMsg && (
+        <Dialog open={!!selectedMsg} onOpenChange={(open) => !open && setSelectedMsg(null)}>
+          <DialogContent className="sm:max-w-4xl p-0 overflow-hidden gap-0 border-border/40">
+            <div className="flex flex-col md:flex-row min-h-[400px]">
+              {/* Left Column: User Info */}
+              <div className="w-full md:w-1/3 shrink-0 bg-muted/10 border-b md:border-b-0 md:border-r border-border/40 p-6 flex flex-col">
+                <DialogHeader className="mb-8 text-left">
+                  <DialogTitle className="text-lg font-medium tracking-tight">Chi tiết tin nhắn</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-8 flex-1">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 font-medium text-lg">
+                      {selectedMsg.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-sm text-foreground">{selectedMsg.name}</h3>
+                      <p className="text-xs text-muted-foreground pt-0.5">{new Date(selectedMsg.createdAt).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div>
+                      <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase mb-1.5">Email</p>
+                      <p className="text-sm text-foreground">{selectedMsg.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase mb-1.5">Số điện thoại</p>
+                      <p className="text-sm text-foreground">{selectedMsg.phone || <span className="text-muted-foreground italic">Không có</span>}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase mb-1.5">Chủ đề</p>
+                      <p className="text-sm text-foreground">{selectedMsg.subject || <span className="text-muted-foreground italic">Liên hệ chung</span>}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase mb-1.5">Trạng thái</p>
+                      <p className="text-sm font-medium">
+                        {selectedMsg.status === 'unread' ? <span className="text-primary">Chưa đọc</span> : <span className="text-muted-foreground">Đã đọc</span>}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Message Content */}
+              <div className="w-full md:w-2/3 min-w-0 flex flex-col bg-background overflow-hidden">
+                <div className="flex-1 p-8 overflow-y-auto">
+                  <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase mb-4">Nội dung</p>
+                  <div className="text-[15px] leading-relaxed text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap break-all font-mono bg-muted/5 p-4 rounded-lg border border-border/40 min-h-[200px]">
+                    {selectedMsg.message}
+                  </div>
+                </div>
+                
+                <DialogFooter className="p-4 border-t border-border/40 bg-muted/10 flex sm:justify-end gap-2">
+                  <Button variant="ghost" onClick={() => setSelectedMsg(null)}>Đóng</Button>
+                  {selectedMsg.status === 'unread' && (
+                    <Button onClick={() => {
+                      d.updateMessageStatus(selectedMsg.id, 'read');
+                      setSelectedMsg(null);
+                    }}>
+                      Đánh dấu đã đọc
+                    </Button>
+                  )}
+                </DialogFooter>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  )
+}
+
+// ============================================================================
 // Main CrudPage Component
 // ============================================================================
 export function CrudPage({ section }: { section: string }) {
   const d = useDataStore()
+
+
   const [search, setSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Row | null>(null)
@@ -673,16 +914,23 @@ export function CrudPage({ section }: { section: string }) {
   const [page, setPage] = useState(1)
   const pageSize = 10
   const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+
+  if (section === 'messages') {
+    return <MessagesForm d={d} />
+  }
 
   let rows: Row[] = []
   if (section === "products") rows = d.products
   if (section === "categories") rows = d.categories
   if (section === "services") rows = d.services
-  if (section === "training") rows = [...d.courses, ...d.leads]
+  if (section === "training") rows = d.courses
   if (section === "merchandise-stories") rows = d.stories
   if (section === "lookbook") rows = d.lookbook
   if (section === "orders") rows = d.orders
   if (section === "media") rows = d.media
+  if (section === "promo-codes") rows = d.promoCodes
+  if (section === "faqs") rows = d.faqs || []
   if (section === "customers" || section === "staff") {
     const customerMap = new Map();
     d.customers.forEach(c => {
@@ -727,6 +975,8 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "training") d.deleteCourse(item.id)
     if (section === "merchandise-stories") d.deleteStory(item.id)
     if (section === "lookbook") d.deleteLookbook(item.id)
+    if (section === "promo-codes") await d.deletePromoCode(item.id)
+    if (section === "faqs") await d.deleteFaq(item.id)
     setItemToDelete(null)
   }
 
@@ -739,8 +989,15 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "categories") await d.upsertCategory(formData as any)
     if (section === "services") await d.upsertService(formData as any)
     if (section === "training") d.upsertCourse(formData as any)
-    if (section === "merchandise-stories") d.upsertStory(formData as any)
+    if (section === "merchandise-stories") {
+      const payload = { ...formData };
+      try { if (typeof payload.blocks === 'string') payload.blocks = JSON.parse(payload.blocks); } catch {}
+      try { if (typeof payload.gallery === 'string') payload.gallery = JSON.parse(payload.gallery); } catch {}
+      d.upsertStory(payload as any)
+    }
     if (section === "lookbook") d.upsertLookbook(formData as any)
+    if (section === "promo-codes") await d.upsertPromoCode(formData as any)
+    if (section === "faqs") await d.upsertFaq(formData as any)
     setModalOpen(false)
   }
 
@@ -750,95 +1007,136 @@ export function CrudPage({ section }: { section: string }) {
 
   if (section === "settings") {
     return (
-      <div>
-        <header className="flex items-end justify-between">
-          <div><p className="text-xs font-bold uppercase tracking-widest text-primary">Quản trị nội dung</p><h1 className="mt-2 font-display text-4xl font-bold uppercase">Cài đặt</h1></div>
-        </header>
-        <div className="mt-8 grid max-w-3xl gap-5 border bg-white p-6 sm:grid-cols-2">
-          <Field label="Tên doanh nghiệp" value={d.settings.business.name} />
-          <Field label="Điện thoại" value={d.settings.contact.phone} />
-          <Field label="Địa chỉ" value={d.settings.contact.address} wide />
-          <Button className="sm:col-span-2">Lưu thay đổi</Button>
-        </div>
-      </div>
+      <SettingsForm />
     )
   }
 
   return (
     <div>
-      <header className="flex items-end justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-primary">Quản trị nội dung</p>
           <h1 className="mt-2 font-display text-4xl font-bold uppercase">{labels[section] ?? section}</h1>
         </div>
         {section !== "settings" && section !== "orders" && (
-          <Button onClick={handleAdd}><Plus className="mr-2 size-4" />Thêm mới</Button>
+          <Button onClick={handleAdd} className="w-full sm:w-auto"><Plus className="mr-2 size-4" />Thêm mới</Button>
         )}
       </header>
 
-      <div className="mt-8 border bg-white">
+      <div className="mt-8 border bg-white max-w-full overflow-hidden">
         <div className="flex items-center gap-2 border-b p-4">
           <Search className="size-4 text-neutral-400" />
           <input placeholder="Tìm kiếm..." className="flex-1 outline-none" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full">
           <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
-              <tr>
-                <th className="p-4">Tên / Mã</th>
-                <th>Loại</th>
-                <th>{section === "media" ? "" : section === "categories" ? "Mô tả" : "Trạng thái"}</th>
-                {section !== "merchandise-stories" && <th>{section === "categories" ? "Số lượng SP" : section === "media" ? "Kích thước" : section === "lookbook" ? "Thứ tự" : "Giá trị"}</th>}
-                <th />
-              </tr>
+              {section === "promo-codes" ? (
+                <tr>
+                  <th className="p-4">Mã giảm giá</th>
+                  <th>Điều kiện</th>
+                  <th>Thời hạn (TTL)</th>
+                  <th>Trạng thái</th>
+                  <th />
+                </tr>
+              ) : (
+                <tr>
+                  <th className="p-4">Tên / Mã</th>
+                  <th>Loại</th>
+                  {section !== "customers" && section !== "staff" && <th>{section === "media" ? "" : section === "categories" ? "Mô tả" : "Trạng thái"}</th>}
+                  {section !== "merchandise-stories" && <th>{section === "categories" ? "Số lượng SP" : section === "media" ? "Kích thước" : section === "lookbook" ? "Thứ tự" : "Giá trị"}</th>}
+                  <th />
+                </tr>
+              )}
             </thead>
             <tbody>
               {filtered.length ? filtered.slice((page - 1) * pageSize, page * pageSize).map((r, i) => (
                 <tr key={String(r.id ?? i)} className="border-t">
-                  <td className="p-4 font-medium">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-3">
-                        {(typeof r.image === "string" || (Array.isArray(r.images) && r.images[0])) && (
-                          <div className="relative size-10 bg-neutral-100 overflow-hidden rounded-md">
-                            <Image src={typeof r.image === "string" ? r.image : r.images[0]} alt="" fill className="object-cover" />
+                  {section === "promo-codes" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-bold text-base">{r.code}</span>
+                          <span className="text-xs text-neutral-500">{r.discountType === "PERCENT" ? `Giảm ${r.discountValue}%` : `Giảm ${formatCurrency(r.discountValue)}`}</span>
+                        </div>
+                      </td>
+                      <td className="text-sm text-neutral-600 space-y-1 py-3">
+                        <div>Đơn tối thiểu: {formatCurrency(r.minOrderValue)}</div>
+                        {r.maxDiscount ? <div>Giảm tối đa: {formatCurrency(r.maxDiscount)}</div> : null}
+                        <div className="text-xs text-neutral-400">Lượt dùng: {r.usedCount} / {r.usageLimit ?? "Không giới hạn"}</div>
+                      </td>
+                      <td className="text-sm">
+                        {r.expiresAt ? (
+                          <div className="flex flex-col gap-1">
+                            <span>{new Date(r.expiresAt).toLocaleDateString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })}</span>
+                            {new Date(r.expiresAt) > new Date() ? (
+                              <span className="text-xs text-emerald-600 font-medium">Còn {Math.ceil((new Date(r.expiresAt).getTime() - new Date().getTime()) / (1000 * 3600 * 24))} ngày</span>
+                            ) : (
+                              <span className="text-xs text-red-600 font-medium">Đã hết hạn</span>
+                            )}
                           </div>
+                        ) : (
+                          <span className="text-neutral-500">Không thời hạn</span>
                         )}
-                        {String(r.title ?? r.name ?? r.caption ?? r.code ?? r.email ?? `Bản ghi ${i + 1}`)}
-                      </div>
-                      {r.slug && <span className="text-xs text-neutral-400 font-normal">{r.slug}</span>}
-                    </div>
-                  </td>
-                  <td>{String(section === "orders" ? r.paymentMethod : section === "merchandise-stories" ? "Bài viết" : (r.role ?? r.category ?? r.parent ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
-                  <td>
-                    {section === "media" ? "—" : section === "categories" ? (
-                      <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
-                    ) : (
-                      <div className="flex flex-col gap-1 items-start">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
-                          {r.status === "active" ? ((section === "customers" || section === "staff") ? "Đang HĐ" : "Đang bán") : 
-                           r.status === "draft" ? "Nháp" : 
-                           (r.status === "published" || r.published === true) ? "Hiển thị" : 
-                           r.published === false ? "Ẩn" :
-                           (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
-                           r.status === "PROCESSING" ? "Đang chuẩn bị" :
-                           r.status === "SHIPPED" ? "Đang giao" :
-                           r.status === "CANCELLED" ? "Đã hủy" :
-                           (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
+                      </td>
+                      <td>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded ${!r.isActive ? "bg-neutral-100 text-neutral-500" : (r.expiresAt && new Date(r.expiresAt) < new Date() ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700")}`}>
+                          {!r.isActive ? "Bị khóa" : (r.expiresAt && new Date(r.expiresAt) < new Date() ? "Hết hạn" : "Hoạt động")}
                         </span>
-                        {section === "orders" && (
-                          <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
-                            {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                  {section !== "merchandise-stories" && <td>
-                    {section === "lookbook" ? (r.order ?? "—") :
-                     section === "categories" ? (r.productCount ?? 0) :
-                     section === "media" ? (typeof r.size === "string" ? r.size : "—") :
-                     typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
-                  </td>}
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-3">
+                            {(typeof r.url === "string" || typeof r.image === "string" || (Array.isArray(r.images) && r.images[0])) && (
+                              <div className="relative size-10 shrink-0 bg-neutral-100 overflow-hidden rounded-md border">
+                                <Image src={typeof r.url === "string" ? r.url : typeof r.image === "string" ? r.image : r.images[0]} alt="" fill className="object-cover" />
+                              </div>
+                            )}
+                            {String(r.title || r.name || r.caption || r.code || r.email || `Bản ghi ${i + 1}`)}
+                          </div>
+                          {r.slug && <span className="text-xs text-neutral-400 font-normal">{r.slug}</span>}
+                        </div>
+                      </td>
+                      <td>{String(section === "orders" ? r.paymentMethod : section === "merchandise-stories" ? "Bài viết" : (r.role ?? r.category ?? r.parent ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
+                      {section !== "customers" && section !== "staff" && (
+                        <td>
+                          {section === "media" ? "—" : section === "categories" ? (
+                            <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
+                          ) : (
+                            <div className="flex flex-col gap-1 items-start">
+                              <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true || r.isActive === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false || r.isActive === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
+                                {r.status === "active" ? "Đang bán" : 
+                                 r.status === "draft" ? "Nháp" : 
+                                 (r.status === "published" || r.published === true) ? "Hiển thị" : 
+                                 r.published === false ? "Ẩn" :
+                                 r.isActive === true ? "Hoạt động" :
+                                 r.isActive === false ? "Bị khóa" :
+                                 (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
+                                 r.status === "PROCESSING" ? "Đang chuẩn bị" :
+                                 r.status === "SHIPPED" ? "Đang giao" :
+                                 r.status === "CANCELLED" ? "Đã hủy" :
+                                 (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
+                              </span>
+                              {section === "orders" && (
+                                <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
+                                  {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      )}
+                      {section !== "merchandise-stories" && <td>
+                        {section === "lookbook" ? (r.order ?? "—") :
+                         section === "categories" ? (r.productCount ?? 0) :
+                         section === "media" ? (typeof r.size === "string" ? r.size : "—") :
+                         typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
+                      </td>}
+                    </>
+                  )}
                   <td>
                     {section !== "customers" && section !== "staff" && (
                       <DropdownMenu>
@@ -975,15 +1273,30 @@ export function CrudPage({ section }: { section: string }) {
                         <option value="published">Hiển thị</option>
                         <option value="draft">Nháp</option>
                       </select>
+                    ) : key === "discountType" ? (
+                      <select 
+                        value={formData[key] || "PERCENT"} 
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="PERCENT">Phần trăm (%)</option>
+                        <option value="FIXED">Số tiền cố định (VNĐ)</option>
+                      </select>
                     ) : key === "url" || key === "image" || key === "heroImage" ? (
-                      <div className="flex gap-2 items-center">
-                        <Input
-                          value={formData[key] || ""}
-                          onChange={e => handleChange(key, e.target.value)}
-                          placeholder="Hoặc nhập URL trực tiếp..."
-                          className="flex-1"
-                        />
-                        <label className="flex h-10 px-3 shrink-0 items-center justify-center rounded-md border bg-neutral-100 hover:bg-neutral-200 cursor-pointer text-sm font-medium transition-colors">
+                      <div className="flex flex-col gap-2">
+                        {formData[key] && (
+                          <div className="relative h-32 w-full bg-neutral-100 rounded-md overflow-hidden border">
+                            <Image src={formData[key]} alt="Preview" fill className="object-contain" />
+                          </div>
+                        )}
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            value={formData[key] || ""}
+                            onChange={e => handleChange(key, e.target.value)}
+                            placeholder="Hoặc nhập URL trực tiếp..."
+                            className="flex-1"
+                          />
+                          <label className="flex h-10 px-3 shrink-0 items-center justify-center rounded-md border bg-neutral-100 hover:bg-neutral-200 cursor-pointer text-sm font-medium transition-colors">
                           <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                             const file = e.target.files?.[0]
                             if (!file) return
@@ -1008,6 +1321,7 @@ export function CrudPage({ section }: { section: string }) {
                           }} />
                           Tải ảnh lên
                         </label>
+                        </div>
                       </div>
                     ) : key === "size" && section === "media" ? (
                       <Input value={formData[key] || ""} disabled className="bg-neutral-50" />
@@ -1043,17 +1357,35 @@ export function CrudPage({ section }: { section: string }) {
                         <option value="grooming">Grooming (Chăm sóc tóc & râu)</option>
                         <option value="merchandise">Merchandise (Thời trang)</option>
                       </select>
-                    ) : key === "manifesto" || key === "excerpt" || key === "description" ? (
+                    ) : key === "manifesto" || key === "excerpt" || key === "description" || key === "blocks" || key === "gallery" || key === "message" ? (
                       <textarea
-                        value={formData[key] || ""}
+                        value={typeof formData[key] === 'object' ? JSON.stringify(formData[key], null, 2) : (formData[key] || "")}
                         onChange={e => handleChange(key, e.target.value)}
                         className="w-full flex min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y"
                       />
+                    ) : key === "expiresAt" ? (
+                      <Input
+                        type="datetime-local"
+                        value={formData[key] ? new Date(new Date(formData[key]).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,16) : ""}
+                        onChange={e => handleChange(key, e.target.value ? new Date(e.target.value).toISOString() : "")}
+                      />
+                    ) : key === "password" ? (
+                      <div className="relative">
+                        <Input
+                          value={formData[key] || ""}
+                          onChange={e => handleChange(key, e.target.value)}
+                          type={showPassword ? "text" : "password"}
+                          className="pr-10"
+                        />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600">
+                          {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        </button>
+                      </div>
                     ) : (
                       <Input
                         value={formData[key] || ""}
                         onChange={e => handleChange(key, typeof formData[key] === "number" ? Number(e.target.value) : e.target.value)}
-                        type={key === "password" ? "password" : typeof formData[key] === "number" ? "number" : "text"}
+                        type={typeof formData[key] === "number" ? "number" : "text"}
                       />
                     )}
                   </div>

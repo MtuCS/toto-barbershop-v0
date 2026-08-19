@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
@@ -7,7 +7,6 @@ import type {
   Category,
   Service,
   TrainingCourse,
-  TrainingLead,
   MerchandiseStory,
   LookbookItem,
   Order,
@@ -16,18 +15,11 @@ import type {
   OrderStatus,
   PaymentStatus,
   CartItem,
+  ContactMessage,
 } from "@/types"
 
 
-import { categories as seedCategories } from "@/data/categories"
-import { products as seedProducts } from "@/data/products"
-import { services as seedServices } from "@/data/services"
-import { trainingCourses as seedCourses } from "@/data/training"
-import { merchandiseStories as seedStories } from "@/data/stories"
-import { lookbookItems as seedLookbook } from "@/data/lookbook"
-import { media as seedMedia } from "@/data/media"
 import { toast } from "sonner"
-import { defaultSettings } from "@/data/settings"
 import { useAuthStore } from "./auth-store"
 
 // ============================================================================
@@ -39,22 +31,33 @@ const uid = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2,
 
 interface DataState {
   products: Product[]
+
   categories: Category[]
   services: Service[]
   courses: TrainingCourse[]
-  leads: TrainingLead[]
   stories: MerchandiseStory[]
   lookbook: LookbookItem[]
   orders: Order[]
-  customers: any[] // we use users as customers
+  promoCodes: any[]
+  customers: any[]
   media: MediaItem[]
+  faqs: any[]
   settings: SettingsData
+  messages: ContactMessage[]
 
   fetchProducts: () => Promise<void>
   fetchCategories: () => Promise<void>
   fetchServices: () => Promise<void>
+  fetchCourses: () => Promise<void>
+  fetchStories: () => Promise<void>
+  fetchLookbook: () => Promise<void>
+  fetchMedia: () => Promise<void>
   fetchOrders: () => Promise<void>
+  fetchPromoCodes: () => Promise<void>
   fetchUsers: () => Promise<void>
+  fetchFaqs: () => Promise<void>
+  fetchSettings: () => Promise<void>
+  fetchMessages: () => Promise<void>
   createUser: (userData: any) => Promise<void>
   updateOrderStatus: (id: string, data: { status?: string, paymentStatus?: string }) => Promise<void>
   cancelOrder: (id: string, token: string) => Promise<boolean>
@@ -74,11 +77,6 @@ interface DataState {
   upsertCourse: (course: TrainingCourse) => void
   deleteCourse: (id: string) => void
 
-  // Leads
-  addLead: (lead: Omit<TrainingLead, "id" | "createdAt" | "status">) => void
-  updateLeadStatus: (id: string, status: TrainingLead["status"]) => void
-  deleteLead: (id: string) => void
-
   // Stories
   upsertStory: (story: MerchandiseStory) => void
   deleteStory: (id: string) => void
@@ -87,41 +85,46 @@ interface DataState {
   upsertLookbook: (item: LookbookItem) => void
   deleteLookbook: (id: string) => void
 
+  // Promo Codes
+  upsertPromoCode: (promo: any) => Promise<void>
+  deletePromoCode: (id: string | number) => Promise<void>
+
   // Orders
-  placeOrder: (input: {
-    customer: Order["customer"]
-    items: CartItem[]
-    subtotal: number
-    shippingFee: number
-    discount: number
-    total: number
-    couponCode?: string
-    paymentMethod: Order["paymentMethod"]
-  }) => Order
+  
   setOrderStatusInStore: (id: string | number, status: OrderStatus, paymentStatus: PaymentStatus) => void
 
   // Media
   addMedia: (item: Omit<MediaItem, "id" | "createdAt">) => void
   deleteMedia: (id: string) => void
 
+  // FAQ
+  upsertFaq: (faq: any) => Promise<void>
+  deleteFaq: (id: string | number) => Promise<void>
+
   // Settings
-  updateSettings: (settings: SettingsData) => void
+  updateSettings: (settings: SettingsData) => Promise<void>
+
+  // Messages
+  updateMessageStatus: (id: string, status: string) => Promise<void>
+  deleteMessage: (id: string) => Promise<void>
 
   resetAll: () => void
 }
 
 const seed = {
-  products: seedProducts,
-  categories: seedCategories,
-  services: seedServices,
-  courses: seedCourses,
-  leads: [] as TrainingLead[],
-  stories: seedStories,
-  lookbook: seedLookbook,
+  products: [] as Product[],
+  categories: [] as Category[],
+  services: [] as Service[],
+  courses: [] as TrainingCourse[],
+  stories: [] as MerchandiseStory[],
+  lookbook: [] as LookbookItem[],
+  promoCodes: [] as any[],
   orders: [] as Order[],
   customers: [] as any[],
-  media: seedMedia,
-  settings: defaultSettings,
+  media: [] as MediaItem[],
+  faqs: [] as any[],
+  settings: {} as SettingsData,
+  messages: [] as ContactMessage[],
 }
 
 export const useDataStore = create<DataState>()(
@@ -169,6 +172,30 @@ export const useDataStore = create<DataState>()(
           console.error("Failed to fetch services:", error);
         }
       },
+      fetchCourses: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses`);
+          if (res.ok) set({ courses: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+      fetchStories: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories`);
+          if (res.ok) set({ stories: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+      fetchLookbook: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks`);
+          if (res.ok) set({ lookbook: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+      fetchMedia: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/media`);
+          if (res.ok) set({ media: await res.json() });
+        } catch (error) { console.error(error); }
+      },
 
       fetchOrders: async () => {
         try {
@@ -180,6 +207,16 @@ export const useDataStore = create<DataState>()(
         } catch (error) {
           console.error("Failed to fetch orders:", error);
         }
+      },
+
+      fetchPromoCodes: async () => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/promo`, {
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) set({ promoCodes: await res.json() });
+        } catch (error) { console.error(error); }
       },
 
       fetchUsers: async () => {
@@ -401,87 +438,210 @@ export const useDataStore = create<DataState>()(
         }
       },
 
-      upsertCourse: (course) =>
-        set((s) => ({
-          courses: s.courses.some((x) => x.id === course.id)
-            ? s.courses.map((x) => (x.id === course.id ? course : x))
-            : [...s.courses, { ...course, id: course.id || uid("t") }],
-        })),
-      deleteCourse: (id) => set((s) => ({ courses: s.courses.filter((x) => x.id !== id) })),
-
-      addLead: (lead) =>
-        set((s) => ({
-          leads: [
-            {
-              ...lead,
-              id: uid("lead"),
-              status: "new",
-              createdAt: new Date().toISOString(),
-            } as TrainingLead,
-            ...s.leads,
-          ],
-        })),
-      updateLeadStatus: (id, status) =>
-        set((s) => ({ leads: s.leads.map((l) => (l.id === id ? { ...l, status } : l)) })),
-      deleteLead: (id) => set((s) => ({ leads: s.leads.filter((l) => l.id !== id) })),
-
-      upsertStory: (story) =>
-        set((s) => ({
-          stories: s.stories.some((x) => x.id === story.id)
-            ? s.stories.map((x) => (x.id === story.id ? story : x))
-            : [...s.stories, { ...story, id: story.id || uid("st") }],
-        })),
-      deleteStory: (id) => set((s) => ({ stories: s.stories.filter((x) => x.id !== id) })),
-
-      upsertLookbook: (item) =>
-        set((s) => ({
-          lookbook: s.lookbook.some((x) => x.id === item.id)
-            ? s.lookbook.map((x) => (x.id === item.id ? item : x))
-            : [...s.lookbook, { ...item, id: item.id || uid("lb") }],
-        })),
-      deleteLookbook: (id) => set((s) => ({ lookbook: s.lookbook.filter((x) => x.id !== id) })),
-
-      placeOrder: (input) => {
-        const now = new Date().toISOString()
-        const order: Order = {
-          id: uid("ord"),
-          code: `TOTO-${Math.floor(1000 + Math.random() * 9000)}`,
-          customer: input.customer,
-          items: input.items.map((i) => ({
-            variantId: i.variantId,
-            productId: i.productId,
-            title: i.title,
-            variantName: i.variantName,
-            image: i.image,
-            price: i.price,
-            quantity: i.quantity,
-          })),
-          subtotal: input.subtotal,
-          shippingFee: input.shippingFee,
-          discount: input.discount,
-          total: input.total,
-          couponCode: input.couponCode,
-          paymentMethod: input.paymentMethod,
-          paymentStatus: "unpaid",
-          status: "pending",
-          timeline: [{ status: "pending", at: now, note: "KhÃ¡ch Ä‘áº·t hÃ ng" }],
-          createdAt: now,
-        }
-        set((s) => ({ orders: [order, ...s.orders] }))
-        return order
+      
+      upsertCourse: async (course) => {
+        const token = useAuthStore.getState().session?.token;
+        const isUpdate = !!course.id && !String(course.id).startsWith('t-');
+        const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses/${course.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses`;
+        await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(course) });
+        get().fetchCourses();
+      },
+      deleteCourse: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        get().fetchCourses();
       },
 
 
-      addMedia: (item) =>
-        set((s) => ({
-          media: [
-            { ...item, id: uid("med"), createdAt: new Date().toISOString().slice(0, 10) } as MediaItem,
-            ...s.media,
-          ],
-        })),
-      deleteMedia: (id) => set((s) => ({ media: s.media.filter((m) => m.id !== id) })),
+      upsertStory: async (story) => {
+        const token = useAuthStore.getState().session?.token;
+        const isUpdate = !!story.id && !String(story.id).startsWith('st-');
+        const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories/${story.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories`;
+        await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(story) });
+        get().fetchStories();
+      },
+      deleteStory: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        get().fetchStories();
+      },
 
-      updateSettings: (settings) => set({ settings }),
+
+      
+      upsertLookbook: async (item) => {
+        const token = useAuthStore.getState().session?.token;
+        const isUpdate = !!item.id && !String(item.id).startsWith('lb-');
+        const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks/${item.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks`;
+        await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(item) });
+        get().fetchLookbook();
+      },
+      deleteLookbook: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        get().fetchLookbook();
+      },
+
+      upsertPromoCode: async (promo) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const isUpdate = !!promo.id;
+          const url = isUpdate 
+            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/promo/${promo.id}`
+            : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/promo`;
+          const method = isUpdate ? 'PUT' : 'POST';
+          
+          const res = await fetch(url, {
+            method,
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(promo)
+          });
+          
+          if (res.ok) {
+            get().fetchPromoCodes();
+          } else {
+            const err = await res.json();
+            toast.error(err.error || 'Lỗi lưu mã giảm giá');
+          }
+        } catch (error) {
+          console.error(error);
+          toast.error('Lỗi lưu mã giảm giá');
+        }
+      },
+      
+      deletePromoCode: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/promo/${id}`, {
+            method: 'DELETE',
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) {
+            get().fetchPromoCodes();
+          } else {
+            toast.error('Lỗi xóa mã giảm giá');
+          }
+        } catch (error) {
+          console.error(error);
+          toast.error('Lỗi xóa mã giảm giá');
+        }
+      },
+
+      
+      addMedia: async (item) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/media`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(item) });
+        get().fetchMedia();
+      },
+      deleteMedia: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/media/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        get().fetchMedia();
+      },
+
+
+      fetchFaqs: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/faqs`);
+          if (res.ok) set({ faqs: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+      
+      upsertFaq: async (faq) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const isUpdate = !!faq.id;
+          const url = isUpdate 
+            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/faqs/${faq.id}`
+            : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/faqs`;
+          const res = await fetch(url, {
+            method: isUpdate ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            body: JSON.stringify(faq)
+          });
+          if (res.ok) get().fetchFaqs();
+        } catch (error) { console.error(error); toast.error('Failed to save FAQ'); }
+      },
+      
+      deleteFaq: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/faqs/${id}`, {
+            method: 'DELETE',
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) get().fetchFaqs();
+        } catch (error) { console.error(error); toast.error('Failed to delete FAQ'); }
+      },
+
+      fetchSettings: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/settings`);
+          if (res.ok) set({ settings: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+
+      updateSettings: async (settings) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/settings`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            body: JSON.stringify(settings)
+          });
+          if (res.ok) {
+            set({ settings: await res.json() });
+            toast.success("Đã lưu Cài đặt!");
+          } else {
+            toast.error("Lưu cài đặt thất bại (Lỗi server)!");
+          }
+        } catch (error) { console.error(error); toast.error('Failed to update settings'); }
+      },
+
+      fetchMessages: async () => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/messages`, {
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) set({ messages: await res.json() });
+        } catch (error) { console.error(error); }
+      },
+
+      updateMessageStatus: async (id, status) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/messages/${id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            body: JSON.stringify({ status })
+          });
+          if (res.ok) {
+            get().fetchMessages();
+            toast.success("Đã cập nhật trạng thái tin nhắn!");
+          } else {
+            toast.error("Cập nhật thất bại!");
+          }
+        } catch (error) { console.error(error); toast.error('Failed to update message'); }
+      },
+
+      deleteMessage: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/messages/${id}`, {
+            method: 'DELETE',
+            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+          });
+          if (res.ok) {
+            get().fetchMessages();
+            toast.success("Đã xóa tin nhắn!");
+          } else {
+            toast.error("Xóa thất bại!");
+          }
+        } catch (error) { console.error(error); toast.error('Failed to delete message'); }
+      },
 
       resetAll: () => set({ ...seed }),
     }),
@@ -491,7 +651,7 @@ export const useDataStore = create<DataState>()(
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<DataState>
         if (version < 2 && !state.products?.length) {
-          return { ...state, products: seedProducts }
+          return { ...state }
         }
         return state as DataState
       },
@@ -502,6 +662,3 @@ export const useDataStore = create<DataState>()(
 export function getOrderByCode(orders: Order[], code: string) {
   return orders.find((o) => o.code === code)
 }
-
-
-

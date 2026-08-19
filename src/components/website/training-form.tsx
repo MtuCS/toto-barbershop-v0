@@ -2,34 +2,53 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { useDataStore } from "@/store/data-store"
+import { isValidEmail, isValidPhone } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 
 const fieldClassName = "min-h-12 border border-black/20 bg-white px-4 text-[#101715] outline-none transition-colors placeholder:text-neutral-500 focus:border-primary"
 
 export function TrainingForm() {
-  const add = useDataStore((state) => state.addLead)
   const [loading, setLoading] = useState(false)
 
   return (
     <form
       className="grid gap-4 md:grid-cols-2"
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault()
         setLoading(true)
         const form = new FormData(event.currentTarget)
-        add({
-          name: String(form.get("name")),
-          phone: String(form.get("phone")),
-          email: String(form.get("email")),
-          courseId: String(form.get("course")) || null,
-          message: String(form.get("message")),
-        })
-        setTimeout(() => {
-          setLoading(false)
+        try {
+          const courseId = String(form.get("course")) || "Không xác định";
+          const courseName = courseId === "t-foundation" ? "Barber Foundation" : courseId === "t-pro" ? "Advanced Fade & Styling" : courseId;
+          const phone = String(form.get("phone"));
+          const email = String(form.get("email"));
+          if (!isValidEmail(email)) { toast.error("Email không hợp lệ. Vui lòng kiểm tra lại."); setLoading(false); return; }
+          if (!isValidPhone(phone)) { toast.error("Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 số."); setLoading(false); return; }
+          
+          const userMsg = String(form.get("message") || "Không có");
+          const subject = courseName !== "Không xác định" ? `Đăng ký khóa học: ${courseName}` : undefined;
+
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: String(form.get("name")),
+              email,
+              phone,
+              subject,
+              message: userMsg
+            })
+          });
+
+          if (!res.ok) throw new Error("Gửi form thất bại");
+
           toast.success("Đã gửi đăng ký tư vấn")
           ;(event.target as HTMLFormElement).reset()
-        }, 300)
+        } catch (error: any) {
+          toast.error(error.message || "Đăng ký thất bại. Vui lòng thử lại sau.")
+        } finally {
+          setLoading(false)
+        }
       }}
     >
       <input required name="name" placeholder="Họ và tên" className={fieldClassName} />
@@ -41,7 +60,7 @@ export function TrainingForm() {
         <option value="t-pro">Advanced Fade &amp; Styling</option>
       </select>
       <textarea name="message" placeholder="Bạn muốn được tư vấn điều gì?" className={`${fieldClassName} min-h-32 py-3 md:col-span-2`} />
-      <Button disabled={loading} className="h-12 md:col-span-2">
+      <Button type="submit" disabled={loading} className="h-12 md:col-span-2">
         {loading ? "Đang gửi..." : "Đăng ký tư vấn"}
       </Button>
     </form>

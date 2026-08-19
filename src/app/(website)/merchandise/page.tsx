@@ -4,8 +4,7 @@ import Link from "next/link"
 import { ArrowDown, ArrowRight, ArrowUpRight } from "lucide-react"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { ProductCard } from "@/components/website/product-card"
-import { products } from "@/data/products"
-import { merchandiseStories } from "@/data/stories"
+import { getProducts, getStories } from "@/lib/api"
 import { PageHero, SectionTitle } from "@/components/website/page-hero"
 
 export const metadata: Metadata = {
@@ -14,11 +13,12 @@ export const metadata: Metadata = {
     "Khám phá TOTO Merchandise: những thiết kế streetwear được tạo nên từ văn hóa barber, tay nghề và tinh thần của tiệm.",
 }
 
-const featuredMerchandise = products
-  .filter((product) => product.category === "merchandise")
-  .slice(0, 4)
+export default async function Page() {
+  const products = await getProducts()
+  const merchandiseStories = await getStories()
+  const merchandiseProducts = products.filter((product) => product.category === "merchandise")
+  const featuredMerchandise = merchandiseProducts.slice(0, 4)
 
-export default function Page() {
   return (
     <MarketingPageShell>
       <section className="relative min-h-[calc(100dvh-4rem)] overflow-hidden bg-[#07110f]">
@@ -97,7 +97,8 @@ export default function Page() {
           {merchandiseStories.map((story, index) => (
             <Link href={`/merchandise/${story.slug}`} key={story.id} className="group grid items-center gap-8 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79b8a7] md:grid-cols-12 md:gap-12">
               <div className={`relative aspect-[4/3] overflow-hidden border border-white/10 bg-black/30 md:col-span-7 ${index % 2 ? "md:order-2" : ""}`}>
-                <Image src={story.heroImage} alt={story.title} fill sizes="(max-width: 767px) 100vw, 58vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.025] motion-reduce:transition-none" />
+                <Image
+                  src={story.heroImage || (story as any).image || "/images/hero.png"} alt={story.title} fill sizes="(max-width: 767px) 100vw, 58vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.025] motion-reduce:transition-none" />
               </div>
               <div className="md:col-span-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7]">Collection {String(index + 1).padStart(2, "0")}</p>

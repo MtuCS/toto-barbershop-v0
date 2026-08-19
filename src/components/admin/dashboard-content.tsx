@@ -3,6 +3,8 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { formatCurrency } from "@/lib/format";
 import { useDataStore } from "@/store/data-store";
 import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 export function DashboardContent() {
   const orders = useDataStore(s => s.orders);
@@ -51,9 +53,15 @@ export function DashboardContent() {
 
   return (
     <>
-      <header>
-        <p className="text-xs font-bold uppercase tracking-widest text-primary">Admin dashboard</p>
-        <h1 className="mt-2 font-display text-4xl font-bold uppercase">Tổng quan</h1>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-primary">Admin dashboard</p>
+          <h1 className="mt-2 font-display text-4xl font-bold uppercase">Tổng quan</h1>
+        </div>
+        <Button onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stats/export`, '_blank')} className="bg-primary hover:bg-primary/90 text-white rounded-xl h-10 px-4 flex items-center gap-2">
+          <Download className="w-4 h-4" />
+          Xuất báo cáo (Excel)
+        </Button>
       </header>
       
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

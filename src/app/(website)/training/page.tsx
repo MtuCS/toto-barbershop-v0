@@ -1,5 +1,5 @@
-﻿import Image from "next/image"
-import { trainingCourses } from "@/data/training"
+import Image from "next/image"
+import { getCourses } from "@/lib/api"
 import { formatCurrency } from "@/lib/format"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { TrainingForm } from "@/components/website/training-form"
@@ -12,7 +12,8 @@ const trainingImages = {
   portrait: "/images/training/653585426_1258711476411020_7669587643556603719_n.jpg",
 }
 
-export default function Page() {
+export default async function TrainingPage() {
+  const trainingCourses = await getCourses()
   return (
     <MarketingPageShell>
       <header className="border-b border-white/10">
@@ -137,7 +138,7 @@ export default function Page() {
                 <p className="mt-8 text-xl font-bold tracking-tight">{formatCurrency(course.price)}</p>
 
                 <div className="mt-9 border-t border-black/15">
-                  {course.roadmap.map((item) => (
+                  {(course.roadmap || []).map((item: any) => (
                     <div key={item.week} className="grid grid-cols-[5.5rem_1fr] gap-4 border-b border-black/10 py-3 text-sm">
                       <b className="font-semibold">{item.week}</b>
                       <span className="text-neutral-600">{item.focus}</span>

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, ShoppingBag, Search, User, X, LogIn } from "lucide-react"
+import { Menu, ShoppingBag, Search, User, X, LogIn, LogOut } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { MAIN_NAV, SITE_NAME } from "@/lib/constants"
@@ -12,9 +12,10 @@ import { useCartStore } from "@/store/cart-store"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { useDataStore } from "@/store/data-store"
 import { useMounted } from "@/hooks/use-mounted"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu"
 import { CustomerAuthModal } from "@/components/website/customer-auth-modal"
 
 function Logo() {
@@ -46,7 +47,7 @@ export function SiteHeader() {
   const mounted = useMounted()
 
   // Stores
-  const { user, isAuthModalOpen: authOpen, setAuthModalOpen: setAuthOpen } = useCustomerUserStore()
+  const { user, isAuthModalOpen: authOpen, setAuthModalOpen: setAuthOpen, logout } = useCustomerUserStore()
   const { products } = useDataStore()
   const totalItems = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
@@ -124,109 +125,54 @@ export function SiteHeader() {
 
         {/* Right Section: Inline Search Input + Icons */}
         <div className="flex items-center gap-3">
-          {/* Direct Search Input Box */}
-          {/* <div ref={searchRef} className="relative hidden md:block w-48 lg:w-64">
-            <div className="relative flex items-center">
-              <Search className="absolute left-3 size-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Tìm kiếm sản phẩm..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  setIsSearchOpen(true)
-                }}
-                onFocus={() => setIsSearchOpen(true)}
-                className="h-9 w-full rounded-full border-black/15 bg-neutral-100/80 pl-9 pr-8 text-xs placeholder:text-neutral-500 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => {
-                    setSearchQuery("")
-                    setSearchResults([])
-                  }}
-                  className="absolute right-2.5 text-neutral-400 hover:text-neutral-700"
-                >
-                  <X className="size-3.5" />
-                </button>
-              )}
-            </div> */}
 
-            {/* Live Search Results Dropdown */}
-            {/* {isSearchOpen && searchQuery.trim() !== "" && (
-              <div className="absolute left-0 right-0 top-full mt-2 z-50 overflow-hidden rounded-xl border border-border bg-background p-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150">
-                {isSearching ? (
-                  <p className="p-3 text-center text-xs text-muted-foreground">Đang tìm kiếm...</p>
-                ) : searchResults.length > 0 ? (
-                  <div className="max-h-72 overflow-y-auto space-y-1">
-                    {searchResults.map((product: any) => {
-                      const name = product.title || product.name || "Sản phẩm ToTo"
-                      const img =
-                        (product.images && product.images[0]) ||
-                        product.image ||
-                        "https://images.unsplash.com/photo-1599305090598-fe179d501227?q=80&w=300"
-                      const catName =
-                        typeof product.category === "object"
-                          ? product.category?.name
-                          : product.category === "grooming"
-                          ? "Sáp & Chăm sóc"
-                          : product.category === "merchandise"
-                          ? "Thời trang"
-                          : product.category || "Sản phẩm"
-                      const priceVal =
-                        product.basePrice ||
-                        product.price ||
-                        (product.variants && product.variants[0]?.price) ||
-                        0
-
-                      return (
-                        <Link
-                          key={product.id || product.slug}
-                          href={`/shop/${product.slug}`}
-                          onClick={() => setIsSearchOpen(false)}
-                          className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/60 transition-colors"
-                        >
-                          <div className="relative size-10 shrink-0 overflow-hidden rounded border border-border bg-neutral-100">
-                            <Image src={img} alt={name} fill className="object-cover" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="truncate text-xs font-bold text-foreground">{name}</h4>
-                            <p className="text-[10px] text-muted-foreground">
-                              {catName} • {priceVal.toLocaleString("vi-VN")} ₫
-                            </p>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="p-3 text-center text-xs text-muted-foreground">Không tìm thấy sản phẩm nào.</p>
-                )}
-              </div>
-            )}
-          </div> */}
           
 
           {/* User Auth Icon Button (Đăng nhập / Đăng ký) */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
-            aria-label={user ? `Tài khoản (${user.name})` : "Đăng nhập / Đăng ký"}
-            onClick={() => {
-              if (user) router.push("/profile")
-              else setAuthOpen(true)
-            }}
-            title={user ? `Hồ sơ, ${user.name}` : "Đăng nhập / Đăng ký"}
-          >
-            <User className="size-5" />
-            {mounted && user && (
-              <span
-                className="absolute right-0 top-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                title="Đã đăng nhập"
-              />
-            )}
-          </Button>
+          {mounted && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
+                    aria-label={`Tài khoản (${user.name})`}
+                  />
+                }
+              >
+                <User className="size-5" />
+                <span className="absolute right-0 top-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white" title="Đã đăng nhập" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 font-display">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer">
+                    <User className="size-4 mr-2" /> Hồ sơ cá nhân
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/profile?tab=orders")} className="cursor-pointer">
+                    <ShoppingBag className="size-4 mr-2" /> Đơn hàng
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { logout(); router.push("/"); }} className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
+                  <LogOut className="size-4 mr-2" /> Đăng xuất
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
+              aria-label="Đăng nhập / Đăng ký"
+              onClick={() => setAuthOpen(true)}
+              title="Đăng nhập / Đăng ký"
+            >
+              <User className="size-5" />
+            </Button>
+          )}
 
           {/* Cart Icon Button */}
           <Button
@@ -247,14 +193,11 @@ export function SiteHeader() {
           {/* Mobile Menu Trigger */}
           <Sheet>
             <SheetTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-none hover:bg-primary/8 hover:text-primary xl:hidden"
-                  aria-label="Mở menu"
-                />
-              }
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "rounded-none hover:bg-primary/8 hover:text-primary xl:hidden"
+              )}
+              aria-label="Mở menu"
             >
               <Menu className="size-5" />
             </SheetTrigger>
@@ -263,19 +206,7 @@ export function SiteHeader() {
                 <SheetTitle className="font-display uppercase">Menu</SheetTitle>
               </SheetHeader>
 
-              {/* Mobile Inline Search */}
-              {/* <div className="px-2 pt-2 pb-4">
-                <div className="relative flex items-center">
-                  <Search className="absolute left-3 size-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Tìm kiếm sản phẩm..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-10 w-full rounded-full border-black/15 bg-neutral-100 pl-9 text-xs"
-                  />
-                </div>
-              </div> */}
+
 
               {/* Mobile Auth Button */}
               <div className="px-2 pb-4 border-b border-border">
@@ -303,6 +234,7 @@ export function SiteHeader() {
                 {HEADER_NAV.map((link) => (
                   <SheetClose
                     key={link.href}
+                    {...({ nativeButton: false } as any)}
                     render={
                       <Link
                         href={link.href}
