@@ -22,13 +22,13 @@ function Logo() {
   return (
     <Link
       href="/"
-      className="group inline-flex items-end py-2 text-foreground"
+      className="group inline-flex shrink-0 items-end py-2 text-foreground"
       aria-label={`${SITE_NAME}, trang chủ`}
     >
-      <span className="font-display text-[1.7rem] font-black leading-none tracking-[-0.075em] transition-transform duration-300 group-hover:-translate-y-px">
+      <span className="font-display text-[1.7rem] font-black leading-none tracking-[-0.075em] transition-transform duration-300 group-hover:-translate-y-px max-[374px]:text-[1.45rem]">
         ToTo
       </span>
-      <span className="relative ml-3 pb-0.5 text-[0.98rem] font-black leading-none tracking-[0.2em] text-primary">
+      <span className="relative ml-3 pb-0.5 text-[0.98rem] font-black leading-none tracking-[0.2em] text-primary max-[374px]:ml-2 max-[374px]:text-[0.78rem]">
         BARBERSHOP
         <span
           className="absolute -bottom-1 left-0 h-0.5 w-full origin-left bg-primary transition-transform duration-300 group-hover:scale-x-50"
@@ -116,15 +116,15 @@ export function SiteHeader() {
 
   return (
     <header className="site-glass-header fixed inset-x-0 top-0 z-50 border-b border-white/60 text-foreground backdrop-blur-xl backdrop-saturate-150 shadow-[0_10px_40px_rgba(7,17,15,0.14),inset_0_1px_0_rgba(255,255,255,0.82)]">
-      <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-4 px-5 md:px-6">
+      <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-5 md:gap-3 md:px-6 xl:gap-4">
         <Logo />
 
-        <div className="hidden xl:block">
+        <div className="hidden shrink-0 md:block">
           <GooeyNav items={HEADER_NAV} />
         </div>
 
         {/* Right Section: Inline Search Input + Icons */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
 
           
 
@@ -195,7 +195,7 @@ export function SiteHeader() {
             <SheetTrigger
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
-                "rounded-none hover:bg-primary/8 hover:text-primary xl:hidden"
+                "rounded-none hover:bg-primary/8 hover:text-primary md:hidden"
               )}
               aria-label="Mở menu"
             >

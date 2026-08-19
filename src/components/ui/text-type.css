@@ -3,10 +3,16 @@
   white-space: pre-wrap;
 }
 
+.text-type.text-type--nowrap {
+  white-space: nowrap;
+}
+
 .text-type__cursor {
   display: inline-block;
   margin-left: 0.12em;
   opacity: 1;
+  vertical-align: baseline;
+  white-space: nowrap;
 }
 
 .text-type__cursor--hidden {

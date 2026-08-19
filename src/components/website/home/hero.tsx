@@ -149,7 +149,7 @@ export function Hero() {
           <h1
             key={replayKey}
             data-home-hero-replay-key={replayKey}
-            className="font-agatho font-medium uppercase leading-[0.86] tracking-tight text-[#79b8a7] text-balance"
+            className="font-agatho font-medium uppercase leading-[0.92] tracking-tight text-[#79b8a7] md:leading-[0.86]"
           >
             <span className="sr-only">ToTo Barbershop</span>
             <TextType
@@ -160,7 +160,7 @@ export function Hero() {
               initialDelay={250}
               loop={false}
               showCursor={false}
-              className="!block min-h-[0.86em] text-[19vw] sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]"
+              className="!block min-h-[0.92em] text-[clamp(3.5rem,18vw,4.75rem)] sm:text-[clamp(4.75rem,16vw,6.5rem)] lg:text-[13vw] xl:text-[5.5rem]"
             />
             <TextType
               aria-hidden="true"
@@ -173,7 +173,7 @@ export function Hero() {
               cursorCharacter="|"
               cursorBlinkDuration={0.65}
               cursorClassName="font-sans font-light text-[#2f7a68]"
-              className="!block min-h-[0.86em] pl-[0.88em] text-[14vw] text-[#f2f5f3] sm:text-[14vw] lg:text-[13vw] xl:text-[5.5rem]"
+              className="text-type--nowrap !block min-h-[0.92em] pl-[0.22em] text-[clamp(2.2rem,11.5vw,3.2rem)] text-[#f2f5f3] sm:pl-[0.55em] sm:text-[clamp(3.25rem,11.5vw,5rem)] lg:pl-[0.88em] lg:text-[13vw] xl:text-[5.5rem]"
             />
           </h1>
 
