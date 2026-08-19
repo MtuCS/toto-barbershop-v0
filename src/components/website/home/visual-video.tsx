@@ -20,16 +20,20 @@
 export function VisualVideo() {
   return (
     <section className="relative z-10 border-b border-border bg-[#07110f]">
-      <video
-        src="/images/TotoVisual.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        aria-label="Visual ToTo Barbershop"
-        className="block h-auto w-full"
-      />
+      <div className="w-full">
+        <div className="relative w-full overflow-hidden lg:h-full lg:bg-black">
+          <video
+            src="/images/TotoVisual.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label="Visual ToTo Barbershop"
+            className="block h-auto w-full lg:absolute lg:inset-0 lg:h-full lg:object-contain"
+          />
+        </div>
+      </div>
     </section>
   )
 }
