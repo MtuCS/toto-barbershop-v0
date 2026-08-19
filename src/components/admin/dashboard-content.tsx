@@ -89,16 +89,19 @@ export function DashboardContent() {
       { label: 'Giá trị TB', value: formatCurrency(cpAov), trend: calcTrend(cpAov, ppAov), icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-100' }
     ];
 
-    const productSales: Record<string, number> = {};
+    const productSales: Record<string, { sold: number, image: string | undefined }> = {};
     cpCompletedOrders.forEach(o => {
       o.items?.forEach(i => {
-        const name = i.title || 'Unknown';
-        productSales[name] = (productSales[name] || 0) + i.quantity;
+        const name = i.product?.title || i.title || 'Unknown';
+        if (!productSales[name]) {
+          productSales[name] = { sold: 0, image: i.product?.images?.[0] || i.image };
+        }
+        productSales[name].sold += i.quantity;
       });
     });
     
     const computedTop = Object.entries(productSales)
-      .map(([name, sold]) => ({ name, sold }))
+      .map(([name, data]) => ({ name, sold: data.sold, image: data.image }))
       .sort((a, b) => b.sold - a.sold)
       .slice(0, 5);
 
@@ -344,8 +347,11 @@ export function DashboardContent() {
             <div className="space-y-5">
               {topProductsList.length > 0 ? topProductsList.map((p, i) => (
                 <div key={p.name} className="flex gap-3 items-center group">
-                  <div className="size-8 rounded-full bg-neutral-100 flex items-center justify-center text-xs font-bold text-neutral-500 group-hover:bg-primary group-hover:text-white transition-colors">
+                  <div className="size-8 rounded-full bg-neutral-100 flex items-center justify-center text-xs font-bold text-neutral-500 group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
                     {i+1}
+                  </div>
+                  <div className="w-10 h-10 rounded bg-neutral-100 overflow-hidden shrink-0">
+                    <img src={p.image || "https://placehold.co/40x40"} alt={p.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-neutral-900">{p.name}</p>

@@ -167,14 +167,12 @@ export interface MerchandiseStory {
 // ---------------------------------------------------------------------------
 
 export interface LookbookItem {
-  [key: string]: unknown
   id: ID
   image: string
-  caption: string
+  title: string
   category: string
-  featured: boolean
-  published: boolean
-  order: number
+  tags?: string[]
+  instagramUrl?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -213,6 +211,7 @@ export interface OrderItem {
   image: string
   price: number
   quantity: number
+  product?: any
 }
 
 export interface OrderTimelineEntry {

@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Check, CreditCard, Loader2, MapPin, Tag, Truck } from "lucide-react"
 import { toast } from "sonner"
@@ -83,15 +83,37 @@ export function CheckoutForm() {
   }, [user?.id])
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items])
+  const prevSubtotal = useRef(subtotal)
   
   useEffect(() => {
-    if (coupon) {
-      setCoupon(null)
-      setDiscount(0)
-      setCouponInput("")
-      toast.info("Giỏ hàng thay đổi, vui lòng áp dụng lại mã giảm giá.")
+    // Chỉ reset mã giảm giá nếu giỏ hàng THỰC SỰ thay đổi sau khi đã load xong (subtotal từ >0 sang giá trị mới)
+    if (prevSubtotal.current > 0 && prevSubtotal.current !== subtotal) {
+      if (coupon) {
+        setCoupon(null)
+        setDiscount(0)
+        setCouponInput("")
+        applyCouponToStore(null)
+        toast.info("Giỏ hàng thay đổi, vui lòng áp dụng lại mã giảm giá.")
+      }
+    } else if (prevSubtotal.current === 0 && subtotal > 0 && coupon && discount === 0) {
+      // Tự động kiểm tra lại mã giảm giá khi load trang có subtotal
+      fetch("/api/promo/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ code: coupon, subtotal })
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          setDiscount(data.discount)
+        } else {
+          setCoupon(null)
+          setDiscount(0)
+          applyCouponToStore(null)
+          toast.error("Mã giảm giá đã lưu không còn hợp lệ.")
+        }
+      }).catch(() => {})
     }
-  }, [subtotal])
+    prevSubtotal.current = subtotal;
+  }, [subtotal, coupon, applyCouponToStore, discount, token])
 
   const shipping = subtotal === 0 || form.payment === 'payos' ? 0 : SHIPPING_FLAT_FEE
   const total = Math.max(0, subtotal + shipping - discount)
