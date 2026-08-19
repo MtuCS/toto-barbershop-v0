@@ -20,7 +20,7 @@ export function CheckoutForm() {
   const clear = useCartStore((s) => s.clear)
   const storedCoupon = useCartStore((s) => s.couponCode)
   const applyCouponToStore = useCartStore((s) => s.applyCoupon)
-  const { user, token } = useCustomerUserStore()
+  const { user, token, setAuthModalOpen: setAuthOpen } = useCustomerUserStore()
   const mounted = useMounted()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [couponInput, setCouponInput] = useState(storedCoupon ?? "")
@@ -152,13 +152,9 @@ export function CheckoutForm() {
       <CreditCard className="size-10 text-primary" />
       <h1 className="mt-4 font-display text-3xl font-bold uppercase">Yêu cầu đăng nhập</h1>
       <p className="mt-3 text-neutral-600">Vui lòng đăng nhập vào tài khoản của bạn trước khi tiến hành thanh toán.</p>
-      <Button asChild className="mt-6">
-        <Link href={`/login?redirect=/checkout`}>Đăng nhập ngay</Link>
+      <Button onClick={() => setAuthOpen(true)} className="mt-6">
+        Đăng nhập / Đăng ký
       </Button>
-      <p className="mt-3 text-sm text-neutral-400">
-        Chưa có tài khoản?{" "}
-        <Link href="/login?tab=register&redirect=/checkout" className="text-primary underline">Đăng ký miễn phí</Link>
-      </p>
     </div>
   )
   return <main className="bg-[#f5f9f7] py-8 text-[#101715] md:py-12"><div className="mx-auto max-w-[1240px] px-5 md:px-8">

@@ -916,6 +916,11 @@ export function CrudPage({ section }: { section: string }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Row | null>(null)
   const [formData, setFormData] = useState<Row>({})
+  
+  // Product Filters
+  const [filterCategory, setFilterCategory] = useState("ALL")
+  const [filterStatus, setFilterStatus] = useState("ALL")
+  const [sortOrder, setSortOrder] = useState("NEWEST")
   const [page, setPage] = useState(1)
   const pageSize = 10
   const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
@@ -956,11 +961,25 @@ export function CrudPage({ section }: { section: string }) {
     }
   }
 
-  const filtered = rows.filter(r => {
+  let filtered = rows.filter(r => {
     const text = String(r.title ?? r.name ?? r.code ?? r.email ?? "").toLowerCase()
-    return text.includes(search.toLowerCase())
+    let match = text.includes(search.toLowerCase())
+    
+    if (section === "products") {
+      if (filterCategory !== "ALL" && r.category !== filterCategory) match = false
+      if (filterStatus !== "ALL" && r.status !== filterStatus) match = false
+    }
+    
+    return match
   })
 
+  if (section === "products") {
+    filtered = [...filtered].sort((a, b) => {
+      if (sortOrder === "PRICE_ASC") return (Number(a.basePrice) || 0) - (Number(b.basePrice) || 0)
+      if (sortOrder === "PRICE_DESC") return (Number(b.basePrice) || 0) - (Number(a.basePrice) || 0)
+      return 0
+    })
+  }
   const handleAdd = () => {
     setEditingItem(null)
     setFormData(generateDefaultForm(section))
@@ -1029,9 +1048,34 @@ export function CrudPage({ section }: { section: string }) {
       </header>
 
       <div className="mt-8 border bg-white max-w-full overflow-hidden">
-        <div className="flex items-center gap-2 border-b p-4">
-          <Search className="size-4 text-neutral-400" />
-          <input placeholder="Tìm kiếm..." className="flex-1 outline-none" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+        <div className="flex flex-wrap items-center gap-3 border-b p-4 bg-white/50">
+          <div className="relative w-full sm:max-w-xs flex items-center">
+            <Search className="absolute left-3 size-4 text-neutral-400" />
+            <input placeholder="Tìm kiếm..." className="flex-1 h-9 outline-none pl-9 border border-neutral-200 rounded-md text-sm focus:border-primary" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+          </div>
+          {section === "products" && (
+            <>
+              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả danh mục</option>
+                <option value="grooming">Chăm sóc tóc</option>
+                <option value="merchandise">Thời trang</option>
+              </select>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="active">Đang bán</option>
+                <option value="draft">Bản nháp</option>
+                <option value="archived">Lưu trữ</option>
+              </select>
+              <select value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="NEWEST">Mới nhất</option>
+                <option value="PRICE_ASC">Giá tăng dần</option>
+                <option value="PRICE_DESC">Giá giảm dần</option>
+              </select>
+              {(filterCategory !== "ALL" || filterStatus !== "ALL" || sortOrder !== "NEWEST") && (
+                <button onClick={() => { setFilterCategory("ALL"); setFilterStatus("ALL"); setSortOrder("NEWEST") }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              )}
+            </>
+          )}
         </div>
         {section === "media" ? (
           <div className="p-6 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">

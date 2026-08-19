@@ -29,6 +29,8 @@ export function OrderAdminPage() {
   const { orders, updateOrderStatus, fetchOrders } = useDataStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("ALL")
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<string>("ALL")
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>("ALL")
   const [filterFrom, setFilterFrom] = useState("")
   const [filterTo, setFilterTo] = useState("")
 
@@ -54,13 +56,15 @@ export function OrderAdminPage() {
       o.customer.phone.includes(searchQuery)
     
     const matchStatus = filterStatus === "ALL" || o.status === filterStatus
+    const matchPaymentStatus = filterPaymentStatus === "ALL" || o.paymentStatus === filterPaymentStatus
+    const matchPaymentMethod = filterPaymentMethod === "ALL" || o.paymentMethod?.toLowerCase() === filterPaymentMethod.toLowerCase()
     
     // So sánh ngày theo VN timezone
     const orderDateVN = new Date(new Date(o.createdAt).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }))
     const matchFrom = !filterFrom || orderDateVN >= new Date(filterFrom)
     const matchTo = !filterTo || orderDateVN <= new Date(filterTo + "T23:59:59")
     
-    return matchSearch && matchStatus && matchFrom && matchTo
+    return matchSearch && matchStatus && matchPaymentStatus && matchPaymentMethod && matchFrom && matchTo
   })
 
   const paymentMethodLabel: Record<string, string> = {
@@ -108,12 +112,12 @@ export function OrderAdminPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
       <div className="p-4 border-b border-neutral-100 flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
             <Input 
               placeholder="Mã đơn, Tên KH, SĐT..." 
-              className="pl-9 bg-neutral-50/50 border-neutral-200 focus-visible:bg-white"
+              className="pl-9 h-9 bg-neutral-50/50 border-neutral-200 focus-visible:bg-white"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
@@ -121,24 +125,43 @@ export function OrderAdminPage() {
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
-            className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary"
+            className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary cursor-pointer"
           >
-            <option value="ALL">Tất cả trạng thái</option>
+            <option value="ALL">Tất cả đơn hàng</option>
             {Object.entries(orderStatusMap).map(([key, val]) => (
               <option key={key} value={key}>{val.label}</option>
             ))}
           </select>
-          <div className="flex items-center gap-2 text-sm text-neutral-600 whitespace-nowrap">
-            <span>Từ</span>
+          <select
+            value={filterPaymentStatus}
+            onChange={e => setFilterPaymentStatus(e.target.value)}
+            className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary cursor-pointer"
+          >
+            <option value="ALL">Tất cả thanh toán</option>
+            {Object.entries(paymentStatusMap).map(([key, val]) => (
+              <option key={key} value={key}>{val.label}</option>
+            ))}
+          </select>
+          <select
+            value={filterPaymentMethod}
+            onChange={e => setFilterPaymentMethod(e.target.value)}
+            className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary cursor-pointer"
+          >
+            <option value="ALL">Tất cả phương thức</option>
+            <option value="COD">COD (Nhận hàng)</option>
+            <option value="PAYOS">PayOS / CK</option>
+          </select>
+          <div className="flex items-center gap-2 text-sm text-neutral-600 bg-neutral-50 border border-neutral-200 rounded-md h-9 px-2 overflow-hidden">
+            <span className="text-neutral-400"><Calendar className="size-4" /></span>
             <input type="date" value={filterFrom} onChange={e => setFilterFrom(e.target.value)}
-              className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-2 text-sm focus:outline-none focus:border-primary" />
-            <span>đến</span>
+              className="bg-transparent focus:outline-none w-[110px]" />
+            <span className="text-neutral-300">-</span>
             <input type="date" value={filterTo} onChange={e => setFilterTo(e.target.value)}
-              className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-2 text-sm focus:outline-none focus:border-primary" />
+              className="bg-transparent focus:outline-none w-[110px]" />
           </div>
-          {(filterStatus !== 'ALL' || filterFrom || filterTo || searchQuery) && (
-            <button onClick={() => { setFilterStatus('ALL'); setFilterFrom(''); setFilterTo(''); setSearchQuery('') }}
-              className="text-xs text-primary underline whitespace-nowrap">Xoá lọc</button>
+          {(filterStatus !== 'ALL' || filterPaymentStatus !== 'ALL' || filterPaymentMethod !== 'ALL' || filterFrom || filterTo || searchQuery) && (
+            <button onClick={() => { setFilterStatus('ALL'); setFilterPaymentStatus('ALL'); setFilterPaymentMethod('ALL'); setFilterFrom(''); setFilterTo(''); setSearchQuery('') }}
+              className="text-xs text-primary hover:underline whitespace-nowrap px-2">Xoá lọc</button>
           )}
         </div>
         <p className="text-xs text-neutral-400">
