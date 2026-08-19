@@ -70,8 +70,9 @@ const fieldLabels: Record<string, string> = {
   subtitle: "Phụ đề",
   heroImage: "Ảnh bìa",
   manifesto: "Tuyên ngôn",
-  blocks: "Nội dung (JSON Array)",
-  gallery: "Thư viện ảnh (JSON Array)",
+  process: "Quy trình dịch vụ",
+  blocks: "Nội dung (các khối)",
+  gallery: "Thư viện ảnh",
   published: "Trạng thái hiển thị",
   order: "Thứ tự",
   url: "Đường dẫn file (URL)",
@@ -81,13 +82,15 @@ const fieldLabels: Record<string, string> = {
   code: "Mã giảm giá",
   discountType: "Loại giảm giá",
   discountValue: "Giá trị giảm",
-  minOrderValue: "Giá trị đơn tối thiểu",
-  maxDiscount: "Giảm tối đa (Tùy chọn)",
-  usageLimit: "Giới hạn số lần dùng",
-  isActive: "Hoạt động",
+  minOrderValue: "Giá trị đơn tối thiểu (VNĐ)",
+  maxDiscount: "Giảm tối đa (VNĐ, để trống = không giới hạn)",
+  usageLimit: "Giới hạn số lần dùng (bỏ trống = không giới hạn)",
+  isActive: "Trạng thái kích hoạt",
+  expiresAt: "Ngày hết hạn (bỏ trống = không giới hạn)",
   message: "Lời nhắn",
+  question: "Câu hỏi",
+  answer: "Câu trả lời",
 }
-
 // ============================================================================
 // Config: Product variant rules by product type
 // ============================================================================
@@ -723,12 +726,14 @@ function SettingsForm() {
 // ============================================================================
 // Generic form for other sections
 // ============================================================================
-const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "relatedProductIds", "timeline", "items", "process", "modules", "roadmap", "benefits", "audience", "productCount"]
+const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "relatedProductIds", "timeline", "items", "modules", "roadmap", "benefits", "audience", "productCount"]
+// Những field dùng UI dynamic list thay vì textarea JSON
+const JSON_LIST_KEYS = ["process", "blocks", "gallery"]
 
 function generateDefaultForm(section: string) {
   switch (section) {
     case "categories": return { name: "", slug: "", parent: "", description: "" }
-    case "services": return { name: "", duration: "", price: 0, category: "" }
+    case "services": return { name: "", duration: "", price: 0, category: "", description: "", process: [] }
     case "training": return { title: "", duration: "", price: 0 }
     case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", blocks: [], gallery: [], status: "draft", order: 1 }
     case "lookbook": return { caption: "", category: "", image: "", featured: false, published: true, order: 1 }
@@ -911,6 +916,11 @@ export function CrudPage({ section }: { section: string }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Row | null>(null)
   const [formData, setFormData] = useState<Row>({})
+  
+  // Product Filters
+  const [filterCategory, setFilterCategory] = useState("ALL")
+  const [filterStatus, setFilterStatus] = useState("ALL")
+  const [sortOrder, setSortOrder] = useState("NEWEST")
   const [page, setPage] = useState(1)
   const pageSize = 10
   const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
@@ -951,11 +961,25 @@ export function CrudPage({ section }: { section: string }) {
     }
   }
 
-  const filtered = rows.filter(r => {
+  let filtered = rows.filter(r => {
     const text = String(r.title ?? r.name ?? r.code ?? r.email ?? "").toLowerCase()
-    return text.includes(search.toLowerCase())
+    let match = text.includes(search.toLowerCase())
+    
+    if (section === "products") {
+      if (filterCategory !== "ALL" && r.category !== filterCategory) match = false
+      if (filterStatus !== "ALL" && r.status !== filterStatus) match = false
+    }
+    
+    return match
   })
 
+  if (section === "products") {
+    filtered = [...filtered].sort((a, b) => {
+      if (sortOrder === "PRICE_ASC") return (Number(a.basePrice) || 0) - (Number(b.basePrice) || 0)
+      if (sortOrder === "PRICE_DESC") return (Number(b.basePrice) || 0) - (Number(a.basePrice) || 0)
+      return 0
+    })
+  }
   const handleAdd = () => {
     setEditingItem(null)
     setFormData(generateDefaultForm(section))
@@ -1001,7 +1025,7 @@ export function CrudPage({ section }: { section: string }) {
     setModalOpen(false)
   }
 
-  const handleChange = (key: string, value: string | number | boolean) => {
+  const handleChange = (key: string, value: any) => {
     setFormData(prev => ({ ...prev, [key]: value }))
   }
 
@@ -1018,18 +1042,66 @@ export function CrudPage({ section }: { section: string }) {
           <p className="text-xs font-bold uppercase tracking-widest text-primary">Quản trị nội dung</p>
           <h1 className="mt-2 font-display text-4xl font-bold uppercase">{labels[section] ?? section}</h1>
         </div>
-        {section !== "settings" && section !== "orders" && (
+        {section !== "settings" && section !== "orders" && section !== "media" && (
           <Button onClick={handleAdd} className="w-full sm:w-auto"><Plus className="mr-2 size-4" />Thêm mới</Button>
         )}
       </header>
 
       <div className="mt-8 border bg-white max-w-full overflow-hidden">
-        <div className="flex items-center gap-2 border-b p-4">
-          <Search className="size-4 text-neutral-400" />
-          <input placeholder="Tìm kiếm..." className="flex-1 outline-none" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+        <div className="flex flex-wrap items-center gap-3 border-b p-4 bg-white/50">
+          <div className="relative w-full sm:max-w-xs flex items-center">
+            <Search className="absolute left-3 size-4 text-neutral-400" />
+            <input placeholder="Tìm kiếm..." className="flex-1 h-9 outline-none pl-9 border border-neutral-200 rounded-md text-sm focus:border-primary" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+          </div>
+          {section === "products" && (
+            <>
+              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả danh mục</option>
+                <option value="grooming">Chăm sóc tóc</option>
+                <option value="merchandise">Thời trang</option>
+              </select>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="active">Đang bán</option>
+                <option value="draft">Bản nháp</option>
+                <option value="archived">Lưu trữ</option>
+              </select>
+              <select value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="NEWEST">Mới nhất</option>
+                <option value="PRICE_ASC">Giá tăng dần</option>
+                <option value="PRICE_DESC">Giá giảm dần</option>
+              </select>
+              {(filterCategory !== "ALL" || filterStatus !== "ALL" || sortOrder !== "NEWEST") && (
+                <button onClick={() => { setFilterCategory("ALL"); setFilterStatus("ALL"); setSortOrder("NEWEST") }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              )}
+            </>
+          )}
         </div>
-        <div className="overflow-x-auto w-full">
-          <table className="w-full min-w-[700px] text-left text-sm">
+        {section === "media" ? (
+          <div className="p-6 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
+            {filtered.length ? filtered.map((r, i) => (
+              <div key={String(r.id ?? i)} className="group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200 shadow-sm">
+                <Image src={String(r.url)} alt={String(r.name || "Media")} fill className="object-cover transition-transform group-hover:scale-105" />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
+                  <div className="text-[10px] text-white/90 truncate font-medium bg-black/50 px-2 py-1 rounded w-fit max-w-full">
+                    {r.name}
+                  </div>
+                  <button 
+                    onClick={() => setItemToDelete(r)} 
+                    className="self-end bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-transform hover:scale-110"
+                    title="Xóa hình ảnh"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              </div>
+            )) : (
+              <div className="col-span-full py-16 text-center text-neutral-400">Không tìm thấy hình ảnh nào.</div>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
               {section === "promo-codes" ? (
                 <tr>
@@ -1038,6 +1110,13 @@ export function CrudPage({ section }: { section: string }) {
                   <th>Thời hạn (TTL)</th>
                   <th>Trạng thái</th>
                   <th />
+                </tr>
+              ) : section === "faqs" ? (
+                <tr>
+                  <th className="p-4 w-16 text-center">STT</th>
+                  <th>Câu hỏi & Trả lời</th>
+                  <th className="w-32">Danh mục</th>
+                  <th className="w-16" />
                 </tr>
               ) : (
                 <tr>
@@ -1082,6 +1161,23 @@ export function CrudPage({ section }: { section: string }) {
                       <td>
                         <span className={`px-2 py-1 text-xs font-semibold rounded ${!r.isActive ? "bg-neutral-100 text-neutral-500" : (r.expiresAt && new Date(r.expiresAt) < new Date() ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700")}`}>
                           {!r.isActive ? "Bị khóa" : (r.expiresAt && new Date(r.expiresAt) < new Date() ? "Hết hạn" : "Hoạt động")}
+                        </span>
+                      </td>
+                    </>
+                  ) : section === "faqs" ? (
+                    <>
+                      <td className="p-4 font-medium text-center text-neutral-500">{r.order ?? "—"}</td>
+                      <td className="py-3 pr-4">
+                        <div className="font-bold text-base text-neutral-900 mb-1">{r.question || "Chưa có câu hỏi"}</div>
+                        <div className="text-sm text-neutral-600 line-clamp-2">{r.answer || "Chưa có câu trả lời"}</div>
+                      </td>
+                      <td>
+                        <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${
+                          r.category === "shop" ? "bg-amber-100 text-amber-800" :
+                          r.category === "service" ? "bg-purple-100 text-purple-800" :
+                          r.category === "training" ? "bg-blue-100 text-blue-800" : "bg-neutral-100 text-neutral-600"
+                        }`}>
+                          {r.category === "shop" ? "Cửa hàng" : r.category === "service" ? "Dịch vụ" : r.category === "training" ? "Đào tạo" : r.category}
                         </span>
                       </td>
                     </>
@@ -1163,6 +1259,7 @@ export function CrudPage({ section }: { section: string }) {
             </tbody>
           </table>
         </div>
+        )}
         {/* Pagination controls */}
         {filtered.length > pageSize && (
           <div className="flex items-center justify-between border-t p-4 text-sm text-neutral-500">
@@ -1193,7 +1290,7 @@ export function CrudPage({ section }: { section: string }) {
 
       {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className={section === "products" ? "sm:max-w-[720px] max-h-[90vh] overflow-y-auto" : "sm:max-w-[480px]"}>
+        <DialogContent className={section === "products" ? "sm:max-w-[720px] max-h-[90vh] overflow-y-auto" : "sm:max-w-[500px] max-h-[90vh] overflow-y-auto"}>
           <DialogHeader>
             <DialogTitle>{editingItem ? "Chỉnh sửa" : "Thêm mới"} {labels[section]?.toLowerCase()}</DialogTitle>
           </DialogHeader>
@@ -1338,6 +1435,16 @@ export function CrudPage({ section }: { section: string }) {
                         <option value="Grooming">Grooming</option>
                         <option value="Coloring">Coloring</option>
                       </select>
+                    ) : key === "category" && section === "faqs" ? (
+                      <select 
+                        value={formData[key] || "shop"} 
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="shop">Cửa hàng</option>
+                        <option value="service">Dịch vụ</option>
+                        <option value="training">Đào tạo</option>
+                      </select>
                     ) : key === "type" && section === "media" ? (
                       <select 
                         value={formData[key] || "image"} 
@@ -1357,7 +1464,45 @@ export function CrudPage({ section }: { section: string }) {
                         <option value="grooming">Grooming (Chăm sóc tóc & râu)</option>
                         <option value="merchandise">Merchandise (Thời trang)</option>
                       </select>
-                    ) : key === "manifesto" || key === "excerpt" || key === "description" || key === "blocks" || key === "gallery" || key === "message" ? (
+                    ) : JSON_LIST_KEYS.includes(key) ? (
+                      // UI Dynamic List thay vì textarea JSON thô
+                      <div className="space-y-2">
+                        {(Array.isArray(formData[key]) ? formData[key] : []).map((item: string, idx: number) => (
+                          <div key={idx} className="flex items-start gap-2">
+                            <span className="mt-2 shrink-0 text-xs font-bold text-neutral-400 w-5 text-right">{idx + 1}.</span>
+                            <textarea
+                              value={item}
+                              rows={2}
+                              onChange={e => {
+                                const arr = [...(formData[key] || [])]
+                                arr[idx] = e.target.value
+                                handleChange(key, arr as any)
+                              }}
+                              className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const arr = [...(formData[key] || [])]
+                                arr.splice(idx, 1)
+                                handleChange(key, arr as any)
+                              }}
+                              className="mt-2 text-red-400 hover:text-red-600 text-lg leading-none"
+                            >×</button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => handleChange(key, [...(Array.isArray(formData[key]) ? formData[key] : []), ""] as any)}
+                          className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium mt-1"
+                        >
+                          <span className="text-lg leading-none">+</span> Thêm mục
+                        </button>
+                        {(!formData[key] || formData[key].length === 0) && (
+                          <p className="text-xs text-neutral-400 italic">Chưa có mục nào. Nhấn &quot;+&quot; để thêm.</p>
+                        )}
+                      </div>
+                    ) : key === "manifesto" || key === "excerpt" || key === "description" || key === "message" || key === "answer" ? (
                       <textarea
                         value={typeof formData[key] === 'object' ? JSON.stringify(formData[key], null, 2) : (formData[key] || "")}
                         onChange={e => handleChange(key, e.target.value)}

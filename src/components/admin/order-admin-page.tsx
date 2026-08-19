@@ -28,6 +28,11 @@ const paymentStatusMap: Record<string, { label: string; color: string; bgColor: 
 export function OrderAdminPage() {
   const { orders, updateOrderStatus, fetchOrders } = useDataStore()
   const [searchQuery, setSearchQuery] = useState("")
+  const [filterStatus, setFilterStatus] = useState<string>("ALL")
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<string>("ALL")
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>("ALL")
+  const [filterFrom, setFilterFrom] = useState("")
+  const [filterTo, setFilterTo] = useState("")
 
   useEffect(() => {
     fetchOrders()
@@ -35,14 +40,37 @@ export function OrderAdminPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
 
+  // Format ngày theo múi giờ Việt Nam để tránh bug ngày 23:59 UTC
+  const formatDateVN = (dateStr: string | Date, opts?: Intl.DateTimeFormatOptions) => {
+    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr
+    return date.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", ...opts })
+  }
+
   // Sort orders descending by createdAt
   const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   
-  const filteredOrders = sortedOrders.filter(o => 
-    o.id.toString().includes(searchQuery) || 
-    o.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    o.customer.phone.includes(searchQuery)
-  )
+  const filteredOrders = sortedOrders.filter(o => {
+    const matchSearch = o.id.toString().includes(searchQuery) || 
+      (o as any).orderCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      o.customer.phone.includes(searchQuery)
+    
+    const matchStatus = filterStatus === "ALL" || o.status === filterStatus
+    const matchPaymentStatus = filterPaymentStatus === "ALL" || o.paymentStatus === filterPaymentStatus
+    const matchPaymentMethod = filterPaymentMethod === "ALL" || o.paymentMethod?.toLowerCase() === filterPaymentMethod.toLowerCase()
+    
+    // So sánh ngày theo VN timezone
+    const orderDateVN = new Date(new Date(o.createdAt).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }))
+    const matchFrom = !filterFrom || orderDateVN >= new Date(filterFrom)
+    const matchTo = !filterTo || orderDateVN <= new Date(filterTo + "T23:59:59")
+    
+    return matchSearch && matchStatus && matchPaymentStatus && matchPaymentMethod && matchFrom && matchTo
+  })
+
+  const paymentMethodLabel: Record<string, string> = {
+    cod: 'COD (Nhận hàng)',
+    payos: 'PayOS / Chuyển khoản',
+  }
 
   const handleUpdateStatus = async (orderId: string | number, newStatus: OrderStatus) => {
     setIsUpdating(true)
@@ -62,7 +90,7 @@ export function OrderAdminPage() {
     try {
       await updateOrderStatus(orderId.toString(), { paymentStatus: newPaymentStatus })
 
-      toast.success(`Chuyển trạng thái thanh toán thành ${newPaymentStatus}`)
+      toast.success(`Chuyển trạng thái thanh toán thành ${paymentStatusMap[newPaymentStatus]?.label || newPaymentStatus}`)
       setSelectedOrder(prev => prev ? { ...prev, paymentStatus: newPaymentStatus } : null)
     } catch (e) {
       toast.error("Lỗi khi cập nhật thanh toán")
@@ -83,17 +111,63 @@ export function OrderAdminPage() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
-        <div className="p-4 border-b border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:max-w-md">
+      <div className="p-4 border-b border-neutral-100 flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
             <Input 
-              placeholder="Tìm theo Mã Đơn, Tên KH hoặc Số Điện Thoại..." 
-              className="pl-9 bg-neutral-50/50 border-neutral-200 focus-visible:bg-white"
+              placeholder="Mã đơn, Tên KH, SĐT..." 
+              className="pl-9 h-9 bg-neutral-50/50 border-neutral-200 focus-visible:bg-white"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
           </div>
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+            className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary cursor-pointer"
+          >
+            <option value="ALL">Tất cả đơn hàng</option>
+            {Object.entries(orderStatusMap).map(([key, val]) => (
+              <option key={key} value={key}>{val.label}</option>
+            ))}
+          </select>
+          <select
+            value={filterPaymentStatus}
+            onChange={e => setFilterPaymentStatus(e.target.value)}
+            className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary cursor-pointer"
+          >
+            <option value="ALL">Tất cả thanh toán</option>
+            {Object.entries(paymentStatusMap).map(([key, val]) => (
+              <option key={key} value={key}>{val.label}</option>
+            ))}
+          </select>
+          <select
+            value={filterPaymentMethod}
+            onChange={e => setFilterPaymentMethod(e.target.value)}
+            className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary cursor-pointer"
+          >
+            <option value="ALL">Tất cả phương thức</option>
+            <option value="COD">COD (Nhận hàng)</option>
+            <option value="PAYOS">PayOS / CK</option>
+          </select>
+          <div className="flex items-center gap-2 text-sm text-neutral-600 bg-neutral-50 border border-neutral-200 rounded-md h-9 px-2 overflow-hidden">
+            <span className="text-neutral-400"><Calendar className="size-4" /></span>
+            <input type="date" value={filterFrom} onChange={e => setFilterFrom(e.target.value)}
+              className="bg-transparent focus:outline-none w-[110px]" />
+            <span className="text-neutral-300">-</span>
+            <input type="date" value={filterTo} onChange={e => setFilterTo(e.target.value)}
+              className="bg-transparent focus:outline-none w-[110px]" />
+          </div>
+          {(filterStatus !== 'ALL' || filterPaymentStatus !== 'ALL' || filterPaymentMethod !== 'ALL' || filterFrom || filterTo || searchQuery) && (
+            <button onClick={() => { setFilterStatus('ALL'); setFilterPaymentStatus('ALL'); setFilterPaymentMethod('ALL'); setFilterFrom(''); setFilterTo(''); setSearchQuery('') }}
+              className="text-xs text-primary hover:underline whitespace-nowrap px-2">Xoá lọc</button>
+          )}
         </div>
+        <p className="text-xs text-neutral-400">
+          Hiển thị {filteredOrders.length} / {orders.length} đơn hàng
+        </p>
+      </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -123,10 +197,12 @@ export function OrderAdminPage() {
                   return (
                     <tr key={order.id} className="hover:bg-neutral-50/50 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="font-bold text-neutral-900">TOTO-DH{order.id.toString().padStart(4, '0')}</p>
-                        <p className="text-xs text-neutral-500 mt-1 flex items-center gap-1">
+                        <p className="font-bold text-neutral-900" title={`Mã đơn: ${(order as any).orderCode || `TOTO-DH${order.id.toString().padStart(4, '0')}`}`}>
+                          {(order as any).orderCode || `TOTO-DH${order.id.toString().padStart(4, '0')}`}
+                        </p>
+                        <p className="text-xs text-neutral-500 mt-1 flex items-center gap-1" title="Ngày đặt hàng">
                           <Calendar className="size-3" />
-                          {new Date(order.createdAt).toLocaleDateString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                          {formatDateVN(order.createdAt, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -135,7 +211,9 @@ export function OrderAdminPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <p className="font-bold text-primary">{formatCurrency(order.total)}</p>
-                        <p className="text-[10px] text-neutral-400 uppercase mt-1">{order.paymentMethod}</p>
+                        <p className="text-[10px] text-neutral-400 mt-1" title={order.paymentMethod}>
+                          {paymentMethodLabel[order.paymentMethod?.toLowerCase()] || order.paymentMethod?.toUpperCase()}
+                        </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide ${paymentStatusMap[pStatus]?.bgColor} ${paymentStatusMap[pStatus]?.color}`}>
@@ -174,10 +252,10 @@ export function OrderAdminPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                        Đơn hàng TOTO-DH{selectedOrder.id.toString().padStart(4, '0')}
+                        {(selectedOrder as any).orderCode || `TOTO-DH${selectedOrder.id.toString().padStart(4, '0')}`}
                       </DialogTitle>
                       <p className="text-sm text-neutral-500 mt-1">
-                        Ngày đặt: {new Date(selectedOrder.createdAt).toLocaleString("vi-VN")}
+                        Ngày đặt: {formatDateVN(selectedOrder.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -254,7 +332,7 @@ export function OrderAdminPage() {
                         <CreditCard className="size-4" /> Thanh toán
                       </h3>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-neutral-600 mr-2">Phương thức: <strong className="uppercase">{selectedOrder.paymentMethod}</strong></span>
+                        <p className="text-sm text-neutral-600 mr-2">Phương thức: <strong>{paymentMethodLabel[selectedOrder.paymentMethod?.toLowerCase()] || selectedOrder.paymentMethod?.toUpperCase()}</strong></p>
                       </div>
                       
                       <div className="flex flex-wrap gap-2">

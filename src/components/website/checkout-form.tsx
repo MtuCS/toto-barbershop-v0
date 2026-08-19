@@ -18,11 +18,13 @@ export function CheckoutForm() {
   const router = useRouter()
   const items = useCartStore((s) => s.items)
   const clear = useCartStore((s) => s.clear)
-  const { user, token } = useCustomerUserStore()
+  const storedCoupon = useCartStore((s) => s.couponCode)
+  const applyCouponToStore = useCartStore((s) => s.applyCoupon)
+  const { user, token, setAuthModalOpen: setAuthOpen } = useCustomerUserStore()
   const mounted = useMounted()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [couponInput, setCouponInput] = useState("")
-  const [coupon, setCoupon] = useState<string | null>(null)
+  const [couponInput, setCouponInput] = useState(storedCoupon ?? "")
+  const [coupon, setCoupon] = useState<string | null>(storedCoupon)
   const [discount, setDiscount] = useState(0)
   const [couponError, setCouponError] = useState("")
   const [provinces, setProvinces] = useState<any[]>([])
@@ -96,10 +98,12 @@ export function CheckoutForm() {
         setCoupon(data.code)
         setDiscount(data.discount)
         setCouponError("")
+        applyCouponToStore(data.code)  // persist vào cart store
       } else {
         setCoupon(null)
         setDiscount(0)
         setCouponError(data.error || "Mã giảm giá không hợp lệ.")
+        applyCouponToStore(null)
       }
     } catch (e) {
       setCoupon(null)
@@ -143,9 +147,19 @@ export function CheckoutForm() {
 
   if (!mounted) return null
   if (!items.length) return <div className="mx-auto flex min-h-[55vh] max-w-xl flex-col items-center justify-center px-5 text-center"><CreditCard className="size-10 text-primary" /><h1 className="mt-4 font-display text-3xl font-bold uppercase">Chưa có sản phẩm để thanh toán</h1><Button asChild className="mt-6"><Link href="/shop">Quay lại cửa hàng</Link></Button></div>
+  if (!user) return (
+    <div className="mx-auto flex min-h-[55vh] max-w-xl flex-col items-center justify-center px-5 text-center">
+      <CreditCard className="size-10 text-primary" />
+      <h1 className="mt-4 font-display text-3xl font-bold uppercase">Yêu cầu đăng nhập</h1>
+      <p className="mt-3 text-neutral-600">Vui lòng đăng nhập vào tài khoản của bạn trước khi tiến hành thanh toán.</p>
+      <Button onClick={() => setAuthOpen(true)} className="mt-6">
+        Đăng nhập / Đăng ký
+      </Button>
+    </div>
+  )
   return <main className="bg-[#f5f9f7] py-8 text-[#101715] md:py-12"><div className="mx-auto max-w-[1240px] px-5 md:px-8">
     <div className="mb-8 grid grid-cols-3 gap-2 text-center text-[10px] font-bold uppercase tracking-wide sm:text-xs"><Link href="/cart" className="border-b-2 border-primary pb-3">1. Giỏ hàng</Link><span className="border-b-2 border-primary pb-3 text-primary">2. Thanh toán</span><span className="border-b-2 border-black/10 pb-3 text-neutral-400">3. Hoàn tất</span></div>
-    <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_380px]"><form id="checkout-form" onSubmit={submit} className="space-y-5"><div><h1 className="font-display text-4xl font-bold uppercase md:text-5xl">Thanh toán</h1><p className="mt-2 text-sm text-neutral-600">Điền thông tin để hoàn tất đơn hàng. Bạn không cần đăng nhập.</p></div>
+    <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_380px]"><form id="checkout-form" onSubmit={submit} className="space-y-5"><div><h1 className="font-display text-4xl font-bold uppercase md:text-5xl">Thanh toán</h1><p className="mt-2 text-sm text-neutral-600">Kiểm tra và điền thông tin để hoàn tất đơn hàng.</p></div>
       <section className="border border-black/10 bg-white p-5"><h2 className="flex items-center gap-2 font-display text-xl font-bold uppercase"><MapPin className="size-5 text-primary" />Thông tin nhận hàng</h2><div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Họ và tên*<input required value={form.name} onChange={(e) => setField("name", e.target.value)} className="mt-2 h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="Nguyễn Văn A" /></label><label className="text-sm font-medium">Số điện thoại*<input required type="tel" value={form.phone} onChange={(e) => setField("phone", e.target.value)} className="mt-2 h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="09xxxxxxxx" /></label><label className="text-sm font-medium sm:col-span-2">Email nhận xác nhận đơn*<input required type="email" value={form.email} onChange={(e) => setField("email", e.target.value)} className="mt-2 h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="you@example.com" /></label>
       
       <div className="sm:col-span-2 space-y-4 pt-2">
