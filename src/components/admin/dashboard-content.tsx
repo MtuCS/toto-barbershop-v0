@@ -2,13 +2,33 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrency } from "@/lib/format";
 import { useDataStore } from "@/store/data-store";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+
+const STATUS_LABEL: Record<string, string> = {
+  PENDING: 'Chờ xử lý', PROCESSING: 'Đang chuẩn bị',
+  SHIPPED: 'Đang giao', COMPLETED: 'Hoàn thành', CANCELLED: 'Đã hủy',
+}
+const STATUS_COLOR: Record<string, string> = {
+  PENDING: 'bg-amber-100 text-amber-700',
+  PROCESSING: 'bg-blue-100 text-blue-700',
+  SHIPPED: 'bg-purple-100 text-purple-700',
+  COMPLETED: 'bg-emerald-100 text-emerald-700',
+  CANCELLED: 'bg-red-100 text-red-700',
+}
+
+const CHART_FILTERS = [
+  { label: '7 ngày', days: 7 },
+  { label: '30 ngày', days: 30 },
+  { label: '6 tháng', days: 180 },
+  { label: 'Năm nay', days: 365 },
+] as const
 
 export function DashboardContent() {
   const orders = useDataStore(s => s.orders);
   const customers = useDataStore(s => s.customers);
+  const [chartDays, setChartDays] = useState<number>(365)
 
   const { stats, topProductsList, revenueByMonth } = useMemo(() => {
     const revenue = orders.reduce((acc, o) => acc + o.total, 0);
@@ -36,11 +56,18 @@ export function DashboardContent() {
       .sort((a, b) => b.sold - a.sold)
       .slice(0, 5);
 
+    // Filter theo khoảng ngày được chọn + dùng timezone VN
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - chartDays);
+
     const monthlyRevenue: Record<string, number> = {};
     orders.forEach(o => {
-      const d = o.createdAt ? new Date(o.createdAt) : new Date();
-      const m = `T${d.getMonth() + 1}`;
-      monthlyRevenue[m] = (monthlyRevenue[m] || 0) + o.total;
+      const d = o.createdAt ? new Date(new Date(o.createdAt).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })) : new Date();
+      if (d < cutoff) return;
+      const key = chartDays <= 30
+        ? `${d.getDate()}/${d.getMonth() + 1}`  // Theo ngày nếu <= 30 ngày
+        : `T${d.getMonth() + 1}/${d.getFullYear().toString().slice(-2)}`;  // Theo tháng nếu > 30 ngày
+      monthlyRevenue[key] = (monthlyRevenue[key] || 0) + o.total;
     });
 
     let computedRevenue = Object.entries(monthlyRevenue).map(([month, revenue]) => ({ month, revenue }));
@@ -49,7 +76,7 @@ export function DashboardContent() {
     }
 
     return { stats: computedStats, topProductsList: computedTop, revenueByMonth: computedRevenue };
-  }, [orders, customers]);
+  }, [orders, customers, chartDays]);
 
   return (
     <>
@@ -76,7 +103,20 @@ export function DashboardContent() {
       
       <div className="mt-6 grid gap-6 xl:grid-cols-[2fr_1fr]">
         <section className="border bg-white p-5">
-          <h2 className="font-semibold">Doanh thu theo tháng</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-semibold">Doanh thu</h2>
+            <div className="flex gap-1">
+              {CHART_FILTERS.map(f => (
+                <button
+                  key={f.days}
+                  onClick={() => setChartDays(f.days)}
+                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${chartDays === f.days ? 'bg-primary text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="mt-5 h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueByMonth}>
@@ -87,7 +127,7 @@ export function DashboardContent() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3"/>
-                <XAxis dataKey="month"/>
+                <XAxis dataKey="month" tick={{ fontSize: 11 }}/>
                 <YAxis hide/>
                 <Tooltip formatter={v => formatCurrency(Number(v))}/>
                 <Area dataKey="revenue" stroke="#13443B" fill="url(#green)"/>
@@ -120,7 +160,7 @@ export function DashboardContent() {
           <table className="w-full text-left text-sm">
             <thead className="text-neutral-500">
               <tr>
-                <th className="py-3">Mã</th>
+                <th className="py-3">Mã đơn</th>
                 <th>Khách hàng</th>
                 <th>Trạng thái</th>
                 <th className="text-right">Tổng</th>
@@ -129,10 +169,12 @@ export function DashboardContent() {
             <tbody>
               {orders.slice(0, 5).map(o => (
                 <tr key={o.id} className="border-t">
-                  <td className="py-4 font-medium">{o.code}</td>
+                  <td className="py-4 font-medium">{(o as any).orderCode || o.code || `#${o.id}`}</td>
                   <td>{o.customer?.name}</td>
                   <td>
-                    <span className="bg-emerald-50 px-2 py-1 text-xs text-primary">{o.status}</span>
+                    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${STATUS_COLOR[o.status] || 'bg-neutral-100 text-neutral-600'}`}>
+                      {STATUS_LABEL[o.status] || o.status}
+                    </span>
                   </td>
                   <td className="text-right">{formatCurrency(o.total)}</td>
                 </tr>
@@ -149,3 +191,5 @@ export function DashboardContent() {
     </>
   );
 }
+
+
