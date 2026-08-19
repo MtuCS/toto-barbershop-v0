@@ -1499,7 +1499,7 @@ export function CrudPage({ section }: { section: string }) {
                           <span className="text-lg leading-none">+</span> Thêm mục
                         </button>
                         {(!formData[key] || formData[key].length === 0) && (
-                          <p className="text-xs text-neutral-400 italic">Chưa có mục nào. Nhấn "+" để thêm.</p>
+                          <p className="text-xs text-neutral-400 italic">Chưa có mục nào. Nhấn &quot;+&quot; để thêm.</p>
                         )}
                       </div>
                     ) : key === "manifesto" || key === "excerpt" || key === "description" || key === "message" || key === "answer" ? (
