@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Check, CreditCard, Loader2, MapPin, Tag, Truck } from "lucide-react"
 import { toast } from "sonner"
@@ -18,11 +18,13 @@ export function CheckoutForm() {
   const router = useRouter()
   const items = useCartStore((s) => s.items)
   const clear = useCartStore((s) => s.clear)
-  const { user, token } = useCustomerUserStore()
+  const storedCoupon = useCartStore((s) => s.couponCode)
+  const applyCouponToStore = useCartStore((s) => s.applyCoupon)
+  const { user, token, setAuthModalOpen: setAuthOpen } = useCustomerUserStore()
   const mounted = useMounted()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [couponInput, setCouponInput] = useState("")
-  const [coupon, setCoupon] = useState<string | null>(null)
+  const [couponInput, setCouponInput] = useState(storedCoupon ?? "")
+  const [coupon, setCoupon] = useState<string | null>(storedCoupon)
   const [discount, setDiscount] = useState(0)
   const [couponError, setCouponError] = useState("")
   const [provinces, setProvinces] = useState<any[]>([])
@@ -34,48 +36,84 @@ export function CheckoutForm() {
     if (!provinces.length) fetch("https://provinces.open-api.vn/api/p/").then(r=>r.json()).then(setProvinces)
   }, [provinces.length])
 
+  // Pre-fill name/phone/email ngay khi user thay đổi (kể cả khi phone load chậm)
   useEffect(() => {
     if (!user) return
-    const timeout = window.setTimeout(() => {
-      const address = user.addresses?.find((item) => item.isDefault) ?? user.addresses?.[0]
-      if (address) {
-        setForm((current) => ({ ...current, name: user.name || current.name, phone: user.phone || current.phone, email: user.email || current.email, street: address.street, provinceName: address.province, districtName: address.district, wardName: address.ward }))
-        fetch("https://provinces.open-api.vn/api/p/").then(r=>r.json()).then(provs => {
-          setProvinces(provs)
-          const p = provs.find((x:any) => x.name === address.province)
-          if(p) {
-            setForm(c => ({...c, provinceCode: p.code}))
-            fetch(`https://provinces.open-api.vn/api/p/${p.code}?depth=2`).then(r=>r.json()).then(data => {
-              setDistricts(data.districts)
-              const d = data.districts.find((x:any) => x.name === address.district)
-              if(d) {
-                setForm(c => ({...c, districtCode: d.code}))
-                fetch(`https://provinces.open-api.vn/api/d/${d.code}?depth=2`).then(r=>r.json()).then(wData => {
-                  setWards(wData.wards)
-                  const w = wData.wards.find((x:any) => x.name === address.ward)
-                  if(w) setForm(c => ({...c, wardCode: w.code}))
-                })
-              }
+    setForm((current) => ({
+      ...current,
+      name: user.name || current.name,
+      phone: user.phone || current.phone,
+      email: user.email || current.email,
+    }))
+  }, [user?.name, user?.phone, user?.email])
+
+  // Pre-fill địa chỉ từ profile (chỉ chạy khi user lần đầu được set)
+  useEffect(() => {
+    if (!user) return
+    const address = user.addresses?.find((item) => item.isDefault) ?? user.addresses?.[0]
+    if (!address) return
+
+    setForm((current) => ({
+      ...current,
+      street: address.street,
+      provinceName: address.province,
+      districtName: address.district,
+      wardName: address.ward,
+    }))
+
+    fetch("https://provinces.open-api.vn/api/p/").then(r=>r.json()).then(provs => {
+      setProvinces(provs)
+      const p = provs.find((x:any) => x.name === address.province)
+      if(p) {
+        setForm(c => ({...c, provinceCode: p.code}))
+        fetch(`https://provinces.open-api.vn/api/p/${p.code}?depth=2`).then(r=>r.json()).then(data => {
+          setDistricts(data.districts)
+          const d = data.districts.find((x:any) => x.name === address.district)
+          if(d) {
+            setForm(c => ({...c, districtCode: d.code}))
+            fetch(`https://provinces.open-api.vn/api/d/${d.code}?depth=2`).then(r=>r.json()).then(wData => {
+              setWards(wData.wards)
+              const w = wData.wards.find((x:any) => x.name === address.ward)
+              if(w) setForm(c => ({...c, wardCode: w.code}))
             })
           }
         })
-      } else {
-        setForm((current) => ({ ...current, name: user.name || current.name, phone: user.phone || current.phone, email: user.email || current.email }))
       }
-    }, 0)
-    return () => window.clearTimeout(timeout)
-  }, [user])
+    })
+  }, [user?.id])
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items])
+  const prevSubtotal = useRef(subtotal)
   
   useEffect(() => {
-    if (coupon) {
-      setCoupon(null)
-      setDiscount(0)
-      setCouponInput("")
-      toast.info("Giỏ hàng thay đổi, vui lòng áp dụng lại mã giảm giá.")
+    // Chỉ reset mã giảm giá nếu giỏ hàng THỰC SỰ thay đổi sau khi đã load xong (subtotal từ >0 sang giá trị mới)
+    if (prevSubtotal.current > 0 && prevSubtotal.current !== subtotal) {
+      if (coupon) {
+        setCoupon(null)
+        setDiscount(0)
+        setCouponInput("")
+        applyCouponToStore(null)
+        toast.info("Giỏ hàng thay đổi, vui lòng áp dụng lại mã giảm giá.")
+      }
+    } else if (prevSubtotal.current === 0 && subtotal > 0 && coupon && discount === 0) {
+      // Tự động kiểm tra lại mã giảm giá khi load trang có subtotal
+      fetch("/api/promo/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ code: coupon, subtotal })
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          setDiscount(data.discount)
+        } else {
+          setCoupon(null)
+          setDiscount(0)
+          applyCouponToStore(null)
+          toast.error("Mã giảm giá đã lưu không còn hợp lệ.")
+        }
+      }).catch(() => {})
     }
-  }, [subtotal])
+    prevSubtotal.current = subtotal;
+  }, [subtotal, coupon, applyCouponToStore, discount, token])
 
   const shipping = subtotal === 0 || form.payment === 'payos' ? 0 : SHIPPING_FLAT_FEE
   const total = Math.max(0, subtotal + shipping - discount)
@@ -96,10 +134,12 @@ export function CheckoutForm() {
         setCoupon(data.code)
         setDiscount(data.discount)
         setCouponError("")
+        applyCouponToStore(data.code)  // persist vào cart store
       } else {
         setCoupon(null)
         setDiscount(0)
         setCouponError(data.error || "Mã giảm giá không hợp lệ.")
+        applyCouponToStore(null)
       }
     } catch (e) {
       setCoupon(null)
@@ -143,28 +183,38 @@ export function CheckoutForm() {
 
   if (!mounted) return null
   if (!items.length) return <div className="mx-auto flex min-h-[55vh] max-w-xl flex-col items-center justify-center px-5 text-center"><CreditCard className="size-10 text-primary" /><h1 className="mt-4 font-display text-3xl font-bold uppercase">Chưa có sản phẩm để thanh toán</h1><Button asChild className="mt-6"><Link href="/shop">Quay lại cửa hàng</Link></Button></div>
+  if (!user) return (
+    <div className="mx-auto flex min-h-[55vh] max-w-xl flex-col items-center justify-center px-5 text-center">
+      <CreditCard className="size-10 text-primary" />
+      <h1 className="mt-4 font-display text-3xl font-bold uppercase">Yêu cầu đăng nhập</h1>
+      <p className="mt-3 text-neutral-600">Vui lòng đăng nhập vào tài khoản của bạn trước khi tiến hành thanh toán.</p>
+      <Button onClick={() => setAuthOpen(true)} className="mt-6">
+        Đăng nhập / Đăng ký
+      </Button>
+    </div>
+  )
   return <main className="bg-[#f5f9f7] py-8 text-[#101715] md:py-12"><div className="mx-auto max-w-[1240px] px-5 md:px-8">
     <div className="mb-8 grid grid-cols-3 gap-2 text-center text-[10px] font-bold uppercase tracking-wide sm:text-xs"><Link href="/cart" className="border-b-2 border-primary pb-3">1. Giỏ hàng</Link><span className="border-b-2 border-primary pb-3 text-primary">2. Thanh toán</span><span className="border-b-2 border-black/10 pb-3 text-neutral-400">3. Hoàn tất</span></div>
-    <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_380px]"><form id="checkout-form" onSubmit={submit} className="space-y-5"><div><h1 className="font-display text-4xl font-bold uppercase md:text-5xl">Thanh toán</h1><p className="mt-2 text-sm text-neutral-600">Điền thông tin để hoàn tất đơn hàng. Bạn không cần đăng nhập.</p></div>
-      <section className="border border-black/10 bg-white p-5"><h2 className="flex items-center gap-2 font-display text-xl font-bold uppercase"><MapPin className="size-5 text-primary" />Thông tin nhận hàng</h2><div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Họ và tên*<input required value={form.name} onChange={(e) => setField("name", e.target.value)} className="mt-2 h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="Nguyễn Văn A" /></label><label className="text-sm font-medium">Số điện thoại*<input required type="tel" value={form.phone} onChange={(e) => setField("phone", e.target.value)} className="mt-2 h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="09xxxxxxxx" /></label><label className="text-sm font-medium sm:col-span-2">Email nhận xác nhận đơn*<input required type="email" value={form.email} onChange={(e) => setField("email", e.target.value)} className="mt-2 h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="you@example.com" /></label>
+    <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_380px]"><form id="checkout-form" onSubmit={submit} className="space-y-5"><div><h1 className="font-display text-4xl font-bold uppercase md:text-5xl">Thanh toán</h1><p className="mt-2 text-sm text-neutral-600">Kiểm tra và điền thông tin để hoàn tất đơn hàng.</p></div>
+      <section className="border border-black/10 bg-white p-5"><h2 className="flex items-center gap-2 font-display text-xl font-bold uppercase"><MapPin className="size-5 text-primary" />Thông tin nhận hàng</h2><div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Họ và tên*<input required value={form.name} onChange={(e) => { setField("name", e.target.value); (e.target as HTMLInputElement).setCustomValidity('') }} onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Vui lòng nhập họ và tên')} className="mt-2 h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="Nguyễn Văn A" /></label><label className="text-sm font-medium">Số điện thoại*<input required type="tel" value={form.phone} onChange={(e) => { setField("phone", e.target.value); (e.target as HTMLInputElement).setCustomValidity('') }} onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Vui lòng nhập số điện thoại')} className="mt-2 h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="09xxxxxxxx" /></label><label className="text-sm font-medium sm:col-span-2">Email nhận xác nhận đơn*<input required type="email" value={form.email} onChange={(e) => { setField("email", e.target.value); (e.target as HTMLInputElement).setCustomValidity('') }} onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Vui lòng nhập email')} className="mt-2 h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="you@example.com" /></label>
       
       <div className="sm:col-span-2 space-y-4 pt-2">
         <label className="text-sm font-medium block">Địa chỉ giao hàng*</label>
         <div className="grid gap-3 sm:grid-cols-3">
-          <select required value={form.provinceCode} className="h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary bg-white" onChange={(e) => { const p = provinces.find(x => x.code == e.target.value); setForm(c => ({...c, provinceCode: p?.code||"", provinceName: p?.name||"", districtCode: "", districtName: "", wardCode: "", wardName: ""})); if(p) { fetch(`https://provinces.open-api.vn/api/p/${p.code}?depth=2`).then(r=>r.json()).then(d=>setDistricts(d.districts)) } else { setDistricts([]); setWards([]) } }}>
+          <select required value={form.provinceCode} onInvalid={(e) => (e.target as HTMLSelectElement).setCustomValidity('Vui lòng chọn Tỉnh/Thành phố')} className="h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary bg-white" onChange={(e) => { (e.target as HTMLSelectElement).setCustomValidity(''); const p = provinces.find(x => x.code == e.target.value); setForm(c => ({...c, provinceCode: p?.code||"", provinceName: p?.name||"", districtCode: "", districtName: "", wardCode: "", wardName: ""})); if(p) { fetch(`https://provinces.open-api.vn/api/p/${p.code}?depth=2`).then(r=>r.json()).then(d=>setDistricts(d.districts)) } else { setDistricts([]); setWards([]) } }}>
             <option value="">Tỉnh/Thành phố</option>
             {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
           </select>
-          <select required disabled={!form.provinceCode} value={form.districtCode} className="h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary disabled:bg-neutral-100 bg-white" onChange={(e) => { const d = districts.find(x => x.code == e.target.value); setForm(c => ({...c, districtCode: d?.code||"", districtName: d?.name||"", wardCode: "", wardName: ""})); if(d) { fetch(`https://provinces.open-api.vn/api/d/${d.code}?depth=2`).then(r=>r.json()).then(w=>setWards(w.wards)) } else { setWards([]) } }}>
+          <select required disabled={!form.provinceCode} value={form.districtCode} onInvalid={(e) => (e.target as HTMLSelectElement).setCustomValidity('Vui lòng chọn Quận/Huyện')} className="h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary disabled:bg-neutral-100 bg-white" onChange={(e) => { (e.target as HTMLSelectElement).setCustomValidity(''); const d = districts.find(x => x.code == e.target.value); setForm(c => ({...c, districtCode: d?.code||"", districtName: d?.name||"", wardCode: "", wardName: ""})); if(d) { fetch(`https://provinces.open-api.vn/api/d/${d.code}?depth=2`).then(r=>r.json()).then(w=>setWards(w.wards)) } else { setWards([]) } }}>
             <option value="">Quận/Huyện</option>
             {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
           </select>
-          <select required disabled={!form.districtCode} value={form.wardCode} className="h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary disabled:bg-neutral-100 bg-white" onChange={(e) => { const w = wards.find(x => x.code == e.target.value); setForm(c => ({...c, wardCode: w?.code||"", wardName: w?.name||""})) }}>
+          <select required disabled={!form.districtCode} value={form.wardCode} onInvalid={(e) => (e.target as HTMLSelectElement).setCustomValidity('Vui lòng chọn Phường/Xã')} className="h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary disabled:bg-neutral-100 bg-white" onChange={(e) => { (e.target as HTMLSelectElement).setCustomValidity(''); const w = wards.find(x => x.code == e.target.value); setForm(c => ({...c, wardCode: w?.code||"", wardName: w?.name||""})) }}>
             <option value="">Phường/Xã</option>
             {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
           </select>
         </div>
-        <input required value={form.street} onChange={(e) => setField("street", e.target.value)} className="h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="Số nhà, tên đường..." />
+        <input required value={form.street} onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Vui lòng nhập số nhà, tên đường')} onChange={(e) => { setField("street", e.target.value); (e.target as HTMLInputElement).setCustomValidity('') }} className="h-11 w-full border border-black/20 px-3 text-sm outline-none focus:border-primary" placeholder="Số nhà, tên đường..." />
       </div>
 
       <label className="text-sm font-medium sm:col-span-2">Ghi chú (tùy chọn)<textarea value={form.note} onChange={(e) => setField("note", e.target.value)} className="mt-2 min-h-20 w-full border border-black/20 px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Thời gian nhận hàng, lưu ý cho shipper..." /></label></div></section>

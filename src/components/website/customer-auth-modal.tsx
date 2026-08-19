@@ -83,6 +83,12 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
       try { data = await res.json() } catch (err) { throw new Error("Phản hồi từ máy chủ không hợp lệ.") }
 
       if (res.ok && data.user) {
+        // Chặn tài khoản Admin đăng nhập vào trang khách hàng
+        if (data.user.role === 'ADMIN') {
+          setErrorMsg("Tài khoản quản trị không được dùng để mua hàng. Vui lòng tạo tài khoản riêng.")
+          setLoading(false)
+          return
+        }
         setUser(data.user, data.token || null)
         setSuccessMsg("Đăng nhập thành công!")
         setTimeout(() => { onClose(); setSuccessMsg("") }, 1000)

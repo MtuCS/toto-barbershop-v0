@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { User, Phone, MapPin, Mail, Loader2, Save, ShoppingBag, Plus, Trash2, LogOut, Package, Eye, EyeOff } from "lucide-react"
+import { User, Phone, MapPin, Mail, Loader2, Save, ShoppingBag, Plus, Trash2, LogOut, Package, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import type { OrderStatus, PaymentStatus } from "@/types"
+import { createClient } from "@/utils/supabase/client"
 
 function OrderStepper({ status }: { status: string }) {
   const normStatus = (status || "PENDING").toUpperCase()
@@ -94,6 +95,7 @@ export default function ProfilePage() {
   const [addingAddress, setAddingAddress] = useState(false)
   const [addressToDelete, setAddressToDelete] = useState<number | null>(null)
   const [orderToCancel, setOrderToCancel] = useState<string | number | null>(null)
+  const [expandedOrderId, setExpandedOrderId] = useState<string | number | null>(null)
 
   // Password Modal State
   const [passwordModalOpen, setPasswordModalOpen] = useState(false)
@@ -154,75 +156,37 @@ export default function ProfilePage() {
     }
   }, [user?.id, token])
 
-  // Lấy danh sách ID đơn hàng để chạy lại effect nếu có đơn mới
-  const orderIds = JSON.stringify(orders.map(o => o.id))
-
+  // Realtime: Lắng nghe thay đổi trạng thái đơn hàng từ Supabase
   useEffect(() => {
-    const activeOrders = orders.filter(o => !['completed', 'cancelled', 'delivered'].includes((o.status || '').toLowerCase()));
-    if (activeOrders.length === 0) return;
+    if (!user?.id) return;
 
-    let intervalId: NodeJS.Timeout;
-    let controller: AbortController | null = null;
-    let pollCount = 0;
-    let currentMs = 5000;
+    const supabase = createClient();
 
-    const checkOrderStatus = async () => {
-      controller?.abort();
-      controller = new AbortController();
-
-      try {
-        const currentActive = useDataStore.getState().orders.filter(
-          o => o.customer.email === user?.email && !['completed', 'cancelled', 'delivered'].includes((o.status || '').toLowerCase())
-        );
-        
-        if (currentActive.length === 0) {
-          stopPolling();
-          return;
+    const channel = supabase
+      .channel(`orders-user-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'Order',
+          filter: `userId=eq.${user.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as { id: number; status: string; paymentStatus: string };
+          useDataStore.getState().setOrderStatusInStore(
+            updated.id,
+            updated.status.toUpperCase() as OrderStatus,
+            updated.paymentStatus.toUpperCase() as PaymentStatus
+          );
         }
-
-        await Promise.all(currentActive.map(async (order) => {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${order.id}/status`, { signal: controller?.signal });
-          if (res.ok) {
-            const data = await res.json();
-            useDataStore.getState().setOrderStatusInStore(data.id, (data.status.toUpperCase()) as OrderStatus, (data.paymentStatus.toUpperCase()) as PaymentStatus);
-          }
-        }));
-
-        pollCount++;
-        if (pollCount === 12 && currentMs === 5000) {
-          stopPolling(); startPolling(10000);
-        } else if (pollCount === 24 && currentMs === 10000) {
-          stopPolling(); startPolling(30000);
-        } else if (pollCount === 34 && currentMs === 30000) {
-          stopPolling(); startPolling(60000);
-        }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') console.error('Polling error:', err);
-      }
-    };
-
-    const startPolling = (ms = 5000) => {
-      currentMs = ms;
-      intervalId = setInterval(checkOrderStatus, ms);
-    };
-
-    const stopPolling = () => {
-      clearInterval(intervalId);
-      controller?.abort();
-    };
-
-    const handleVisibilityChange = () => {
-      document.visibilityState === 'visible' ? startPolling(currentMs) : stopPolling();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    startPolling(currentMs);
+      )
+      .subscribe();
 
     return () => {
-      stopPolling();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      supabase.removeChannel(channel);
     };
-  }, [orderIds])
+  }, [user?.id])
 
 
   const handleSave = async (e: React.FormEvent) => {
@@ -498,16 +462,102 @@ export default function ProfilePage() {
                       <OrderStepper status={o.status as string} />
                     </div>
 
-                    <div className="mt-4 flex flex-col items-center sm:flex-row sm:justify-end gap-4">
-                      {((o.status || 'PENDING').toUpperCase() === 'PENDING' || (o.status || 'PENDING').toUpperCase() === 'PROCESSING') && (
-                        <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => setOrderToCancel(o.id)}>
+                    <div className="mt-4 flex flex-col items-center sm:flex-row sm:justify-end gap-4 border-t border-neutral-100 pt-4">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
+                        className="text-neutral-500 w-full sm:w-auto"
+                      >
+                        {expandedOrderId === o.id ? 'Thu gọn' : 'Xem chi tiết'}
+                        {expandedOrderId === o.id ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
+                      </Button>
+                      {(o.status || 'PENDING').toUpperCase() === 'PENDING' && (
+                        <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 w-full sm:w-auto" onClick={() => setOrderToCancel(o.id)}>
                           Hủy đơn
                         </Button>
                       )}
-                      {(o.status || '').toUpperCase() === "PENDING" && o.paymentStatus === "PAID" && (
+                      {(o.status || '').toUpperCase() === "PENDING" && (o.paymentStatus || '').toUpperCase() === "PAID" && (
                         <p className="text-sm text-amber-600 font-medium italic bg-amber-50 px-4 py-2 rounded-lg text-center w-full sm:w-auto">Đã thanh toán. L/H CSKH để huỷ đơn & hoàn tiền.</p>
                       )}
                     </div>
+
+                    {/* Order Details Accordion */}
+                    {expandedOrderId === o.id && (
+                      <div className="mt-6 border-t border-neutral-100 pt-6 animate-in slide-in-from-top-2 duration-200">
+                        <div className="grid sm:grid-cols-2 gap-8">
+                          {/* Left: Products */}
+                          <div>
+                            <h3 className="font-bold text-neutral-900 mb-4 flex items-center gap-2">
+                              <Package className="w-4 h-4 text-primary" /> Sản phẩm ({o.items?.length || 0})
+                            </h3>
+                            <div className="space-y-4">
+                              {o.items?.map((item: any, idx: number) => (
+                                <div key={idx} className="flex gap-4 items-start">
+                                  <div className="w-16 h-16 rounded-md bg-neutral-100 overflow-hidden shrink-0 border border-neutral-200">
+                                    <img src={item.image || "https://placehold.co/100x100"} alt={item.title} className="w-full h-full object-cover" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-neutral-900 truncate">{item.title}</p>
+                                    <p className="text-xs text-neutral-500 mt-1">{item.variantName}</p>
+                                    <div className="flex justify-between items-center mt-2">
+                                      <p className="text-sm text-primary font-semibold">{(item.price || 0).toLocaleString("vi-VN")}đ</p>
+                                      <p className="text-xs text-neutral-500 font-medium">x{item.quantity || 1}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Right: Shipping & Billing */}
+                          <div className="space-y-6">
+                            <div>
+                              <h3 className="font-bold text-neutral-900 mb-4 flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-primary" /> Thông tin giao hàng
+                              </h3>
+                              <div className="bg-neutral-50 rounded-lg p-4 text-sm border border-neutral-100">
+                                <p className="font-semibold text-neutral-900 mb-1">{o.customer?.name} - {o.customer?.phone}</p>
+                                <p className="text-neutral-600 leading-relaxed">{o.customer?.address}</p>
+                                {o.customer?.note && (
+                                  <p className="mt-2 text-neutral-500 italic border-t border-neutral-200 pt-2">Ghi chú: {o.customer.note}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div>
+                              <h3 className="font-bold text-neutral-900 mb-4 flex items-center gap-2">
+                                <ShoppingBag className="w-4 h-4 text-primary" /> Chi tiết thanh toán
+                              </h3>
+                              <div className="bg-neutral-50 rounded-lg p-4 text-sm space-y-3 border border-neutral-100">
+                                <div className="flex justify-between text-neutral-600">
+                                  <span>Tạm tính</span>
+                                  <span>{(o.subtotal || 0).toLocaleString("vi-VN")}đ</span>
+                                </div>
+                                <div className="flex justify-between text-neutral-600">
+                                  <span>Phí giao hàng</span>
+                                  <span>{(o.shippingFee || 0).toLocaleString("vi-VN")}đ</span>
+                                </div>
+                                {(o.discount || 0) > 0 && (
+                                  <div className="flex justify-between text-emerald-600 font-medium">
+                                    <span>Giảm giá {o.couponCode ? `(${o.couponCode})` : ''}</span>
+                                    <span>-{(o.discount || 0).toLocaleString("vi-VN")}đ</span>
+                                  </div>
+                                )}
+                                <div className="pt-3 border-t border-neutral-200 flex justify-between font-bold text-base">
+                                  <span>Tổng cộng</span>
+                                  <span className="text-primary">{(o.total || 0).toLocaleString("vi-VN")}đ</span>
+                                </div>
+                                <div className="pt-3 border-t border-neutral-200 flex justify-between text-neutral-600">
+                                  <span>Phương thức</span>
+                                  <span className="font-medium uppercase">{o.paymentMethod || 'COD'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

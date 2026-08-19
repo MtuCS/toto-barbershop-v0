@@ -18,13 +18,13 @@ export function ShopCarousel({ items }: { items: LookbookItem[] }) {
               >
                 <Image
                   src={x.image}
-                  alt={x.caption}
+                  alt={x.title || "Lookbook"}
                   fill
                   sizes="(max-width: 767px) 85vw, (max-width: 1023px) 45vw, 310px"
                   className="object-cover transition-transform duration-500 hover:scale-[1.025]"
                 />
                 <div className="absolute inset-0 flex items-end p-6 opacity-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 hover:opacity-100">
-                  <p className="text-sm font-medium tracking-wide text-white">{x.caption}</p>
+                  <p className="text-sm font-medium tracking-wide text-white">{x.title}</p>
                 </div>
               </figure>
             ))}

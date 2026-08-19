@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, ShoppingBag, Search, User, X, LogIn, LogOut } from "lucide-react"
+import { Menu, ShoppingBag, Search, User, X, LogIn, LogOut, Dices } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { MAIN_NAV, SITE_NAME } from "@/lib/constants"
@@ -173,6 +173,19 @@ export function SiteHeader() {
               <User className="size-5" />
             </Button>
           )}
+
+          {/* Lucky Wheel Icon */}
+          <Link href="/lucky-wheel" passHref>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
+              aria-label="Vòng quay may mắn"
+              title="Vòng quay may mắn"
+            >
+              <Dices className="size-5" />
+            </Button>
+          </Link>
 
           {/* Cart Icon Button */}
           <Button
