@@ -95,12 +95,12 @@ export function LookbookPreview() {
               >
                 <Link
                   href="/lookbook"
-                  aria-label={`Xem tác phẩm ${activeItem.caption} trong lookbook`}
+                  aria-label={`Xem tác phẩm ${activeItem.caption || activeItem.title || "lookbook"} trong lookbook`}
                   className="group block size-full focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-[#79b8a7]"
                 >
                   <Image
                     src={activeItem.image || "/placeholder.svg"}
-                    alt={activeItem.caption}
+                    alt={activeItem.caption || activeItem.title || "Tác phẩm lookbook"}
                     fill
                     sizes="(max-width: 1023px) 100vw, 50vw"
                     className="object-contain object-center transition-transform duration-700 ease-out group-hover:scale-[1.025]"
@@ -127,7 +127,7 @@ export function LookbookPreview() {
                 className="flex items-baseline justify-between gap-4 border-b border-white/15 pb-3"
               >
                 <p className="text-sm font-medium text-[#f2f5f3]">
-                  {activeItem.caption}
+                  {activeItem.caption || activeItem.title}
                 </p>
                 <p className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#79b8a7]">
                   {activeItem.category}
@@ -137,7 +137,7 @@ export function LookbookPreview() {
           </AnimatePresence>
           <p className="sr-only" aria-live="polite">
             {activeItem
-              ? `${activeItem.caption}, ${activeItem.category}`
+              ? `${activeItem.caption || activeItem.title}, ${activeItem.category}`
               : "Lookbook đang được cập nhật"}
           </p>
         </div>

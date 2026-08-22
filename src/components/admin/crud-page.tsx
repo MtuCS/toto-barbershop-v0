@@ -702,6 +702,10 @@ function SettingsForm() {
           <label className="text-xs font-semibold text-neutral-600">Địa chỉ</label>
           <Input value={form.contact?.address || ""} onChange={e => handleChange('contact', 'address', e.target.value)} />
         </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <label className="text-xs font-semibold text-neutral-600">Giờ làm việc / Giờ mở cửa</label>
+          <Input value={form.contact?.hours || ""} placeholder="VD: 08:30 - 20:30 (Thứ 2 - Chủ Nhật)" onChange={e => handleChange('contact', 'hours', e.target.value)} />
+        </div>
 
         <h2 className="sm:col-span-2 font-bold text-lg border-b pb-2 mt-4">Mạng xã hội</h2>
         <div className="space-y-1.5">

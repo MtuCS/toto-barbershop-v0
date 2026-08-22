@@ -17,13 +17,13 @@ export function ShopCarousel({ items }: { items: LookbookItem[] }) {
               >
                 <Image
                   src={item.image}
-                  alt={item.caption}
+                  alt={item.title || "TOTO Barbershop Lookbook"}
                   fill
                   sizes="(max-width: 767px) 85vw, (max-width: 1023px) 45vw, 310px"
                   className="object-cover transition-transform duration-500 hover:scale-[1.025]"
                 />
                 <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 via-transparent to-transparent p-6 opacity-0 transition-opacity duration-300 hover:opacity-100">
-                  <p className="text-sm font-medium tracking-wide text-white">{item.caption}</p>
+                  <p className="text-sm font-medium tracking-wide text-white">{item.title || "TOTO Barbershop"}</p>
                 </div>
               </figure>
             ))}

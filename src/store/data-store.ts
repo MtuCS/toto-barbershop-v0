@@ -21,6 +21,7 @@ import type {
 
 import { toast } from "sonner"
 import { useAuthStore } from "./auth-store"
+import { useCustomerUserStore } from "./customer-user-store"
 
 // ============================================================================
 // Central editable data store (admin CMS). Persisted to LocalStorage so admin
@@ -199,7 +200,15 @@ export const useDataStore = create<DataState>()(
 
       fetchOrders: async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders`);
+          const adminToken = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const customerToken = typeof window !== 'undefined' ? useCustomerUserStore.getState().token : null;
+          const token = adminToken || customerToken;
+
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders`, {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
           if (res.ok) {
             const data = await res.json();
             set({ orders: data });
@@ -272,19 +281,27 @@ export const useDataStore = create<DataState>()(
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` }
           });
+          const data = await res.json().catch(() => ({}));
           if (res.ok) {
             get().fetchOrders();
             return true;
+          } else {
+            toast.error(data.error || 'Hủy đơn hàng thất bại');
           }
         } catch (error) {
           console.error("Failed to cancel order:", error);
+          toast.error('Lỗi kết nối máy chủ khi hủy đơn');
         }
         return false;
       },
 
       setOrderStatusInStore: (id, status, paymentStatus) => {
         set((state) => ({
-          orders: state.orders.map(o => o.id.toString() === id.toString() ? { ...o, status, paymentStatus } : o)
+          orders: state.orders.map(o => o.id.toString() === id.toString() ? { 
+            ...o, 
+            status: (status ? status.toLowerCase() : o.status) as OrderStatus, 
+            paymentStatus: (paymentStatus ? paymentStatus.toLowerCase() : o.paymentStatus) as PaymentStatus 
+          } : o)
         }))
       },
 
