@@ -1,88 +1,66 @@
 import type { Product, Category, Service, TrainingCourse, MerchandiseStory, LookbookItem } from "@/types"
+import { clientLogger } from "./logger"
 
 const API_URL = process.env.BACKEND_URL || 'http://localhost:5000'
 
-export async function getProducts(): Promise<Product[]> {
+async function safeFetch<T>(endpoint: string, fallback: T, options?: RequestInit): Promise<T> {
+  const reqId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : undefined;
+  const url = `${API_URL}${endpoint}`;
+  
   try {
-    const res = await fetch(`${API_URL}/api/products`, { next: { revalidate: 60 } })
-    if (!res.ok) return []
-    return res.json()
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        ...options?.headers,
+        ...(reqId ? { 'X-Request-Id': reqId } : {}),
+      },
+    });
+
+    if (!res.ok) {
+      clientLogger.warn(`API responded with status ${res.status} [${endpoint}]`, { reqId, status: res.status });
+      return fallback;
+    }
+
+    return await res.json();
   } catch (error) {
-    return []
+    clientLogger.error(`Failed to fetch from ${endpoint}`, error, reqId);
+    return fallback;
   }
+}
+
+export async function getProducts(): Promise<Product[]> {
+  return safeFetch<Product[]>('/api/products', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getCategories(): Promise<Category[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/categories`, { next: { revalidate: 60 } })
-    if (!res.ok) return []
-    return res.json()
-  } catch (error) {
-    return []
-  }
+  return safeFetch<Category[]>('/api/categories', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getServices(): Promise<Service[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/services`, { next: { revalidate: 60 } })
-    if (!res.ok) return []
-    return res.json()
-  } catch (error) {
-    return []
-  }
+  return safeFetch<Service[]>('/api/services', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getCourses(): Promise<TrainingCourse[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/courses`, { next: { revalidate: 60 } })
-    if (!res.ok) return []
-    return res.json()
-  } catch (error) {
-    return []
-  }
+  return safeFetch<TrainingCourse[]>('/api/courses', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getStories(): Promise<MerchandiseStory[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/stories`, { next: { revalidate: 60 } })
-    if (!res.ok) return []
-    return res.json()
-  } catch (error) {
-    return []
-  }
+  return safeFetch<MerchandiseStory[]>('/api/stories', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getStoryBySlug(slug: string): Promise<MerchandiseStory | null> {
-  const stories = await getStories()
-  return stories.find((s) => s.slug === slug) || null
+  const stories = await getStories();
+  return stories.find((s) => s.slug === slug) || null;
 }
 
 export async function getLookbooks(): Promise<LookbookItem[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/lookbooks`, { next: { revalidate: 60 } })
-    if (!res.ok) return []
-    return res.json()
-  } catch (error) {
-    return []
-  }
+  return safeFetch<LookbookItem[]>('/api/lookbooks', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getFaqs(): Promise<any[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/faqs`, { next: { revalidate: 60 } })
-    if (!res.ok) return []
-    return res.json()
-  } catch (error) {
-    return []
-  }
+  return safeFetch<any[]>('/api/faqs', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getSettings(): Promise<any> {
-  try {
-    const res = await fetch(`${API_URL}/api/settings`, { next: { revalidate: 60 } })
-    if (!res.ok) return {}
-    return res.json()
-  } catch (error) {
-    return {}
-  }
+  return safeFetch<any>('/api/settings', {}, { next: { revalidate: 60 } } as any);
 }

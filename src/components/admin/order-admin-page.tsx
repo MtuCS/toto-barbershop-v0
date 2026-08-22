@@ -50,14 +50,22 @@ export function OrderAdminPage() {
   const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   
   const filteredOrders = sortedOrders.filter(o => {
-    const matchSearch = o.id.toString().includes(searchQuery) || 
-      (o as any).orderCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      o.customer.phone.includes(searchQuery)
+    const q = searchQuery.toLowerCase().trim();
+    const customerName = (o.customer?.name || '').toLowerCase();
+    const customerPhone = (o.customer?.phone || '');
+    const orderCode = (o as any).orderCode?.toLowerCase() || `toto-dh${o.id.toString().padStart(4, '0')}`;
+    const legacyCode = (o.code || '').toLowerCase();
+
+    const matchSearch = !q || 
+      o.id.toString().includes(q) || 
+      orderCode.includes(q) ||
+      legacyCode.includes(q) ||
+      customerName.includes(q) || 
+      customerPhone.includes(q);
     
-    const matchStatus = filterStatus === "ALL" || o.status === filterStatus
-    const matchPaymentStatus = filterPaymentStatus === "ALL" || o.paymentStatus === filterPaymentStatus
-    const matchPaymentMethod = filterPaymentMethod === "ALL" || o.paymentMethod?.toLowerCase() === filterPaymentMethod.toLowerCase()
+    const matchStatus = filterStatus === "ALL" || (o.status || '').toUpperCase() === filterStatus.toUpperCase();
+    const matchPaymentStatus = filterPaymentStatus === "ALL" || (o.paymentStatus || '').toUpperCase() === filterPaymentStatus.toUpperCase();
+    const matchPaymentMethod = filterPaymentMethod === "ALL" || (o.paymentMethod || '').toLowerCase() === filterPaymentMethod.toLowerCase();
     
     // So sánh ngày theo VN timezone
     const orderDateVN = new Date(new Date(o.createdAt).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }))

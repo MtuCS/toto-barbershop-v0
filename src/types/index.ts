@@ -169,10 +169,14 @@ export interface MerchandiseStory {
 export interface LookbookItem {
   id: ID
   image: string
-  title: string
+  title?: string
+  caption?: string
   category: string
   tags?: string[]
   instagramUrl?: string
+  published?: boolean
+  featured?: boolean
+  order?: number
 }
 
 // ---------------------------------------------------------------------------
@@ -225,6 +229,7 @@ export interface Order {
   id: ID
   code: string
   customer: {
+    id?: ID
     name: string
     phone: string
     email: string
@@ -300,6 +305,7 @@ export interface SettingsData {
     phone: string
     email: string
     address: string
+    hours?: string
   }
   social: {
     instagram: string

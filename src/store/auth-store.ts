@@ -56,4 +56,4 @@ export const useAuthStore = create<AuthState>()(
   ),
 )
 
-export const DEMO_CREDENTIALS = { email: "admin@totobarber.com", password: "admin123" }
+export const DEMO_CREDENTIALS = { email: "admin@toto.com", password: "123456" }
