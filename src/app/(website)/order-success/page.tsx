@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, ShoppingBag, Package } from "lucide-react";
+import { CheckCircle2, ShoppingBag, Package, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Đặt Hàng Thành Công",
+  description: "Cảm ơn bạn đã đặt hàng sáp vuốt tóc và sản phẩm tại ToTo Barbershop. Đơn hàng của bạn đang được đóng gói và giao hoả tốc.",
+};
 
 export default async function Page({
   searchParams,

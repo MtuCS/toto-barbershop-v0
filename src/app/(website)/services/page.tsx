@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -7,6 +8,7 @@ import {
   ScanFace,
   ScanSearch,
   Scissors,
+  ShoppingBag,
 } from "lucide-react";
 import {
   Accordion,
@@ -15,8 +17,16 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { MarketingPageShell } from "@/components/website/marketing-page-shell";
+import { Breadcrumbs } from "@/components/website/breadcrumbs";
+import { CaseStudies } from "@/components/website/case-studies";
 import { getServices, getFaqs } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
+
+export const metadata: Metadata = {
+  title: "Bảng Giá Dịch Vụ Cắt Tóc Nam & Grooming Chuyên Nghiệp",
+  description:
+    "Bảng giá dịch vụ cắt tóc chuẩn barber, cạo mặt khăn nóng, uốn textured, tẩy nhuộm màu thời trang tại ToTo Barbershop 85 Đồng Đen, Tân Bình.",
+};
 
 
 const processSteps = [
@@ -64,6 +74,10 @@ export default async function Page() {
 
   return (
     <MarketingPageShell className="bg-[#07110f]">
+      <div className="mx-auto max-w-[1400px] px-5 pt-6 md:px-8">
+        <Breadcrumbs items={[{ label: "Menu Dịch Vụ & Bảng Giá" }]} />
+      </div>
+
       <section className="overflow-hidden border-b border-white/10 bg-[#07110f] text-[#f2f5f3]">
         <div className="mx-auto grid max-w-[1400px] gap-10 px-5 py-12 md:grid-cols-12 md:px-8 md:py-16 lg:min-h-[670px] lg:items-center">
           <div className="relative z-10 md:col-span-5">
@@ -78,6 +92,16 @@ export default async function Page() {
               trao đổi để tìm ra kiểu tóc thuộc về bạn.
             </p>
 
+            {/* Cross link to shop */}
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-2 rounded-full bg-[#79b8a7] px-6 py-3 text-xs md:text-sm font-bold uppercase tracking-wider text-[#050c0a] transition-all hover:bg-[#8ec7b7]"
+              >
+                <ShoppingBag className="size-4" />
+                Sáp vuốt tóc khuyên dùng
+              </Link>
+            </div>
           </div>
 
           <div className="grid grid-cols-12 gap-3 md:col-span-7 md:pl-4">
@@ -307,6 +331,9 @@ export default async function Page() {
           </div>
         </div>
       </section>
+
+      {/* Case Studies / Transformations Section */}
+      <CaseStudies />
 
       <section className="border-t border-white/10 bg-[#0b1b18] px-5 py-16 md:px-8 md:py-24">
         <div className="mx-auto grid max-w-[1400px] gap-10 md:grid-cols-12">

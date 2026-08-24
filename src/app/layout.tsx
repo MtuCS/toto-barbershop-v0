@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Oswald } from 'next/font/google'
 import localFont from 'next/font/local'
 import { Toaster } from '@/components/ui/sonner'
+import { GoogleAnalytics } from '@/components/website/google-analytics'
 import './globals.css'
 
 const inter = Inter({
@@ -67,6 +68,7 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`bg-background ${inter.variable} ${oswald.variable} ${agatho.variable}`}>
       <body className="font-sans antialiased">
+        <GoogleAnalytics />
         {children}
         <Toaster position="top-center" richColors closeButton />
         {process.env.NODE_ENV === 'production' && <Analytics />}
