@@ -6,12 +6,7 @@ import { ServicesBento } from "@/components/website/home/services-bento"
 import { HomeTestimonials } from "@/components/website/home/home-testimonials"
 import { HomeLookbook } from "@/components/website/home/home-lookbook"
 import { HomeValues } from "@/components/website/home/home-values"
-import { AboutIntro } from "@/components/website/home/about-intro"
-import { LookbookPreview } from "@/components/website/home/lookbook-preview"
-import { MerchTeaser } from "@/components/website/home/merch-teaser"
-import { GroomingFeatured } from "@/components/website/home/grooming-featured"
-import { TrainingTeaser } from "@/components/website/home/training-teaser"
-import { SocialSection } from "@/components/website/home/social-section"
+import { FaqAccordion } from "@/components/website/faq-accordion"
 
 export default function HomePage() {
   return (
@@ -26,6 +21,7 @@ export default function HomePage() {
       <HomeValues />
       <HomeTestimonials />
       <HomeLookbook />
+      <FaqAccordion />
 
       {/* Tạm thời ẩn các scene theo yêu cầu */}
       {/* <MerchTeaser /> */}

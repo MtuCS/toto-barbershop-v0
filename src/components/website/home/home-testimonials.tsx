@@ -1,28 +1,5 @@
 import { Quote, Star } from "lucide-react"
-
-const testimonials = [
-  {
-    quote:
-      "Đến đây thích nhất là sự thong thả. Mấy anh thợ làm kỹ, không vội vàng, tư vấn nhiệt tình và nói chuyện nghe rất dễ chịu.",
-    name: "Anh Minh",
-    role: "Khách quen 3 năm",
-    location: "Tân Bình",
-  },
-  {
-    quote:
-      "Tóc mình rễ tre khó vào nếp, qua mấy chỗ đều bó tay. Ghé ToTo được tư vấn kiểu Messy layer phù hợp, về nhà tự sấy vẫn lên form chuẩn.",
-    name: "Nam Khánh",
-    role: "Sinh viên",
-    location: "Quận 10",
-  },
-  {
-    quote:
-      "Không gian yên tĩnh, âm nhạc vừa phải, không chèo kéo mua sản phẩm hay ép cắt thêm dịch vụ. Một nơi đáng để ghé lại định kỳ.",
-    name: "Hoàng Nam",
-    role: "Thiết kế đồ họa",
-    location: "Quận 1",
-  },
-] as const
+import { GoogleReviewsShowcase } from "@/components/website/google-reviews-showcase"
 
 export function HomeTestimonials() {
   return (
@@ -38,59 +15,52 @@ export function HomeTestimonials() {
       />
 
       <div className="home-scene-inner relative mx-auto flex h-full max-w-[1400px] flex-col justify-center">
-        <div className="home-testimonials-heading max-w-3xl">
-          <p className="home-section-eyebrow text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
-            Chuyện khách kể
-          </p>
-          <h2
-            id="home-testimonials-title"
-            className="home-section-title mt-3 text-3xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.15]"
+        <div className="home-testimonials-heading flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="max-w-2xl">
+            <p className="home-section-eyebrow text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
+              Đánh giá thực tế từ khách hàng
+            </p>
+            <h2
+              id="home-testimonials-title"
+              className="home-section-title mt-3 text-3xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.15]"
+            >
+              ToTo qua lời kể của anh em
+            </h2>
+            <p className="home-section-description mt-4 max-w-2xl text-sm leading-relaxed text-white/75 md:text-base">
+              Những chia sẻ chân thật từ những người anh em đã đồng hành cùng ToTo qua từng góc kéo và tin dùng sáp vuốt tóc của tiệm.
+            </p>
+          </div>
+
+          {/* Google Reviews Badge */}
+          <a
+            href="https://www.google.com/maps/place/Toto+babershop/@10.793289,106.644723,17z/data=!4m6!3m5!1s0x317529fab862286b:0x558f62689c90fdae!8m2!3d10.793289!4d106.644723!16s%2Fg%2F11sy6vhbxb?entry=ttu"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-[#07110f]/90 px-5 py-3.5 shadow-lg backdrop-blur-md transition-all hover:border-[#79b8a7]/60 hover:bg-[#07110f]"
           >
-            ToTo qua lời kể của anh em
-          </h2>
-          <p className="home-section-description mt-4 max-w-2xl text-sm leading-relaxed text-white/75 md:text-base">
-            Những chia sẻ chân thật từ những người anh em đã đồng hành cùng ToTo qua từng góc kéo.
-          </p>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-xl font-black text-[#79b8a7]">
+              G
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold text-white">4.1 / 5.0</span>
+                <div className="flex gap-0.5 text-[#F5FF00]">
+                  {[...Array(4)].map((_, i) => (
+                    <Star key={i} className="size-3 fill-[#F5FF00]" />
+                  ))}
+                  <Star className="size-3 fill-[#F5FF00]/40 text-[#F5FF00]" />
+                </div>
+              </div>
+              <p className="text-[11px] text-white/60">73 đánh giá trên Google Maps</p>
+            </div>
+          </a>
         </div>
 
-        <div className="home-scene-card-grid mt-10 grid gap-6 md:mt-14 md:grid-cols-3">
-          {testimonials.map((item) => (
-            <figure
-              key={item.name}
-              className="home-testimonial-card group relative flex flex-col justify-between rounded-xl border border-white/12 bg-[#07110f]/80 p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[#2f7a68]/60 hover:bg-[#07110f] hover:shadow-[0_16px_40px_rgba(7,17,15,0.6)] md:p-8"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <Quote
-                    className="size-7 text-[#79b8a7] transition-transform duration-300 group-hover:scale-110"
-                    strokeWidth={1.5}
-                    aria-hidden="true"
-                  />
-                  <div className="flex gap-1 text-[#F5FF00]" aria-label="Đánh giá 5 sao">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="size-3.5 fill-[#F5FF00]" />
-                    ))}
-                  </div>
-                </div>
-
-                <blockquote className="home-testimonial-quote mt-6 text-base leading-relaxed text-white/90 md:text-lg">
-                  “{item.quote}”
-                </blockquote>
-              </div>
-
-              <figcaption className="mt-8 border-t border-white/10 pt-5">
-                <div className="font-bold text-white text-base">
-                  {item.name}
-                </div>
-                <div className="mt-1 text-xs font-medium text-[#79b8a7]">
-                  {item.role} <span className="mx-1 text-white/30">•</span> {item.location}
-                </div>
-              </figcaption>
-            </figure>
-          ))}
+        {/* Real Live Google Reviews Showcase */}
+        <div className="mt-10 md:mt-12">
+          <GoogleReviewsShowcase />
         </div>
       </div>
     </section>
   )
 }
-

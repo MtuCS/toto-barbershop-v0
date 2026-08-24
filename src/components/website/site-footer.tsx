@@ -126,7 +126,7 @@ export function SiteFooter() {
           <div className="home-contact-map relative min-h-[320px] w-full overflow-hidden rounded-xl border border-white/15 shadow-2xl lg:min-h-[400px]">
             <iframe
               title="Bản đồ ToTo Barbershop"
-              src="https://www.google.com/maps?ll=10.793289,106.644723&z=17&output=embed"
+              src="https://maps.google.com/maps?q=Toto+babershop+85+Đồng+Đen,+Phường+12,+Tân+Bình,+Hồ+Chí+Minh&t=&z=17&ie=UTF8&iwloc=&output=embed"
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -155,10 +155,16 @@ export function SiteFooter() {
           </div>
         </div>
 
-        {/* Dòng bản quyền */}
+        {/* Dòng bản quyền & Chính sách */}
         <div className="home-contact-legal mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row">
           <p>© {new Date().getFullYear()} ToTo Barbershop. All rights reserved.</p>
-          <p>Barber · Culture · Craft</p>
+          <div className="flex items-center gap-6">
+            <a href="/privacy-policy" className="transition-colors hover:text-[#79b8a7]">
+              Chính sách bảo mật & Điều khoản
+            </a>
+            <span className="text-white/20">•</span>
+            <span>Barber · Culture · Craft</span>
+          </div>
         </div>
       </div>
     </footer>

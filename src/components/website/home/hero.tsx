@@ -51,7 +51,7 @@
 
 
 import { useEffect, useRef, useState } from "react";
-
+import Link from "next/link";
 import TextType from "@/components/ui/text-type";
 
 export function Hero() {
@@ -103,16 +103,12 @@ export function Hero() {
               Ghé ToTo, bỏ lại một Sài Gòn tấp nập phía sau cánh cửa kính. Ở đây chỉ có chiếc ghế da êm, chiếc tủ lạnh đầy nước mát, và những người thợ gắn bó với cây kéo bằng tất cả tâm huyết cùng sự chỉn chu.
             </p>
 
-            <a
-              href="#"
+            <Link
+              href="/services"
               className="group mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#f2f5f3] transition-colors hover:text-[#79b8a7]"
             >
-              Mượt đường kéo, sắc phong độ 
-              {/* <ArrowUpRight
-                className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                aria-hidden="true"
-              /> */}
-            </a>
+              Mượt đường kéo, sắc phong độ
+            </Link>
           </div>
 
           {/* Portrait */}
@@ -132,20 +128,7 @@ export function Hero() {
         </div>
 
         {/* Giant headline */}
-        {/* <div className="relative mt-6 md:mt-8 lg:mt-10"> */}
         <div className="home-hero-headline relative mt-6 pb-8 md:mt-8 md:pb-10 lg:mt-10 lg:pb-14">
-          {/* <h1 className="font-serif font-medium uppercase leading-[0.86] tracking-tight text-accent text-balance">
-            <span className="text-right block text-[19vw] sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]">
-              Barber.
-            </span>
-            <span className="text-center block text-[19vw] text-foreground sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]">
-              Culture.
-            </span>
-            <span className="text-left block text-[19vw] text-foreground sm:text-[16vw] lg:text-[13vw] xl:text-[5.5rem]">
-              Craft.
-            </span>
-          </h1> */}
-
           <h1
             key={replayKey}
             data-home-hero-replay-key={replayKey}
@@ -176,6 +159,40 @@ export function Hero() {
               className="text-type--nowrap !block min-h-[0.92em] pl-[0.22em] text-[clamp(2.2rem,11.5vw,3.2rem)] text-[#f2f5f3] sm:pl-[0.55em] sm:text-[clamp(3.25rem,11.5vw,5rem)] lg:pl-[0.88em] lg:text-[13vw] xl:text-[5.5rem]"
             />
           </h1>
+
+          {/* CTA Above The Fold & Trust Badges */}
+          <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-t border-white/10 pt-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-2 rounded-full bg-[#79b8a7] px-6 py-3 text-xs md:text-sm font-bold uppercase tracking-wider text-[#050c0a] transition-all duration-300 hover:bg-[#8ec7b7] hover:shadow-[0_0_25px_rgba(121,184,167,0.4)]"
+              >
+                🛍️ Khám phá Shop & Sáp
+              </Link>
+              <Link
+                href="/services"
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-xs md:text-sm font-bold uppercase tracking-wider text-[#f2f5f3] transition-all duration-300 hover:border-[#79b8a7] hover:bg-[#79b8a7]/10"
+              >
+                ✂️ Bảng giá dịch vụ
+              </Link>
+            </div>
+
+            {/* Response Time & Quality Promise Badges */}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-white/60">
+              <span className="inline-flex items-center gap-1.5 font-medium text-[#79b8a7]">
+                <span className="size-1.5 rounded-full bg-[#79b8a7] animate-ping" />
+                ⚡ Phản hồi trong 15 phút
+              </span>
+              <span className="hidden md:inline text-white/20">•</span>
+              <span className="inline-flex items-center gap-1">
+                🚚 Giao hoả tốc 2h TP.HCM
+              </span>
+              <span className="hidden md:inline text-white/20">•</span>
+              <span className="inline-flex items-center gap-1 text-amber-400">
+                ⭐ 4.1/5 Google Maps (73 đánh giá)
+              </span>
+            </div>
+          </div>
 
         </div>
       </div>

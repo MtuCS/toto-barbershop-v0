@@ -1,8 +1,16 @@
+import type { Metadata } from "next"
 import Image from "next/image"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { PageHero } from "@/components/website/page-hero"
 import { ShopCarousel } from "@/components/website/lookbook/shop-carousel"
+import { Breadcrumbs } from "@/components/website/breadcrumbs"
 import { getLookbooks } from "@/lib/api"
+
+export const metadata: Metadata = {
+  title: "Bộ Sưu Tập Kiểu Tóc & Lookbook Văn Hóa Barber",
+  description:
+    "Cuts. Faces. Stories. Khám phá những kiểu tóc nam đẹp, từ Classic Side Part, High Fade đến Textured Crop và phong cách thời trang của ToTo Barbershop.",
+}
 
 export default async function Page() {
   const lookbookItems = await getLookbooks()
@@ -11,6 +19,10 @@ export default async function Page() {
 
   return (
     <MarketingPageShell>
+      <div className="mx-auto max-w-[1400px] px-5 pt-6 md:px-8">
+        <Breadcrumbs items={[{ label: "Lookbook & Bộ sưu tập" }]} />
+      </div>
+
       <PageHero
         eyebrow="Lookbook"
         title="Cuts. Faces. Stories."

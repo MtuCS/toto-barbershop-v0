@@ -57,6 +57,7 @@ export function ContactForm() {
 
       toast.success("Cảm ơn bạn! Lời nhắn đã được gửi đến ToTo Barbershop thành công.");
       (e.target as HTMLFormElement).reset();
+      window.location.href = "/thank-you";
     } catch (error) {
       console.error(error);
       toast.error("Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau ít phút.");
