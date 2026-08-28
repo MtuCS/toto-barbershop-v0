@@ -1,4 +1,7 @@
+"use client"
+
 import { MapPin, Phone, Clock, Share2 } from "lucide-react"
+import { useDataStore } from "@/store/data-store"
 
 function TikTokIcon({ className }: { className?: string }) {
   return (
@@ -40,6 +43,21 @@ function InstagramIcon({ className }: { className?: string }) {
 }
 
 export function SiteFooter() {
+  const settings = useDataStore((s) => s.settings) || {}
+
+  // Lấy dữ liệu động từ Admin Settings với giá trị mặc định chuẩn của ToTo Barbershop
+  const businessName = settings.business?.name || "ToTo Barbershop"
+  const address = settings.contact?.address || "85 Đồng Đen, Phường 12, Quận Tân Bình, TP.HCM"
+  const hours = settings.contact?.hours || "09:00 – 20:30 (Mở cửa tất cả các ngày trong tuần)"
+  const phone = settings.contact?.phone || "0981 378 179"
+  
+  const facebookUrl = settings.social?.facebook || settings.socials?.facebook || "https://www.facebook.com/totobarbershopHCM"
+  const instagramUrl = settings.social?.instagram || settings.socials?.instagram || "https://www.instagram.com/totobarbershop_/"
+  const tiktokUrl = settings.social?.tiktok || settings.socials?.tiktok || "https://www.tiktok.com/@totobarbershop85"
+  
+  const mapEmbedUrl = settings.contact?.mapEmbedUrl || 
+    `https://maps.google.com/maps?q=${encodeURIComponent(businessName + " " + address)}&t=&z=17&ie=UTF8&iwloc=&output=embed`
+
   return (
     <footer className="home-contact-footer relative isolate border-t border-white/10 bg-[#050c0a] text-[#f2f5f3]">
       <div className="home-contact-inner mx-auto w-full max-w-[1400px] px-5 py-16 md:px-8 md:py-20 lg:px-10 xl:px-14">
@@ -61,7 +79,7 @@ export function SiteFooter() {
                       Giờ mở cửa
                     </span>
                     <span className="text-white/90">
-                      09:00 – 20:00 (Mở cửa tất cả các ngày trong tuần)
+                      {hours}
                     </span>
                   </div>
                 </li>
@@ -75,7 +93,7 @@ export function SiteFooter() {
                       Địa chỉ
                     </span>
                     <span className="text-white/90">
-                      85 Đồng Đen, Phường 12, Quận Tân Bình, TP.HCM
+                      {address}
                     </span>
                   </div>
                 </li>
@@ -88,9 +106,12 @@ export function SiteFooter() {
                     <span className="block font-semibold uppercase tracking-wider text-xs text-[#79b8a7] mb-0.5">
                       Hotline hỗ trợ
                     </span>
-                    <span className="font-semibold text-[#79b8a7] text-base md:text-lg">
-                      0981 378 179
-                    </span>
+                    <a
+                      href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
+                      className="font-semibold text-[#79b8a7] text-base md:text-lg transition-colors hover:underline"
+                    >
+                      {phone}
+                    </a>
                   </div>
                 </li>
 
@@ -103,15 +124,15 @@ export function SiteFooter() {
                       Social của tiệm
                     </span>
                     <div className="flex items-center gap-3">
-                      <a href="https://www.facebook.com/totobarbershopHCM" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
+                      <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
                         <FacebookIcon className="size-4 text-[#79b8a7]" />
                         FB
                       </a>
-                      <a href="https://www.instagram.com/totobarbershop_/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
+                      <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
                         <InstagramIcon className="size-4 text-[#79b8a7]" />
                         IG
                       </a>
-                      <a href="https://www.tiktok.com/@totobarbershop85" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
+                      <a href={tiktokUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
                         <TikTokIcon className="size-4 text-[#79b8a7]" />
                         TT
                       </a>
@@ -125,8 +146,8 @@ export function SiteFooter() {
           {/* Bản đồ Google Maps */}
           <div className="home-contact-map relative min-h-[320px] w-full overflow-hidden rounded-xl border border-white/15 shadow-2xl lg:min-h-[400px]">
             <iframe
-              title="Bản đồ ToTo Barbershop"
-              src="https://maps.google.com/maps?q=Toto+babershop+85+Đồng+Đen,+Phường+12,+Tân+Bình,+Hồ+Chí+Minh&t=&z=17&ie=UTF8&iwloc=&output=embed"
+              title={`Bản đồ ${businessName}`}
+              src={mapEmbedUrl}
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -146,7 +167,7 @@ export function SiteFooter() {
                   data-testid="footer-map-marker-label"
                   className="absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#8d211b]/70 bg-[#c93a30] px-2.5 py-1 text-xs font-bold tracking-wide text-white shadow-md"
                 >
-                  ToTo Barbershop
+                  {businessName}
                 </span>
                 <MapPin className="size-11 fill-[#c93a30] stroke-[#8d211b] stroke-[1.5] drop-shadow-md" />
                 <span className="absolute bottom-[9px] left-1/2 size-2.5 -translate-x-1/2 rounded-full bg-white" />
@@ -157,7 +178,7 @@ export function SiteFooter() {
 
         {/* Dòng bản quyền & Chính sách */}
         <div className="home-contact-legal mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row">
-          <p>© {new Date().getFullYear()} ToTo Barbershop. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {businessName}. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <a href="/privacy-policy" className="transition-colors hover:text-[#79b8a7]">
               Chính sách bảo mật & Điều khoản
@@ -170,4 +191,3 @@ export function SiteFooter() {
     </footer>
   )
 }
-

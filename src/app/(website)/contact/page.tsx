@@ -51,7 +51,7 @@ export default async function Page() {
               <Clock className="size-5 shrink-0 text-[#79b8a7]" aria-hidden="true" />
               <div className="text-sm text-white/70">
                 {[
-                  { day: "Thứ 2 - Chủ Nhật", hours: "09:00 - 20:00 (Mở cửa cả ngày lễ)" },
+                  { day: "Giờ mở cửa", hours: contact?.hours || "09:00 - 20:30 (Mở cửa tất cả các ngày trong tuần)" },
                 ].map((item) => (
                   <p key={item.day} className="mb-2">
                     <b className="text-[#f2f5f3]">{item.day}:</b> {item.hours}

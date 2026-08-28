@@ -296,27 +296,35 @@ export interface MediaItem {
 // ---------------------------------------------------------------------------
 
 export interface SettingsData {
-  business: {
-    name: string
-    tagline: string
-    description: string
+  business?: {
+    name?: string
+    tagline?: string
+    description?: string
   }
-  contact: {
-    phone: string
-    email: string
-    address: string
+  contact?: {
+    phone?: string
+    email?: string
+    address?: string
     hours?: string
+    googleMapsUrl?: string
+    mapEmbedUrl?: string
   }
-  social: {
-    instagram: string
-    facebook: string
-    tiktok: string
-    youtube: string
+  social?: {
+    instagram?: string
+    facebook?: string
+    tiktok?: string
+    youtube?: string
   }
-  openingHours: { day: string; hours: string }[]
-  shipping: {
-    freeThreshold: number
-    flatFee: number
+  socials?: {
+    instagram?: string
+    facebook?: string
+    tiktok?: string
+    youtube?: string
+  }
+  openingHours?: { day: string; hours: string }[]
+  shipping?: {
+    freeThreshold?: number
+    flatFee?: number
   }
   bankTransfer: {
     bankName: string
