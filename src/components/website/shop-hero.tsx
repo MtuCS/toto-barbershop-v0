@@ -69,7 +69,8 @@ export function ShopHero() {
             src={item.image}
             alt=""
             fill
-            priority={index === 0}
+            priority
+            loading="eager"
             sizes="100vw"
             className={cn("scale-105", item.imageClassName)}
           />
