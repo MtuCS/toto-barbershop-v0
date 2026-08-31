@@ -16,11 +16,12 @@ import { SocialSection } from "@/components/website/home/social-section"
 export default function HomePage() {
   return (
     <>
-      <Hero />
+
       <div data-home-scene="campaign">
         <Marquee />
         <VisualVideo />
       </div>
+      <Hero />
       {/* <QuickInfo /> */}
       <ServicesBento />
       <HomeValues />
