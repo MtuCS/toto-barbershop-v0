@@ -8,6 +8,7 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-oswald), var(--font-inter), sans-serif;
   --font-agatho: var(--font-agatho-local), serif;
+  --font-akira: var(--font-akira-local), sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
 
   --color-sidebar-ring: var(--sidebar-ring);
