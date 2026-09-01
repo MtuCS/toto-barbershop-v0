@@ -104,6 +104,8 @@ export function FloatingContactButtons() {
   return (
     <div
       ref={containerRef}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
       className="fixed bottom-6 right-6 z-50 flex flex-row-reverse items-center md:bottom-8 md:right-8"
       aria-label="Cụm nút liên hệ ToTo Barbershop"
     >
@@ -141,9 +143,8 @@ export function FloatingContactButtons() {
 
         {/* Icon with smooth rotation transition */}
         <span
-          className={`relative flex items-center justify-center transition-transform duration-300 ${
-            isOpen ? "rotate-90 scale-100" : "rotate-0 scale-100"
-          }`}
+          className={`relative flex items-center justify-center transition-transform duration-300 ${isOpen ? "rotate-90 scale-100" : "rotate-0 scale-100"
+            }`}
         >
           {isOpen ? (
             <X className="size-6 text-white" />
@@ -155,11 +156,10 @@ export function FloatingContactButtons() {
 
       {/* 3 Floating Action Buttons (Slides out horizontally to the left) */}
       <div
-        className={`mr-3 flex items-center gap-3 transition-all duration-300 ease-out ${
-          isOpen
+        className={`mr-3 flex items-center gap-3 transition-all duration-300 ease-out ${isOpen
             ? "pointer-events-auto translate-x-0 opacity-100 scale-100"
             : "pointer-events-none translate-x-6 opacity-0 scale-90"
-        }`}
+          }`}
       >
         {SOCIAL_CONTACTS.map((item, index) => (
           <a
@@ -169,9 +169,8 @@ export function FloatingContactButtons() {
             rel={item.href.startsWith("tel:") ? undefined : "noopener noreferrer"}
             tabIndex={isOpen ? 0 : -1}
             aria-label={`${item.label} - ${item.sublabel}`}
-            className={`group relative flex items-center transition-all duration-300 ease-out ${
-              isOpen ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
-            }`}
+            className={`group relative flex items-center transition-all duration-300 ease-out ${isOpen ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
+              }`}
             style={{
               transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
             }}
