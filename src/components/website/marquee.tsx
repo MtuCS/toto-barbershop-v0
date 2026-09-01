@@ -19,7 +19,7 @@ export function Marquee({ repeat = 12 }: MarqueeProps) {
             className="flex shrink-0 items-center gap-8 md:gap-12"
             aria-hidden={i >= repeat}
           >
-            <span className="font-display text-xl font-bold uppercase tracking-[0.25em] text-primary-foreground whitespace-nowrap md:text-2xl">
+            <span className="font-agatho text-xl font-bold uppercase tracking-[0.2em] text-primary-foreground whitespace-nowrap md:text-2xl">
               TOTO
             </span>
             <div className="relative h-8 w-8 shrink-0 md:h-10 md:w-10">

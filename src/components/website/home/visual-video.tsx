@@ -1,28 +1,36 @@
-// export function VisualVideo() {
-//   return (
-//     <section className="border-b border-border bg-background">
-//       <div className="relative w-full h-[50vh] md:h-[70vh] lg:h-[80vh] overflow-hidden">
-//         <video
-//           src="/images/TotoVisual.mp4"
-//           autoPlay
-//           muted
-//           loop
-//           playsInline
-//           className="absolute inset-0 h-full w-full object-cover"
-//         />
-//         {/* Optional overlay if needed to match premium feel, e.g., a very subtle dark gradient */}
-//         <div className="absolute inset-0 bg-black/10 mix-blend-multiply pointer-events-none" />
-//       </div>
-//     </section>
-//   )
-// }
+"use client"
+
+import { useRef } from "react"
 
 export function VisualVideo() {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  const handleRestart = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0
+      videoRef.current.play().catch(() => {})
+    }
+  }
+
   return (
     <section className="relative z-10 border-b border-border bg-[#07110f]">
-      <div className="w-full">
+      <div className="relative w-full">
+        {/* Clickable 'toto' logo/watermark overlay to restart video from 0:00 */}
+        <div className="absolute top-4 md:top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+          <button
+            type="button"
+            onClick={handleRestart}
+            aria-label="Phát lại video từ đầu"
+            title="Bấm để phát lại video từ đầu"
+            className="group font-agatho text-2xl md:text-3xl lg:text-4xl font-bold tracking-[0.2em] text-white/90 transition-all duration-300 hover:text-white hover:scale-105 active:scale-95 drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] focus:outline-none cursor-pointer select-none"
+          >
+            toto
+          </button>
+        </div>
+
         <div className="relative w-full overflow-hidden lg:h-full lg:bg-black">
           <video
+            ref={videoRef}
             src="/images/TotoVisual.mp4"
             autoPlay
             muted

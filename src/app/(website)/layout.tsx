@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/website/site-header"
 import { SiteFooter } from "@/components/website/site-footer"
 import { CartDrawer } from "@/components/cart/cart-drawer"
 import { ScrollToTop } from "@/components/website/scroll-to-top"
+import { FloatingContactButtons } from "@/components/website/floating-contact-buttons"
 import { DataFetcher } from "@/components/website/data-fetcher"
 import { SiteAtmosphere } from "@/components/website/site-atmosphere"
 
@@ -20,8 +21,10 @@ export default function WebsiteLayout({ children }: { children: ReactNode }) {
         <SiteFooter />
       </div>
       <CartDrawer />
+      <FloatingContactButtons />
       <ScrollToTop />
       <DataFetcher />
     </div>
   )
 }
+
