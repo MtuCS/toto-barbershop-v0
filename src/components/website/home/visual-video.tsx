@@ -8,7 +8,7 @@ export function VisualVideo() {
   const handleRestart = () => {
     if (videoRef.current) {
       videoRef.current.currentTime = 0
-      videoRef.current.play().catch(() => {})
+      videoRef.current.play().catch(() => { })
     }
   }
 
@@ -21,10 +21,10 @@ export function VisualVideo() {
             type="button"
             onClick={handleRestart}
             aria-label="Phát lại video từ đầu"
-            title="Bấm để phát lại video từ đầu"
+            title="Replay"
             className="group font-agatho text-2xl md:text-3xl lg:text-4xl font-bold tracking-[0.2em] text-white/90 transition-all duration-300 hover:text-white hover:scale-105 active:scale-95 drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] focus:outline-none cursor-pointer select-none"
           >
-            toto
+            TOTO
           </button>
         </div>
 

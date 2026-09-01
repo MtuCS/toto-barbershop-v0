@@ -51,24 +51,24 @@ interface SocialContact {
 const SOCIAL_CONTACTS: SocialContact[] = [
   {
     id: "phone",
-    label: "Gọi Hotline",
-    sublabel: "0900.000.000 (Tư vấn 24/7)",
-    href: "tel:0900000000",
+    label: "Hotline",
+    sublabel: "0981 378 179",
+    href: "tel:0981378179",
     icon: <Phone className="size-5 text-white animate-phone-ring" />,
     color: "hover:bg-[#1f6b5c] hover:border-[#79b8a7]",
   },
   {
     id: "zalo",
     label: "Nhắn Zalo",
-    sublabel: "Phản hồi nhanh trong 5p",
-    href: "https://zalo.me/",
+    sublabel: "ToTo Barbershop",
+    href: "https://zalo.me/0981378179",
     icon: <ZaloIcon className="size-5" />,
     color: "hover:bg-[#0068FF] hover:border-[#0068FF]/50",
   },
   {
     id: "messenger",
-    label: "Chat Messenger",
-    sublabel: "ToTo Barbershop Fanpage",
+    label: "Messenger",
+    sublabel: "Fanpage ToTo",
     href: "https://m.me/",
     icon: <MessengerIcon className="size-5 text-white" />,
     color: "hover:bg-[#0084FF] hover:border-[#0084FF]/50",
@@ -78,9 +78,8 @@ const SOCIAL_CONTACTS: SocialContact[] = [
 export function FloatingContactButtons() {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Click outside to close
+  // Click outside or press Escape to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -99,85 +98,23 @@ export function FloatingContactButtons() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
       document.removeEventListener("keydown", handleKeyDown)
-      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current)
     }
   }, [])
-
-  const handleMouseEnter = () => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current)
-      closeTimeoutRef.current = null
-    }
-    setIsOpen(true)
-  }
-
-  const handleMouseLeave = () => {
-    closeTimeoutRef.current = setTimeout(() => {
-      setIsOpen(false)
-    }, 450)
-  }
 
   return (
     <div
       ref={containerRef}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="fixed bottom-6 right-6 z-50 flex flex-col items-end md:bottom-8 md:right-8"
+      className="fixed bottom-6 right-6 z-50 flex flex-row-reverse items-center md:bottom-8 md:right-8"
       aria-label="Cụm nút liên hệ ToTo Barbershop"
     >
-      {/* 3 Floating Action Buttons (Expand upward) */}
-      <div
-        className={`mb-3 flex flex-col items-end gap-3 transition-all duration-300 ease-out ${
-          isOpen
-            ? "pointer-events-auto translate-y-0 opacity-100 scale-100"
-            : "pointer-events-none translate-y-6 opacity-0 scale-90"
-        }`}
-      >
-        {SOCIAL_CONTACTS.map((item, index) => (
-          <a
-            key={item.id}
-            href={item.href}
-            target={item.href.startsWith("tel:") ? undefined : "_blank"}
-            rel={item.href.startsWith("tel:") ? undefined : "noopener noreferrer"}
-            tabIndex={isOpen ? 0 : -1}
-            aria-label={`${item.label} - ${item.sublabel}`}
-            className={`group relative flex items-center gap-3 transition-all duration-300 ease-out ${
-              isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}
-            style={{
-              transitionDelay: isOpen ? `${index * 60}ms` : "0ms",
-            }}
-          >
-            {/* Glassmorphism Tooltip (Left side) */}
-            <span className="pointer-events-none hidden items-center gap-1.5 rounded-lg border border-white/15 bg-[#07110f]/90 px-3.5 py-1.5 text-right shadow-xl backdrop-blur-md transition-all duration-200 group-hover:scale-105 group-hover:border-[#79b8a7]/50 sm:flex">
-              <span className="flex flex-col">
-                <span className="font-sans text-xs font-bold tracking-wide text-white">
-                  {item.label}
-                </span>
-                <span className="font-mono text-[10px] text-[#79b8a7]/90">
-                  {item.sublabel}
-                </span>
-              </span>
-            </span>
-
-            {/* Circular Button */}
-            <span
-              className={`relative flex size-11 items-center justify-center rounded-full border border-white/20 bg-[#07110f]/90 text-white shadow-xl backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(121,184,167,0.35)] group-active:scale-95 md:size-12 ${item.color}`}
-            >
-              {item.icon}
-            </span>
-          </a>
-        ))}
-      </div>
-
       {/* Main Hub Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-label={isOpen ? "Đóng menu liên hệ" : "Mở menu liên hệ ToTo"}
-        title={isOpen ? "Đóng liên hệ" : "Liên hệ ToTo Barbershop"}
-        className="group relative flex size-12 items-center justify-center rounded-full border border-[#79b8a7]/40 bg-[#07110f]/95 text-white shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-[#79b8a7] hover:bg-primary active:scale-95 md:size-14"
+        title={isOpen ? "Đóng liên hệ" : "Liên hệ ToTo Barbershop (Click để mở)"}
+        className="group relative flex size-12 items-center justify-center rounded-full border border-[#79b8a7]/40 bg-[#07110f]/95 text-white shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-[#79b8a7] hover:bg-primary active:scale-95 md:size-14 cursor-pointer"
       >
         {/* Radar concentric pulse rings (only active when closed) */}
         {!isOpen && (
@@ -215,6 +152,49 @@ export function FloatingContactButtons() {
           )}
         </span>
       </button>
+
+      {/* 3 Floating Action Buttons (Slides out horizontally to the left) */}
+      <div
+        className={`mr-3 flex items-center gap-3 transition-all duration-300 ease-out ${
+          isOpen
+            ? "pointer-events-auto translate-x-0 opacity-100 scale-100"
+            : "pointer-events-none translate-x-6 opacity-0 scale-90"
+        }`}
+      >
+        {SOCIAL_CONTACTS.map((item, index) => (
+          <a
+            key={item.id}
+            href={item.href}
+            target={item.href.startsWith("tel:") ? undefined : "_blank"}
+            rel={item.href.startsWith("tel:") ? undefined : "noopener noreferrer"}
+            tabIndex={isOpen ? 0 : -1}
+            aria-label={`${item.label} - ${item.sublabel}`}
+            className={`group relative flex items-center transition-all duration-300 ease-out ${
+              isOpen ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
+            }`}
+            style={{
+              transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
+            }}
+          >
+            {/* Tooltip on top of each button */}
+            <span className="pointer-events-none absolute bottom-full left-1/2 mb-2.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/15 bg-[#07110f]/95 px-2.5 py-1 text-center opacity-0 shadow-2xl backdrop-blur-md transition-all duration-200 group-hover:opacity-100 group-hover:-translate-y-1">
+              <span className="block font-sans text-[11px] font-bold text-white">
+                {item.label}
+              </span>
+              <span className="block font-mono text-[9px] text-[#79b8a7]">
+                {item.sublabel}
+              </span>
+            </span>
+
+            {/* Circular Button */}
+            <span
+              className={`relative flex size-11 items-center justify-center rounded-full border border-white/20 bg-[#07110f]/95 text-white shadow-xl backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(121,184,167,0.35)] group-active:scale-95 md:size-12 ${item.color}`}
+            >
+              {item.icon}
+            </span>
+          </a>
+        ))}
+      </div>
     </div>
   )
 }
