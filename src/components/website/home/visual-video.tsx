@@ -17,20 +17,20 @@ export function VisualVideo() {
     <section className="relative z-10 border-b border-border bg-[#07110f]">
       <div className="relative w-full">
         {/* Clickable T_logo_1 watermark overlay to restart video from 0:00 */}
-        <div className="absolute top-4 sm:top-6 md:top-8 lg:top-10 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+        <div className="absolute top-1.5 sm:top-2 md:top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
           <button
             type="button"
             onClick={handleRestart}
             aria-label="Phát lại video từ đầu"
             title="Bấm để phát lại video từ đầu"
-            className="group relative block h-14 w-48 sm:h-20 sm:w-64 md:h-28 md:w-96 lg:h-36 lg:w-[460px] xl:h-40 xl:w-[520px] transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none cursor-pointer select-none"
+            className="group relative block h-7 w-24 sm:h-8 sm:w-32 md:h-10 md:w-40 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none cursor-pointer select-none"
           >
             <Image
               src="/images/T_logo_1.png"
               alt="ToTo Barbershop"
               fill
-              sizes="(max-width: 640px) 200px, (max-width: 768px) 300px, (max-width: 1024px) 400px, 520px"
-              className="object-contain brightness-0 invert drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]"
+              sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, 160px"
+              className="object-contain brightness-0 invert drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]"
               priority
             />
           </button>
