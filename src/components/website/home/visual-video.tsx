@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef } from "react"
+import Image from "next/image"
 
 export function VisualVideo() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -15,16 +16,23 @@ export function VisualVideo() {
   return (
     <section className="relative z-10 border-b border-border bg-[#07110f]">
       <div className="relative w-full">
-        {/* Clickable 'toto' logo/watermark overlay to restart video from 0:00 */}
+        {/* Clickable T_logo_1 watermark overlay to restart video from 0:00 */}
         <div className="absolute top-4 md:top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
           <button
             type="button"
             onClick={handleRestart}
             aria-label="Phát lại video từ đầu"
-            title="Replay"
-            className="group font-agatho text-2xl md:text-3xl lg:text-4xl font-bold tracking-[0.2em] text-white/90 transition-all duration-300 hover:text-white hover:scale-105 active:scale-95 drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] focus:outline-none cursor-pointer select-none"
+            title="Bấm để phát lại video từ đầu"
+            className="group relative block h-8 w-28 sm:h-10 sm:w-36 md:h-12 md:w-44 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none cursor-pointer select-none"
           >
-            TOTO
+            <Image
+              src="/images/T_logo_1.png"
+              alt="ToTo Barbershop"
+              fill
+              sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 176px"
+              className="object-contain brightness-0 invert drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]"
+              priority
+            />
           </button>
         </div>
 
