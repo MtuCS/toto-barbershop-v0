@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { motion, useAnimationControls } from "framer-motion";
+import { motion, useAnimationControls } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Trophy, Sparkles, X, Copy, Check, Gift, HeartHandshake } from "lucide-react";
 import { toast } from "sonner";
