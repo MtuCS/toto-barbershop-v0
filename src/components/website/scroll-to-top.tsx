@@ -42,7 +42,7 @@ export function ScrollToTop() {
       onClick={scrollToTop}
       variant="outline"
       size="icon"
-      className="fixed bottom-6 right-6 z-[999] rounded-full border-neutral-200 bg-white/90 text-neutral-900 shadow-lg backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-white hover:text-primary active:scale-95 animate-in fade-in slide-in-from-bottom-5"
+      className="fixed bottom-[5.25rem] md:bottom-24 right-6 md:right-8 z-40 size-11 md:size-12 rounded-full border border-white/20 bg-[#07110f]/85 text-white shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-[#79b8a7]/60 hover:bg-primary hover:text-white active:scale-95 animate-in fade-in slide-in-from-bottom-3"
       aria-label="Cuộn lên đầu trang"
     >
       <ArrowUp className="size-5" />

@@ -25,6 +25,13 @@ const agatho = localFont({
   display: 'swap',
 })
 
+const akira = localFont({
+  src: '../../public/font/Akira_Expanded.otf',
+  weight: '800',
+  variable: '--font-akira-local',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: {
     default: 'Toto Barbershop — Barber. Culture. Craft.',
@@ -66,7 +73,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi" className={`bg-background ${inter.variable} ${oswald.variable} ${agatho.variable}`}>
+    <html lang="vi" className={`bg-background ${inter.variable} ${oswald.variable} ${agatho.variable} ${akira.variable}`}>
       <body className="font-sans antialiased">
         <GoogleAnalytics />
         {children}

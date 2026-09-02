@@ -11,11 +11,12 @@ import { FaqAccordion } from "@/components/website/faq-accordion"
 export default function HomePage() {
   return (
     <>
-      <Hero />
+
       <div data-home-scene="campaign">
         <Marquee />
         <VisualVideo />
       </div>
+      <Hero />
       {/* <QuickInfo /> */}
       <ServicesBento />
       <HomeValues />
