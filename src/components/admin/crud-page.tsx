@@ -1,6 +1,6 @@
 "use client"
 import Image from "next/image"
-import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, KeyRound, Copy, Check, PhoneCall, Mail, ShoppingBag, UserCheck, RefreshCw, ShieldCheck, User, UploadCloud, Images, Film, ExternalLink, Download, CheckCircle2 } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, KeyRound, Copy, Check, PhoneCall, Mail, ShoppingBag, UserCheck, RefreshCw, ShieldCheck, User, UploadCloud, Images, Film, ExternalLink, Download, CheckCircle2, ImageOff } from "lucide-react"
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
@@ -228,14 +228,60 @@ function generateVariants(
 }
 
 // ============================================================================
+// Media Thumbnail with Graceful Fallback for Broken Images
+// ============================================================================
+export function MediaThumbnail({
+  src,
+  alt = "Media",
+  className = "",
+  type = "image",
+}: {
+  src?: string | null;
+  alt?: string;
+  className?: string;
+  type?: string;
+}) {
+  const [error, setError] = useState(false);
+
+  if (type === "video") {
+    return (
+      <div className={`w-full h-full bg-neutral-900 flex flex-col items-center justify-center text-white ${className}`}>
+        <Film className="size-8 text-neutral-400 mb-1" />
+        <span className="text-[10px] font-bold uppercase tracking-wider bg-black/60 px-2 py-0.5 rounded">Video</span>
+      </div>
+    );
+  }
+
+  if (error || !src || src === "undefined" || src === "null" || typeof src !== "string" || src.trim().length < 3) {
+    return (
+      <div className={`w-full h-full flex flex-col items-center justify-center bg-neutral-100 text-neutral-400 p-2 text-center select-none ${className}`}>
+        <ImageOff className="size-6 text-neutral-300 mb-1" />
+        <span className="text-[9px] font-medium text-neutral-400 truncate max-w-full">Ảnh không khả dụng</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={`w-full h-full object-cover ${className}`}
+      onError={() => setError(true)}
+      loading="lazy"
+    />
+  );
+}
+
+// ============================================================================
 // Media Utility: Aggregate all media assets across the entire application
 // ============================================================================
 export function getAllMediaItems(d: any) {
   const urlMap = new Map<string, any>();
+  const isValidUrl = (u: any) => typeof u === 'string' && u.trim().length > 3 && u !== 'undefined' && u !== 'null';
 
   // 1. Tệp trực tiếp từ cơ sở dữ liệu Media
   (d.media || []).forEach((m: any) => {
-    if (m && m.url) {
+    if (m && isValidUrl(m.url)) {
       urlMap.set(m.url, {
         id: m.id || `med-${urlMap.size + 1}`,
         url: m.url,
@@ -252,7 +298,7 @@ export function getAllMediaItems(d: any) {
   // 2. Hình ảnh từ tất cả Sản phẩm
   (d.products || []).forEach((p: any) => {
     (p.images || []).forEach((img: string, idx: number) => {
-      if (img && !urlMap.has(img)) {
+      if (isValidUrl(img) && !urlMap.has(img)) {
         const rawName = img.split('/').pop()?.split('?')[0] || `${p.title || 'SP'} (${idx + 1})`;
         urlMap.set(img, {
           id: `prod-img-${p.id}-${idx}`,
@@ -269,7 +315,7 @@ export function getAllMediaItems(d: any) {
 
   // 3. Hình ảnh từ Lookbook
   (d.lookbook || []).forEach((lb: any, idx: number) => {
-    if (lb.image && !urlMap.has(lb.image)) {
+    if (isValidUrl(lb.image) && !urlMap.has(lb.image)) {
       const rawName = lb.image.split('/').pop()?.split('?')[0] || `Lookbook ${lb.title || idx + 1}`;
       urlMap.set(lb.image, {
         id: `lb-img-${lb.id || idx}`,
@@ -285,7 +331,7 @@ export function getAllMediaItems(d: any) {
 
   // 4. Hình ảnh từ Stories
   (d.stories || []).forEach((st: any) => {
-    if (st.heroImage && !urlMap.has(st.heroImage)) {
+    if (isValidUrl(st.heroImage) && !urlMap.has(st.heroImage)) {
       urlMap.set(st.heroImage, {
         id: `story-hero-${st.id}`,
         url: st.heroImage,
@@ -293,19 +339,35 @@ export function getAllMediaItems(d: any) {
         size: "—",
         type: "image",
         createdAt: st.createdAt || new Date().toISOString(),
-        source: "Câu chuyện sản phẩm"
+        source: `Câu chuyện: ${st.title || 'Stories'}`
       });
     }
     (st.blocks || []).forEach((b: any, bIdx: number) => {
-      if (b.type === 'image' && b.image && !urlMap.has(b.image)) {
-        urlMap.set(b.image, {
+      const blockImg = b.image || (b.type === 'image' ? b.url : null);
+      if (isValidUrl(blockImg) && !urlMap.has(blockImg)) {
+        const rawName = blockImg.split('/').pop()?.split('?')[0] || `${st.title || 'Story'} - Chi tiết ${bIdx + 1}`;
+        urlMap.set(blockImg, {
           id: `story-block-${st.id}-${bIdx}`,
-          url: b.image,
-          name: `Story Khối ${bIdx + 1}`,
+          url: blockImg,
+          name: rawName.replace(/[-_]/g, ' '),
           size: "—",
           type: "image",
           createdAt: st.createdAt || new Date().toISOString(),
-          source: "Câu chuyện sản phẩm"
+          source: `Câu chuyện: ${st.title || 'Stories'}`
+        });
+      }
+    });
+    (st.gallery || []).forEach((gImg: string, gIdx: number) => {
+      if (isValidUrl(gImg) && !urlMap.has(gImg)) {
+        const rawName = gImg.split('/').pop()?.split('?')[0] || `${st.title || 'Story'} - Gallery ${gIdx + 1}`;
+        urlMap.set(gImg, {
+          id: `story-gal-${st.id}-${gIdx}`,
+          url: gImg,
+          name: rawName.replace(/[-_]/g, ' '),
+          size: "—",
+          type: "image",
+          createdAt: st.createdAt || new Date().toISOString(),
+          source: `Câu chuyện: ${st.title || 'Stories'}`
         });
       }
     });
@@ -463,13 +525,7 @@ export function MediaPickerModal({
                         : "border-neutral-200 hover:border-neutral-400"
                     }`}
                   >
-                    {item.type === "video" ? (
-                      <div className="w-full h-full bg-neutral-900 flex items-center justify-center text-white">
-                        <Film className="size-8 text-neutral-400" />
-                      </div>
-                    ) : (
-                      <img src={item.url} alt={item.name || ""} className="w-full h-full object-cover" />
-                    )}
+                    <MediaThumbnail src={item.url} alt={item.name || ""} type={item.type} />
 
                     {/* Dấu tích chọn */}
                     {isSelected && (
@@ -1189,10 +1245,10 @@ const JSON_LIST_KEYS = ["process", "blocks", "gallery"]
 function generateDefaultForm(section: string) {
   switch (section) {
     case "categories": return { name: "", slug: "", parent: "", description: "" }
-    case "services": return { name: "", duration: "", price: 0, category: "", description: "", process: [] }
-    case "training": return { title: "", duration: "", price: 0 }
-    case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", blocks: [], gallery: [], status: "draft", order: 1 }
-    case "lookbook": return { caption: "", category: "", image: "", featured: false, published: true, order: 1 }
+    case "services": return { name: "", category: "Tóc & tạo kiểu", price: 100000, duration: 45, description: "", process: ["Tư vấn kiểu tóc", "Cắt tỉa tạo form", "Gội sấy & vuốt sáp tạo kiểu"], image: "", featured: false }
+    case "training": return { title: "", duration: "2 tháng", price: 15000000, description: "", excerpt: "", startDate: "Khai giảng hàng tháng", status: "active" }
+    case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", blocks: [], gallery: [], status: "published", order: 1 }
+    case "lookbook": return { title: "", category: "Classic", image: "" }
     case "customers": return { name: "", email: "", password: "", phone: "", role: "CUSTOMER" }
     case "staff": return { name: "", email: "", password: "", phone: "", role: "ADMIN" }
     case "promo-codes": return { code: "", discountType: "PERCENT", discountValue: 0, minOrderValue: 0, maxDiscount: 0, usageLimit: 100, isActive: true, expiresAt: null }
@@ -1457,7 +1513,7 @@ export function CrudPage({ section }: { section: string }) {
   const [faqCategoryFilter, setFaqCategoryFilter] = useState("ALL")
 
   const [page, setPage] = useState(1)
-  const pageSize = 10
+  const pageSize = section === "media" ? 24 : 10
   const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -1685,15 +1741,37 @@ export function CrudPage({ section }: { section: string }) {
       await d.updateOrderStatus(formData.id, { status: formData.status, paymentStatus: formData.paymentStatus })
     }
     if (section === "categories") await d.upsertCategory(formData as any)
-    if (section === "services") await d.upsertService(formData as any)
-    if (section === "training") d.upsertCourse(formData as any)
+    if (section === "services") {
+      const payload = { ...formData };
+      if (payload.price) payload.price = Number(payload.price);
+      if (payload.duration) payload.duration = Number(payload.duration);
+      if (typeof payload.process === 'string') {
+        try { payload.process = JSON.parse(payload.process); } catch { payload.process = payload.process.split('\n').filter(Boolean); }
+      }
+      await d.upsertService(payload as any)
+    }
+    if (section === "training") {
+      const payload = { ...formData };
+      if (payload.price) payload.price = Number(payload.price);
+      if (!payload.slug && payload.title) {
+        payload.slug = payload.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").replace(/(^-|-$)+/g, "");
+      }
+      await d.upsertCourse(payload as any)
+    }
     if (section === "merchandise-stories") {
       const payload = { ...formData };
+      if (!payload.slug && payload.title) {
+        payload.slug = payload.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").replace(/(^-|-$)+/g, "");
+      }
       try { if (typeof payload.blocks === 'string') payload.blocks = JSON.parse(payload.blocks); } catch {}
       try { if (typeof payload.gallery === 'string') payload.gallery = JSON.parse(payload.gallery); } catch {}
-      d.upsertStory(payload as any)
+      await d.upsertStory(payload as any)
     }
-    if (section === "lookbook") d.upsertLookbook(formData as any)
+    if (section === "lookbook") {
+      const payload = { ...formData };
+      if (payload.caption && !payload.title) payload.title = payload.caption;
+      await d.upsertLookbook(payload as any)
+    }
     if (section === "promo-codes") await d.upsertPromoCode(formData as any)
     if (section === "faqs") await d.upsertFaq(formData as any)
     if (section === "media") await d.addMedia(formData as any)
@@ -1709,6 +1787,8 @@ export function CrudPage({ section }: { section: string }) {
       <SettingsForm />
     )
   }
+
+  const paginatedRows = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   return (
     <div>
@@ -1930,26 +2010,19 @@ export function CrudPage({ section }: { section: string }) {
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                Hiển thị {filtered.length} / {allMediaList.length} tệp media
+                Hiển thị {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1} - {Math.min(page * pageSize, filtered.length)} trên tổng số {filtered.length} tệp media {filtered.length > pageSize && `(Trang ${page}/${Math.ceil(filtered.length / pageSize)})`}
               </div>
             </div>
 
-            {filtered.length ? (
+            {paginatedRows.length ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {filtered.map((r, i) => (
+                {paginatedRows.map((r, i) => (
                   <div 
                     key={String(r.id ?? i)} 
                     className="group relative flex flex-col rounded-xl overflow-hidden bg-white border border-neutral-200 shadow-sm hover:shadow-md transition-all"
                   >
                     <div className="relative aspect-square bg-neutral-100 overflow-hidden cursor-pointer" onClick={() => setPreviewMedia(r)}>
-                      {r.type === "video" ? (
-                        <div className="w-full h-full bg-neutral-900 flex flex-col items-center justify-center text-white">
-                          <Film className="size-10 text-neutral-400 mb-1" />
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-black/60 px-2 py-0.5 rounded">Video</span>
-                        </div>
-                      ) : (
-                        <img src={String(r.url)} alt={String(r.name || "Media")} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                      )}
+                      <MediaThumbnail src={String(r.url)} alt={String(r.name || "Media")} type={r.type} className="transition-transform group-hover:scale-105" />
 
                       {/* Source Badge */}
                       <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white px-2 py-0.5 rounded text-[10px] font-medium max-w-[80%] truncate">
@@ -2054,7 +2127,7 @@ export function CrudPage({ section }: { section: string }) {
               )}
             </thead>
             <tbody className="divide-y divide-border/40">
-              {filtered.length ? filtered.slice((page - 1) * pageSize, page * pageSize).map((r, i) => (
+              {paginatedRows.length ? paginatedRows.map((r, i) => (
                 <tr key={String(r.id ?? i)} className="border-t hover:bg-neutral-50/60 transition-colors">
                   {section === "customers" ? (
                     <>
@@ -2244,7 +2317,7 @@ export function CrudPage({ section }: { section: string }) {
                           <div className="flex items-center gap-3">
                             {(typeof r.url === "string" || typeof r.image === "string" || (Array.isArray(r.images) && r.images[0])) && (
                               <div className="relative size-10 shrink-0 bg-neutral-100 overflow-hidden rounded-md border">
-                                <Image src={typeof r.url === "string" ? r.url : typeof r.image === "string" ? r.image : r.images[0]} alt="" fill className="object-cover" />
+                                <MediaThumbnail src={typeof r.url === "string" ? r.url : typeof r.image === "string" ? r.image : r.images[0]} alt="" />
                               </div>
                             )}
                             {String(r.title || r.name || r.caption || r.code || r.email || `Bản ghi ${i + 1}`)}
@@ -2313,9 +2386,9 @@ export function CrudPage({ section }: { section: string }) {
         )}
         {/* Pagination controls */}
         {filtered.length > pageSize && (
-          <div className="flex items-center justify-between border-t p-4 text-sm text-neutral-500">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t p-4 text-sm text-neutral-500">
             <div>
-              Hiển thị từ {(page - 1) * pageSize + 1} đến {Math.min(page * pageSize, filtered.length)} trong tổng số {filtered.length} bản ghi
+              Hiển thị từ <span className="font-semibold text-neutral-800">{(page - 1) * pageSize + 1}</span> đến <span className="font-semibold text-neutral-800">{Math.min(page * pageSize, filtered.length)}</span> trong tổng số <span className="font-semibold text-neutral-800">{filtered.length}</span> bản ghi (Trang {page}/{Math.ceil(filtered.length / pageSize)})
             </div>
             <div className="flex gap-2">
               <Button
@@ -2326,6 +2399,9 @@ export function CrudPage({ section }: { section: string }) {
               >
                 Trang trước
               </Button>
+              <div className="flex items-center px-2 text-xs font-semibold text-neutral-700 bg-neutral-100 rounded">
+                {page} / {Math.ceil(filtered.length / pageSize)}
+              </div>
               <Button
                 variant="outline"
                 size="sm"
@@ -2434,7 +2510,7 @@ export function CrudPage({ section }: { section: string }) {
                       <div className="flex flex-col gap-2">
                         {formData[key] && (
                           <div className="relative h-36 w-full bg-neutral-100 rounded-md overflow-hidden border">
-                            <img src={formData[key]} alt="Preview" className="w-full h-full object-contain" />
+                            <MediaThumbnail src={formData[key]} alt="Preview" className="h-full w-full object-contain" />
                           </div>
                         )}
                         <div className="flex flex-wrap gap-2 items-center">
@@ -2484,18 +2560,31 @@ export function CrudPage({ section }: { section: string }) {
                       </div>
                     ) : key === "size" && section === "media" ? (
                       <Input value={formData[key] || ""} disabled className="bg-neutral-50" />
-                    ) : key === "category" && section === "lookbook" ? (
+                    ) : key === "category" && section === "services" ? (
                       <select 
-                        value={formData[key] || ""} 
+                        value={formData[key] || "Tóc & tạo kiểu"} 
                         onChange={e => handleChange(key, e.target.value)}
                         className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
-                        <option value="">— Chọn danh mục —</option>
+                        <option value="Tóc & tạo kiểu">Tóc & tạo kiểu</option>
+                        <option value="Vệ sinh & chăm sóc">Vệ sinh & chăm sóc</option>
+                        <option value="Râu & khăn nóng">Râu & khăn nóng</option>
+                        <option value="Mấy gói combo">Mấy gói combo</option>
+                        <option value="Tẩy & Nhuộm tóc">Tẩy & Nhuộm tóc</option>
+                        <option value="Uốn tóc Textured">Uốn tóc Textured</option>
+                      </select>
+                    ) : key === "category" && section === "lookbook" ? (
+                      <select 
+                        value={formData[key] || "Classic"} 
+                        onChange={e => handleChange(key, e.target.value)}
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
                         <option value="Classic">Classic</option>
                         <option value="Modern">Modern</option>
                         <option value="Fade">Fade</option>
+                        <option value="Shop">Không gian tiệm (Shop)</option>
                         <option value="Grooming">Grooming</option>
-                        <option value="Coloring">Coloring</option>
+                        <option value="Coloring">Tẩy nhuộm</option>
                       </select>
                     ) : key === "category" && section === "faqs" ? (
                       <select 
@@ -2844,9 +2933,9 @@ export function CrudPage({ section }: { section: string }) {
             <div className="p-4 space-y-4">
               <div className="relative w-full max-h-[420px] bg-neutral-950 rounded-lg overflow-hidden flex items-center justify-center">
                 {previewMedia.type === "video" ? (
-                  <video src={previewMedia.url} controls className="max-h-[420px] w-full" />
+                  <video src={previewMedia.url} controls autoPlay className="max-h-[420px] w-full" />
                 ) : (
-                  <img src={previewMedia.url} alt={previewMedia.name || "Preview"} className="max-h-[420px] w-auto object-contain mx-auto" />
+                  <MediaThumbnail src={previewMedia.url} alt={previewMedia.name || "Preview"} type="image" className="max-h-[420px] w-auto object-contain mx-auto" />
                 )}
               </div>
 
