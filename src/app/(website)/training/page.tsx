@@ -81,13 +81,13 @@ export default async function TrainingPage() {
         <div className="mx-auto grid max-w-[1400px] gap-12 px-5 md:grid-cols-12 md:items-start md:gap-8 md:px-8">
           <div className="md:col-span-6 lg:col-span-5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">
-              01 / Sàn thực hành
+              01 / TOTO Academy
             </p>
-            <h2 className="mt-6 max-w-lg font-display text-4xl uppercase leading-[0.95] text-[#f2f5f3] sm:text-5xl md:text-6xl">
-              Đôi tay học nghề, không chỉ là lý thuyết.
+            <h2 className="mt-6 max-w-lg font-display text-4xl uppercase leading-[1.15] text-[#f2f5f3] sm:text-5xl md:text-6xl">
+              Từ học viên đến chuyên viên
             </h2>
             <p className="mt-6 max-w-md leading-relaxed text-white/65 md:text-base">
-              Mỗi buổi học đưa bạn hòa vào nhịp làm việc thực tế của một tiệm Barber: quan sát từng chi tiết, rèn giũa thao tác tay và hoàn thiện tay nghề qua nhận xét trực tiếp 1:1.
+              Mỗi buổi học đưa bạn hòa vào nhịp làm việc thực tế của một tiệm Barber: quan sát từng chi tiết, rèn giũa thao tác tay và hoàn thiện tay nghề với sự hướng dẫn của Senior Barber.
             </p>
 
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-white/10 pt-5">
@@ -101,7 +101,7 @@ export default async function TrainingPage() {
                 <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
                   Phản hồi
                 </dt>
-                <dd className="mt-2 text-sm font-bold text-[#f2f5f3]">Kèm cặp 1:1</dd>
+                <dd className="mt-2 text-sm font-bold text-[#f2f5f3]">Kèm 1:1</dd>
               </div>
               <div>
                 <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
@@ -133,7 +133,7 @@ export default async function TrainingPage() {
                 02 / Lộ trình học
               </p>
               <h2 className="mt-4 max-w-3xl font-display text-4xl uppercase leading-[1.15] md:text-6xl">
-                Từ nền tảng đến phong cách cá nhân.
+                Từ nền tảng đến phong cách <br /> cá nhân.
               </h2>
             </div>
             <p className="max-w-sm text-sm leading-7 text-neutral-600 md:col-span-3 md:col-start-10 md:pb-1">
