@@ -68,7 +68,7 @@ export function CheckoutForm() {
       phone: user.phone || current.phone,
       email: user.email || current.email,
     }))
-  }, [user?.name, user?.phone, user?.email])
+  }, [user])
 
   // Pre-fill địa chỉ từ profile (chỉ chạy khi user lần đầu được set)
   useEffect(() => {
@@ -103,7 +103,7 @@ export function CheckoutForm() {
         })
       }
     })
-  }, [user?.id])
+  }, [user])
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items])
   const prevSubtotal = useRef(subtotal)
@@ -164,7 +164,7 @@ export function CheckoutForm() {
         setCouponError(data.error || "Mã giảm giá không hợp lệ.")
         applyCouponToStore(null)
       }
-    } catch (e) {
+    } catch {
       setCoupon(null)
       setDiscount(0)
       setCouponError("Lỗi kết nối. Vui lòng thử lại.")

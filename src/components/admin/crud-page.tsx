@@ -1,6 +1,5 @@
 "use client"
-import Image from "next/image"
-import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, KeyRound, Copy, Check, PhoneCall, Mail, ShoppingBag, UserCheck, RefreshCw, ShieldCheck, User, UploadCloud, Images, Film, ExternalLink, Download, CheckCircle2, ImageOff } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, KeyRound, Copy, Check, PhoneCall, Mail, RefreshCw, UploadCloud, Images, Film, ExternalLink, ImageOff } from "lucide-react"
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
@@ -8,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { useState, useMemo, useEffect } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -417,7 +415,7 @@ export function MediaPickerModal({
           }
           toast.success(`Đã tải lên: ${file.name}`);
         }
-      } catch (err) {
+      } catch {
         toast.error("Tải ảnh thất bại");
       }
     }
@@ -1114,7 +1112,7 @@ function ChangeAdminPasswordCard() {
       } else {
         toast.error(data.error || "Đổi mật khẩu thất bại")
       }
-    } catch (err: any) {
+    } catch {
       toast.error("Lỗi khi kết nối đến máy chủ")
     } finally {
       setLoading(false)
@@ -2845,7 +2843,7 @@ export function CrudPage({ section }: { section: string }) {
                                   }
                                   toast.success("Tải ảnh lên thành công!")
                                 } else { toast.error("Tải ảnh thất bại") }
-                              } catch(err) { toast.error("Lỗi tải ảnh") }
+                              } catch { toast.error("Lỗi tải ảnh") }
                             }} />
                             Tải ảnh từ máy
                           </label>
@@ -3306,14 +3304,5 @@ export function CrudPage({ section }: { section: string }) {
         mediaList={allMediaList}
       />
     </div>
-  )
-}
-
-function Field({ label, value, wide }: { label: string; value: string; wide?: boolean }) {
-  return (
-    <label className={`text-sm ${wide ? "sm:col-span-2" : ""}`}>
-      {label}
-      <input defaultValue={value} className="mt-2 w-full border px-3 py-2 rounded" />
-    </label>
   )
 }

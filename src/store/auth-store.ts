@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
           }
           
           return { ok: false, error: data.error || "Email hoặc mật khẩu không đúng." }
-        } catch (err: any) {
+        } catch {
           return { ok: false, error: "Không thể kết nối đến máy chủ." }
         }
       },

@@ -1,4 +1,4 @@
-import { Quote, Star } from "lucide-react"
+import { Star } from "lucide-react"
 import { GoogleReviewsShowcase } from "@/components/website/google-reviews-showcase"
 
 export function HomeTestimonials() {

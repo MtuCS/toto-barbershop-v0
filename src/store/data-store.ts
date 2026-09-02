@@ -14,7 +14,6 @@ import type {
   SettingsData,
   OrderStatus,
   PaymentStatus,
-  CartItem,
   ContactMessage,
 } from "@/types"
 
@@ -27,8 +26,6 @@ import { useCustomerUserStore } from "./customer-user-store"
 // Central editable data store (admin CMS). Persisted to LocalStorage so admin
 // edits survive reloads. Backend hook point: swap each action for an API call.
 // ============================================================================
-
-const uid = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 9)}`
 
 interface DataState {
   products: Product[]

@@ -48,14 +48,13 @@ const navGroups = [
 export function AdminShell({children}:{children:React.ReactNode}){
   const path=usePathname(),router=useRouter(),logout=useAuthStore(s=>s.logout),session=useAuthStore(s=>s.session),[open,setOpen]=useState(false);
   const [mounted, setMounted] = useState(false);
-  const d = useDataStore();
-  const unreadCount = d.messages?.filter((m) => m.status === 'unread').length || 0;
+  const messages = useDataStore((s) => s.messages);
+  const unreadCount = messages?.filter((m) => m.status === 'unread').length || 0;
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     if (session) {
-      d.fetchMessages();
+      useDataStore.getState().fetchMessages();
     }
   }, [session]);
 
