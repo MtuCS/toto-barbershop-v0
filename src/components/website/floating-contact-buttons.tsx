@@ -69,7 +69,7 @@ const SOCIAL_CONTACTS: SocialContact[] = [
     id: "messenger",
     label: "Messenger",
     sublabel: "Fanpage ToTo",
-    href: "https://m.me/",
+    href: "https://www.facebook.com/totobarbershopHCM/?locale=vi_VN",
     icon: <MessengerIcon className="size-5 text-white" />,
     color: "hover:bg-[#0084FF] hover:border-[#0084FF]/50",
   },
@@ -157,8 +157,8 @@ export function FloatingContactButtons() {
       {/* 3 Floating Action Buttons (Slides out horizontally to the left) */}
       <div
         className={`mr-3 flex items-center gap-3 transition-all duration-300 ease-out ${isOpen
-            ? "pointer-events-auto translate-x-0 opacity-100 scale-100"
-            : "pointer-events-none translate-x-6 opacity-0 scale-90"
+          ? "pointer-events-auto translate-x-0 opacity-100 scale-100"
+          : "pointer-events-none translate-x-6 opacity-0 scale-90"
           }`}
       >
         {SOCIAL_CONTACTS.map((item, index) => (
