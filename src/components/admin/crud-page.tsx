@@ -750,7 +750,7 @@ function SettingsForm() {
 // ============================================================================
 // Generic form for other sections
 // ============================================================================
-const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "relatedProductIds", "timeline", "items", "modules", "roadmap", "benefits", "audience", "productCount"]
+const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "relatedProductIds", "timeline", "items", "modules", "roadmap", "benefits", "audience", "productCount", "totalOrders", "totalSpent", "orders", "addresses", "resetTokens"]
 // Những field dùng UI dynamic list thay vì textarea JSON
 const JSON_LIST_KEYS = ["process", "blocks", "gallery"]
 
@@ -772,88 +772,150 @@ function generateDefaultForm(section: string) {
 type Row = Record<string, any>
 
 // ============================================================================
-// Messages Form Component
+// Messages Form Component with Advanced Filters
 // ============================================================================
 function MessagesForm({ d }: { d: any }) {
   const [selectedMsg, setSelectedMsg] = useState<any>(null);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL"); // ALL, COURSE, CONTACT
+  const [statusFilter, setStatusFilter] = useState("ALL"); // ALL, UNREAD, READ
+
+  const filteredMessages = (d.messages || []).filter((msg: any) => {
+    const text = `${msg.name || ""} ${msg.email || ""} ${msg.phone || ""} ${msg.subject || ""} ${msg.message || ""}`.toLowerCase();
+    if (search && !text.includes(search.toLowerCase())) return false;
+
+    const isCourse = msg.subject && msg.subject.includes('Đăng ký khóa học');
+    if (typeFilter === "COURSE" && !isCourse) return false;
+    if (typeFilter === "CONTACT" && isCourse) return false;
+
+    if (statusFilter === "UNREAD" && msg.status !== "unread") return false;
+    if (statusFilter === "READ" && msg.status === "unread") return false;
+
+    return true;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">Tin nhắn liên hệ</h2>
-          <p className="text-sm text-muted-foreground mt-1">Quản lý các yêu cầu và tin nhắn từ khách hàng.</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-primary">Hệ thống</p>
+          <h1 className="mt-2 font-display text-4xl font-bold uppercase">Tin nhắn liên hệ</h1>
+          <p className="text-sm text-muted-foreground mt-1">Quản lý các yêu cầu tư vấn và đăng ký đào tạo từ khách hàng.</p>
         </div>
       </div>
 
-      <div className="bg-background rounded-xl border border-border/40 overflow-hidden shadow-sm">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border/40">
-            <tr>
-              <th className="px-6 py-4 font-medium">Khách hàng</th>
-              <th className="px-6 py-4 font-medium">Loại</th>
-              <th className="px-6 py-4 font-medium">Email</th>
-              <th className="px-6 py-4 font-medium">Trạng thái</th>
-              <th className="px-6 py-4 font-medium">Ngày gửi</th>
-              <th className="px-6 py-4 font-medium text-right">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/40">
-            {d.messages?.map((msg: any) => (
-              <tr key={msg.id} className={`group transition-colors hover:bg-muted/50 ${msg.status === 'unread' ? 'bg-muted/20' : ''}`}>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {msg.status === 'unread' && <div className="size-2 rounded-full bg-primary" />}
-                    <span className={`font-medium ${msg.status === 'unread' ? 'text-foreground' : 'text-muted-foreground'}`}>{msg.name}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  {msg.subject && msg.subject.includes('Đăng ký khóa học') ? (
-                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 tracking-wider uppercase border border-blue-200/50">
-                      Đăng ký học
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-1 text-[10px] font-medium text-neutral-600 tracking-wider uppercase border border-neutral-200">
-                      Liên hệ
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-muted-foreground">{msg.email}</td>
-                <td className="px-6 py-4">
-                  {msg.status === 'unread' ? (
-                    <span className="inline-flex items-center rounded-md bg-neutral-900 px-2 py-1 text-[10px] font-medium text-neutral-50 tracking-wider uppercase">
-                      Chưa đọc
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center rounded-md border border-neutral-200 bg-transparent px-2 py-1 text-[10px] font-medium text-neutral-500 tracking-wider uppercase">
-                      Đã đọc
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-muted-foreground">
-                  {new Date(msg.createdAt).toLocaleDateString('vi-VN')}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" onClick={() => setSelectedMsg(msg)} className="size-8 text-muted-foreground hover:text-foreground">
-                      <Eye className="size-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => {
-                      if (confirm('Xóa tin nhắn này?')) d.deleteMessage(msg.id);
-                    }} className="size-8 text-muted-foreground hover:bg-red-50 hover:text-red-600">
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {(!d.messages || d.messages.length === 0) && (
+      <div className="border bg-white max-w-full overflow-hidden">
+        {/* Bộ lọc tin nhắn */}
+        <div className="flex flex-wrap items-center gap-3 border-b p-4 bg-white/50">
+          <div className="relative w-full sm:max-w-xs flex items-center">
+            <Search className="absolute left-3 size-4 text-neutral-400" />
+            <input 
+              placeholder="Tìm theo tên, email, sđt..." 
+              className="flex-1 h-9 outline-none pl-9 border border-neutral-200 rounded-md text-sm focus:border-primary" 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+            />
+          </div>
+
+          <select 
+            value={typeFilter} 
+            onChange={e => setTypeFilter(e.target.value)} 
+            className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700"
+          >
+            <option value="ALL">Tất cả loại tin</option>
+            <option value="COURSE">Đăng ký khóa học</option>
+            <option value="CONTACT">Liên hệ tư vấn chung</option>
+          </select>
+
+          <select 
+            value={statusFilter} 
+            onChange={e => setStatusFilter(e.target.value)} 
+            className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700"
+          >
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="UNREAD">Chưa đọc</option>
+            <option value="READ">Đã đọc</option>
+          </select>
+
+          {(search || typeFilter !== "ALL" || statusFilter !== "ALL") && (
+            <button 
+              onClick={() => { setSearch(""); setTypeFilter("ALL"); setStatusFilter("ALL"); }} 
+              className="text-xs text-primary hover:underline px-2"
+            >
+              Xóa lọc
+            </button>
+          )}
+        </div>
+
+        <div className="overflow-x-auto w-full">
+          <table className="w-full min-w-[700px] text-sm text-left">
+            <thead className="bg-neutral-50 text-xs uppercase tracking-wider text-neutral-500 border-b">
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">Không có tin nhắn nào.</td>
+                <th className="px-6 py-4 font-medium">Khách hàng</th>
+                <th className="px-6 py-4 font-medium">Loại</th>
+                <th className="px-6 py-4 font-medium">Email</th>
+                <th className="px-6 py-4 font-medium">Trạng thái</th>
+                <th className="px-6 py-4 font-medium">Ngày gửi</th>
+                <th className="px-6 py-4 font-medium text-right">Thao tác</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {filteredMessages.map((msg: any) => (
+                <tr key={msg.id} className={`group transition-colors hover:bg-muted/50 ${msg.status === 'unread' ? 'bg-amber-50/30' : ''}`}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {msg.status === 'unread' && <div className="size-2 rounded-full bg-primary shrink-0" />}
+                      <span className={`font-medium ${msg.status === 'unread' ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>{msg.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {msg.subject && msg.subject.includes('Đăng ký khóa học') ? (
+                      <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 tracking-wider uppercase border border-blue-200/50">
+                        Đăng ký học
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-1 text-[10px] font-medium text-neutral-600 tracking-wider uppercase border border-neutral-200">
+                        Liên hệ
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-muted-foreground">{msg.email}</td>
+                  <td className="px-6 py-4">
+                    {msg.status === 'unread' ? (
+                      <span className="inline-flex items-center rounded-md bg-neutral-900 px-2 py-1 text-[10px] font-medium text-neutral-50 tracking-wider uppercase">
+                        Chưa đọc
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-md border border-neutral-200 bg-transparent px-2 py-1 text-[10px] font-medium text-neutral-500 tracking-wider uppercase">
+                        Đã đọc
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {new Date(msg.createdAt).toLocaleDateString('vi-VN')}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" onClick={() => setSelectedMsg(msg)} className="size-8 text-muted-foreground hover:text-foreground" title="Xem chi tiết">
+                        <Eye className="size-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        if (confirm('Xóa tin nhắn này?')) d.deleteMessage(msg.id);
+                      }} className="size-8 text-muted-foreground hover:bg-red-50 hover:text-red-600" title="Xóa tin nhắn">
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredMessages.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">Không tìm thấy tin nhắn nào.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {selectedMsg && (
@@ -935,7 +997,6 @@ function MessagesForm({ d }: { d: any }) {
 export function CrudPage({ section }: { section: string }) {
   const d = useDataStore()
 
-
   const [search, setSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Row | null>(null)
@@ -944,7 +1005,25 @@ export function CrudPage({ section }: { section: string }) {
   // Product Filters
   const [filterCategory, setFilterCategory] = useState("ALL")
   const [filterStatus, setFilterStatus] = useState("ALL")
+  const [productStockFilter, setProductStockFilter] = useState("ALL")
   const [sortOrder, setSortOrder] = useState("NEWEST")
+
+  // Customer Filters
+  const [customerTypeFilter, setCustomerTypeFilter] = useState("ALL")
+  const [customerSpendingFilter, setCustomerSpendingFilter] = useState("ALL")
+  const [customerSort, setCustomerSort] = useState("NEWEST")
+
+  // Staff Filters
+  const [staffRoleFilter, setStaffRoleFilter] = useState("ALL")
+  const [staffSort, setStaffSort] = useState("NEWEST")
+
+  // Promo Code Filters
+  const [promoTypeFilter, setPromoTypeFilter] = useState("ALL")
+  const [promoStatusFilter, setPromoStatusFilter] = useState("ALL")
+
+  // FAQ Filter
+  const [faqCategoryFilter, setFaqCategoryFilter] = useState("ALL")
+
   const [page, setPage] = useState(1)
   const pageSize = 10
   const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
@@ -955,48 +1034,108 @@ export function CrudPage({ section }: { section: string }) {
   }
 
   let rows: Row[] = []
-  if (section === "products") rows = d.products
-  if (section === "categories") rows = d.categories
-  if (section === "services") rows = d.services
-  if (section === "training") rows = d.courses
-  if (section === "merchandise-stories") rows = d.stories
-  if (section === "lookbook") rows = d.lookbook
-  if (section === "orders") rows = d.orders
-  if (section === "media") rows = d.media
-  if (section === "promo-codes") rows = d.promoCodes
+  if (section === "products") rows = d.products || []
+  if (section === "categories") rows = d.categories || []
+  if (section === "services") rows = d.services || []
+  if (section === "training") rows = d.courses || []
+  if (section === "merchandise-stories") rows = d.stories || []
+  if (section === "lookbook") rows = d.lookbook || []
+  if (section === "orders") rows = d.orders || []
+  if (section === "media") rows = d.media || []
+  if (section === "promo-codes") rows = d.promoCodes || []
   if (section === "faqs") rows = d.faqs || []
   if (section === "customers" || section === "staff") {
     const customerMap = new Map();
-    d.customers.forEach(c => {
-      customerMap.set(c.email, { ...c, totalOrders: 0, totalSpent: 0 });
+    (d.customers || []).forEach(c => {
+      const key = (c.email || String(c.id)).toLowerCase();
+      customerMap.set(key, { ...c, totalOrders: 0, totalSpent: 0 });
     });
-    d.orders.forEach(o => {
-      if (o.customer?.email && customerMap.has(o.customer.email)) {
-        const c = customerMap.get(o.customer.email);
+
+    (d.orders || []).forEach(o => {
+      const emailKey = o.customer?.email?.toLowerCase();
+      let matched = false;
+      if (emailKey && customerMap.has(emailKey)) {
+        const c = customerMap.get(emailKey);
         c.totalOrders += 1;
-        c.totalSpent += o.total;
+        c.totalSpent += (Number(o.total) || 0);
+        matched = true;
+      }
+      if (!matched && o.userId) {
+        for (const c of customerMap.values()) {
+          if (c.id === o.userId) {
+            c.totalOrders += 1;
+            c.totalSpent += (Number(o.total) || 0);
+            break;
+          }
+        }
       }
     });
     
     if (section === "customers") {
-      rows = Array.from(customerMap.values()).filter(c => c.role === 'CUSTOMER');
+      rows = Array.from(customerMap.values()).filter(c => {
+        const role = (c.role || '').toUpperCase();
+        return role === 'CUSTOMER' || role === 'GUEST' || role === 'USER' || (!role || (role !== 'ADMIN' && role !== 'STAFF' && role !== 'MANAGER' && role !== 'BARBER'));
+      });
     } else {
-      rows = Array.from(customerMap.values()).filter(c => c.role !== 'CUSTOMER');
+      rows = Array.from(customerMap.values()).filter(c => {
+        const role = (c.role || '').toUpperCase();
+        return role === 'ADMIN' || role === 'STAFF' || role === 'MANAGER' || role === 'BARBER';
+      });
     }
   }
 
   let filtered = rows.filter(r => {
-    const text = String(r.title ?? r.name ?? r.code ?? r.email ?? "").toLowerCase()
+    const text = String(r.title ?? r.name ?? r.code ?? r.email ?? r.phone ?? r.question ?? "").toLowerCase()
     let match = text.includes(search.toLowerCase())
     
     if (section === "products") {
       if (filterCategory !== "ALL" && r.category !== filterCategory) match = false
       if (filterStatus !== "ALL" && r.status !== filterStatus) match = false
+      if (productStockFilter !== "ALL") {
+        const totalStock = (r.variants && r.variants.length > 0)
+          ? r.variants.reduce((acc: number, v: any) => acc + (Number(v.stock) || 0), 0)
+          : (Number(r.stock) || 0);
+        if (productStockFilter === "IN_STOCK" && totalStock <= 0) match = false;
+        if (productStockFilter === "LOW_STOCK" && (totalStock <= 0 || totalStock > 10)) match = false;
+        if (productStockFilter === "OUT_OF_STOCK" && totalStock > 0) match = false;
+      }
+    }
+
+    if (section === "customers") {
+      const role = (r.role || '').toUpperCase();
+      if (customerTypeFilter === "MEMBER" && role === "GUEST") match = false;
+      if (customerTypeFilter === "GUEST" && role !== "GUEST") match = false;
+      if (customerTypeFilter === "HAS_ORDERS" && (r.totalOrders || 0) === 0) match = false;
+      if (customerTypeFilter === "NO_ORDERS" && (r.totalOrders || 0) > 0) match = false;
+
+      const spent = Number(r.totalSpent) || 0;
+      if (customerSpendingFilter === "OVER_500K" && spent < 500_000) match = false;
+      if (customerSpendingFilter === "OVER_1M" && spent < 1_000_000) match = false;
+      if (customerSpendingFilter === "OVER_5M" && spent < 5_000_000) match = false;
+      if (customerSpendingFilter === "ZERO" && spent > 0) match = false;
+    }
+
+    if (section === "staff") {
+      const role = (r.role || '').toUpperCase();
+      if (staffRoleFilter !== "ALL" && role !== staffRoleFilter) match = false;
+    }
+
+    if (section === "promo-codes") {
+      if (promoTypeFilter !== "ALL" && r.discountType !== promoTypeFilter) match = false;
+      const isExpired = r.expiresAt && new Date(r.expiresAt) < new Date();
+      if (promoStatusFilter === "ACTIVE" && (!r.isActive || isExpired)) match = false;
+      if (promoStatusFilter === "EXPIRED" && !isExpired) match = false;
+      if (promoStatusFilter === "DISABLED" && r.isActive) match = false;
+    }
+
+    if (section === "faqs") {
+      if (faqCategoryFilter !== "ALL" && r.category !== faqCategoryFilter) match = false;
     }
     
     return match
   })
 
+  // Sắp xếp
   if (section === "products") {
     filtered = [...filtered].sort((a, b) => {
       if (sortOrder === "PRICE_ASC") return (Number(a.basePrice) || 0) - (Number(b.basePrice) || 0)
@@ -1004,6 +1143,25 @@ export function CrudPage({ section }: { section: string }) {
       return 0
     })
   }
+
+  if (section === "customers") {
+    filtered = [...filtered].sort((a, b) => {
+      if (customerSort === "SPENT_DESC") return (Number(b.totalSpent) || 0) - (Number(a.totalSpent) || 0);
+      if (customerSort === "ORDERS_DESC") return (Number(b.totalOrders) || 0) - (Number(a.totalOrders) || 0);
+      if (customerSort === "NAME_ASC") return String(a.name || '').localeCompare(String(b.name || ''));
+      if (customerSort === "NEWEST") return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      return 0;
+    })
+  }
+
+  if (section === "staff") {
+    filtered = [...filtered].sort((a, b) => {
+      if (staffSort === "NAME_ASC") return String(a.name || '').localeCompare(String(b.name || ''));
+      if (staffSort === "NEWEST") return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      return 0;
+    })
+  }
+
   const handleAdd = () => {
     setEditingItem(null)
     setFormData(generateDefaultForm(section))
@@ -1025,12 +1183,17 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "lookbook") d.deleteLookbook(item.id)
     if (section === "promo-codes") await d.deletePromoCode(item.id)
     if (section === "faqs") await d.deleteFaq(item.id)
+    if (section === "customers" || section === "staff") await d.deleteUser(item.id)
     setItemToDelete(null)
   }
 
   const handleSaveGeneric = async () => {
     if (section === "customers" || section === "staff") {
-      await d.createUser(formData)
+      if (editingItem?.id) {
+        await d.updateUser(editingItem.id, formData)
+      } else {
+        await d.createUser(formData)
+      }
     } else if (section === "orders") {
       await d.updateOrderStatus(formData.id, { status: formData.status, paymentStatus: formData.paymentStatus })
     }
@@ -1072,19 +1235,33 @@ export function CrudPage({ section }: { section: string }) {
       </header>
 
       <div className="mt-8 border bg-white max-w-full overflow-hidden">
+        {/* Bộ lọc thanh công cụ (Toolbar Filters) */}
         <div className="flex flex-wrap items-center gap-3 border-b p-4 bg-white/50">
           <div className="relative w-full sm:max-w-xs flex items-center">
             <Search className="absolute left-3 size-4 text-neutral-400" />
-            <input placeholder="Tìm kiếm..." className="flex-1 h-9 outline-none pl-9 border border-neutral-200 rounded-md text-sm focus:border-primary" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+            <input 
+              placeholder={section === "customers" ? "Tìm theo tên, email, sđt..." : section === "staff" ? "Tìm theo tên, email..." : "Tìm kiếm..."} 
+              className="flex-1 h-9 outline-none pl-9 border border-neutral-200 rounded-md text-sm focus:border-primary" 
+              value={search} 
+              onChange={e => { setSearch(e.target.value); setPage(1); }} 
+            />
           </div>
+
+          {/* Bộ lọc riêng cho Sản phẩm */}
           {section === "products" && (
             <>
-              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+              <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
                 <option value="ALL">Tất cả danh mục</option>
                 <option value="grooming">Chăm sóc tóc</option>
                 <option value="merchandise">Thời trang</option>
               </select>
-              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+              <select value={productStockFilter} onChange={e => { setProductStockFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả tồn kho</option>
+                <option value="IN_STOCK">Còn hàng</option>
+                <option value="LOW_STOCK">Sắp hết hàng (≤ 10)</option>
+                <option value="OUT_OF_STOCK">Hết hàng (0)</option>
+              </select>
+              <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="active">Đang bán</option>
                 <option value="draft">Bản nháp</option>
@@ -1095,12 +1272,97 @@ export function CrudPage({ section }: { section: string }) {
                 <option value="PRICE_ASC">Giá tăng dần</option>
                 <option value="PRICE_DESC">Giá giảm dần</option>
               </select>
-              {(filterCategory !== "ALL" || filterStatus !== "ALL" || sortOrder !== "NEWEST") && (
-                <button onClick={() => { setFilterCategory("ALL"); setFilterStatus("ALL"); setSortOrder("NEWEST") }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              {(filterCategory !== "ALL" || filterStatus !== "ALL" || productStockFilter !== "ALL" || sortOrder !== "NEWEST" || search) && (
+                <button onClick={() => { setSearch(""); setFilterCategory("ALL"); setFilterStatus("ALL"); setProductStockFilter("ALL"); setSortOrder("NEWEST"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              )}
+            </>
+          )}
+
+          {/* Bộ lọc nâng cao cho Khách hàng */}
+          {section === "customers" && (
+            <>
+              <select value={customerTypeFilter} onChange={e => { setCustomerTypeFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả loại khách</option>
+                <option value="MEMBER">Thành viên có tài khoản</option>
+                <option value="GUEST">Khách mua vãng lai</option>
+                <option value="HAS_ORDERS">Đã từng mua hàng</option>
+                <option value="NO_ORDERS">Chưa mua hàng</option>
+              </select>
+              <select value={customerSpendingFilter} onChange={e => { setCustomerSpendingFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả mức chi tiêu</option>
+                <option value="OVER_500K">Chi tiêu &gt; 500.000đ</option>
+                <option value="OVER_1M">Chi tiêu &gt; 1.000.000đ</option>
+                <option value="OVER_5M">Chi tiêu VIP (&gt; 5.000.000đ)</option>
+                <option value="ZERO">Chưa chi tiêu (0đ)</option>
+              </select>
+              <select value={customerSort} onChange={e => setCustomerSort(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="NEWEST">Ngày tham gia mới nhất</option>
+                <option value="SPENT_DESC">Chi tiêu cao nhất</option>
+                <option value="ORDERS_DESC">Nhiều đơn hàng nhất</option>
+                <option value="NAME_ASC">Tên (A-Z)</option>
+              </select>
+              {(customerTypeFilter !== "ALL" || customerSpendingFilter !== "ALL" || customerSort !== "NEWEST" || search) && (
+                <button onClick={() => { setSearch(""); setCustomerTypeFilter("ALL"); setCustomerSpendingFilter("ALL"); setCustomerSort("NEWEST"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              )}
+            </>
+          )}
+
+          {/* Bộ lọc nâng cao cho Nhân viên */}
+          {section === "staff" && (
+            <>
+              <select value={staffRoleFilter} onChange={e => { setStaffRoleFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả vai trò</option>
+                <option value="ADMIN">Quản trị viên (ADMIN)</option>
+                <option value="MANAGER">Quản lý cửa hàng</option>
+                <option value="BARBER">Thợ cắt tóc (Barber)</option>
+                <option value="STAFF">Nhân viên hỗ trợ</option>
+              </select>
+              <select value={staffSort} onChange={e => setStaffSort(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="NEWEST">Ngày tạo mới nhất</option>
+                <option value="NAME_ASC">Tên (A-Z)</option>
+              </select>
+              {(staffRoleFilter !== "ALL" || staffSort !== "NEWEST" || search) && (
+                <button onClick={() => { setSearch(""); setStaffRoleFilter("ALL"); setStaffSort("NEWEST"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              )}
+            </>
+          )}
+
+          {/* Bộ lọc nâng cao cho Mã giảm giá */}
+          {section === "promo-codes" && (
+            <>
+              <select value={promoTypeFilter} onChange={e => { setPromoTypeFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả loại giảm</option>
+                <option value="PERCENT">Phần trăm (%)</option>
+                <option value="FIXED">Số tiền (VNĐ)</option>
+              </select>
+              <select value={promoStatusFilter} onChange={e => { setPromoStatusFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="ACTIVE">Đang hiệu lực</option>
+                <option value="EXPIRED">Đã hết hạn</option>
+                <option value="DISABLED">Đang khóa</option>
+              </select>
+              {(promoTypeFilter !== "ALL" || promoStatusFilter !== "ALL" || search) && (
+                <button onClick={() => { setSearch(""); setPromoTypeFilter("ALL"); setPromoStatusFilter("ALL"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              )}
+            </>
+          )}
+
+          {/* Bộ lọc cho FAQ */}
+          {section === "faqs" && (
+            <>
+              <select value={faqCategoryFilter} onChange={e => { setFaqCategoryFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả chuyên mục</option>
+                <option value="shop">Cửa hàng</option>
+                <option value="service">Dịch vụ</option>
+                <option value="training">Đào tạo</option>
+              </select>
+              {(faqCategoryFilter !== "ALL" || search) && (
+                <button onClick={() => { setSearch(""); setFaqCategoryFilter("ALL"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
               )}
             </>
           )}
         </div>
+
         {section === "media" ? (
           <div className="p-6 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
             {filtered.length ? filtered.map((r, i) => (
@@ -1126,36 +1388,145 @@ export function CrudPage({ section }: { section: string }) {
         ) : (
           <div className="overflow-x-auto w-full">
             <table className="w-full min-w-[700px] text-left text-sm">
-            <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
-              {section === "promo-codes" ? (
+            <thead className="bg-neutral-50 text-xs uppercase text-neutral-500 border-b">
+              {section === "customers" ? (
+                <tr>
+                  <th className="p-4 font-semibold">Khách hàng</th>
+                  <th className="font-semibold">Liên hệ</th>
+                  <th className="font-semibold text-center">Đơn hàng</th>
+                  <th className="font-semibold">Tổng chi tiêu</th>
+                  <th className="font-semibold">Ngày tham gia</th>
+                  <th className="text-right pr-4">Thao tác</th>
+                </tr>
+              ) : section === "staff" ? (
+                <tr>
+                  <th className="p-4 font-semibold">Nhân viên</th>
+                  <th className="font-semibold">Liên hệ</th>
+                  <th className="font-semibold">Vai trò</th>
+                  <th className="font-semibold">Ngày tạo</th>
+                  <th className="text-right pr-4">Thao tác</th>
+                </tr>
+              ) : section === "promo-codes" ? (
                 <tr>
                   <th className="p-4">Mã giảm giá</th>
                   <th>Điều kiện</th>
                   <th>Thời hạn (TTL)</th>
                   <th>Trạng thái</th>
-                  <th />
+                  <th className="text-right pr-4">Thao tác</th>
                 </tr>
               ) : section === "faqs" ? (
                 <tr>
                   <th className="p-4 w-16 text-center">STT</th>
                   <th>Câu hỏi & Trả lời</th>
                   <th className="w-32">Danh mục</th>
-                  <th className="w-16" />
+                  <th className="w-16 text-right pr-4">Thao tác</th>
                 </tr>
               ) : (
                 <tr>
                   <th className="p-4">Tên / Mã</th>
                   <th>Loại</th>
-                  {section !== "customers" && section !== "staff" && <th>{section === "media" ? "" : section === "categories" ? "Mô tả" : "Trạng thái"}</th>}
-                  {section !== "merchandise-stories" && <th>{section === "categories" ? "Số lượng SP" : section === "media" ? "Kích thước" : section === "lookbook" ? "Thứ tự" : "Giá trị"}</th>}
-                  <th />
+                  <th>{section === "categories" ? "Mô tả" : "Trạng thái"}</th>
+                  {section !== "merchandise-stories" && <th>{section === "categories" ? "Số lượng SP" : section === "lookbook" ? "Thứ tự" : "Giá trị"}</th>}
+                  <th className="text-right pr-4">Thao tác</th>
                 </tr>
               )}
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/40">
               {filtered.length ? filtered.slice((page - 1) * pageSize, page * pageSize).map((r, i) => (
-                <tr key={String(r.id ?? i)} className="border-t">
-                  {section === "promo-codes" ? (
+                <tr key={String(r.id ?? i)} className="border-t hover:bg-neutral-50/60 transition-colors">
+                  {section === "customers" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-200">
+                            {String(r.name || r.email || "K").charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-bold text-neutral-900">{r.name || "Khách hàng"}</div>
+                            <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${r.role === 'GUEST' ? 'bg-neutral-100 text-neutral-600' : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'}`}>
+                              {r.role === 'GUEST' ? 'Khách vãng lai' : 'Thành viên'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 space-y-1">
+                        <div className="text-sm font-medium text-neutral-800">{r.email}</div>
+                        <div className="text-xs text-neutral-500">{r.phone || <span className="italic text-neutral-400">Chưa cập nhật SĐT</span>}</div>
+                      </td>
+                      <td className="text-center py-3">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${r.totalOrders > 0 ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-neutral-100 text-neutral-500'}`}>
+                          {r.totalOrders} đơn
+                        </span>
+                      </td>
+                      <td className="py-3 font-bold text-emerald-600">
+                        {formatCurrency(r.totalSpent || 0)}
+                      </td>
+                      <td className="py-3 text-xs text-neutral-500">
+                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN") : "—"}
+                      </td>
+                      <td className="py-3 text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-200/60 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa tài khoản
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </>
+                  ) : section === "staff" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                            {String(r.name || r.email || "S").charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-bold text-neutral-900">{r.name || "Nhân viên"}</div>
+                            <div className="text-xs text-neutral-400 font-mono">ID: #{r.id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 space-y-1">
+                        <div className="text-sm font-medium text-neutral-800">{r.email}</div>
+                        <div className="text-xs text-neutral-500">{r.phone || <span className="italic text-neutral-400">Chưa có SĐT</span>}</div>
+                      </td>
+                      <td className="py-3">
+                        <span className={`px-2.5 py-1 text-xs font-bold uppercase rounded-md border ${
+                          r.role === "ADMIN" ? "bg-purple-50 text-purple-700 border-purple-200" :
+                          r.role === "MANAGER" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          r.role === "BARBER" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                          "bg-neutral-100 text-neutral-700 border-neutral-200"
+                        }`}>
+                          {r.role === "ADMIN" ? "Quản trị viên" : r.role === "MANAGER" ? "Quản lý" : r.role === "BARBER" ? "Thợ Barber" : "Nhân viên"}
+                        </span>
+                      </td>
+                      <td className="py-3 text-xs text-neutral-500">
+                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN") : "—"}
+                      </td>
+                      <td className="py-3 text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-200/60 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa & Phân quyền
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa nhân viên
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </>
+                  ) : section === "promo-codes" ? (
                     <>
                       <td className="p-4 font-medium">
                         <div className="flex flex-col gap-1">
@@ -1187,6 +1558,21 @@ export function CrudPage({ section }: { section: string }) {
                           {!r.isActive ? "Bị khóa" : (r.expiresAt && new Date(r.expiresAt) < new Date() ? "Hết hạn" : "Hoạt động")}
                         </span>
                       </td>
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
                     </>
                   ) : section === "faqs" ? (
                     <>
@@ -1203,6 +1589,21 @@ export function CrudPage({ section }: { section: string }) {
                         }`}>
                           {r.category === "shop" ? "Cửa hàng" : r.category === "service" ? "Dịch vụ" : r.category === "training" ? "Đào tạo" : r.category}
                         </span>
+                      </td>
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </>
                   ) : (
@@ -1221,64 +1622,59 @@ export function CrudPage({ section }: { section: string }) {
                         </div>
                       </td>
                       <td>{String(section === "orders" ? r.paymentMethod : section === "merchandise-stories" ? "Bài viết" : (r.role ?? r.category ?? r.parent ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
-                      {section !== "customers" && section !== "staff" && (
-                        <td>
-                          {section === "media" ? "—" : section === "categories" ? (
-                            <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
-                          ) : (
-                            <div className="flex flex-col gap-1 items-start">
-                              <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true || r.isActive === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false || r.isActive === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
-                                {r.status === "active" ? "Đang bán" : 
-                                 r.status === "draft" ? "Nháp" : 
-                                 (r.status === "published" || r.published === true) ? "Hiển thị" : 
-                                 r.published === false ? "Ẩn" :
-                                 r.isActive === true ? "Hoạt động" :
-                                 r.isActive === false ? "Bị khóa" :
-                                 (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
-                                 r.status === "PROCESSING" ? "Đang chuẩn bị" :
-                                 r.status === "SHIPPED" ? "Đang giao" :
-                                 r.status === "CANCELLED" ? "Đã hủy" :
-                                 (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
+                      <td>
+                        {section === "categories" ? (
+                          <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
+                        ) : (
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true || r.isActive === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false || r.isActive === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
+                              {r.status === "active" ? "Đang bán" : 
+                               r.status === "draft" ? "Nháp" : 
+                               (r.status === "published" || r.published === true) ? "Hiển thị" : 
+                               r.published === false ? "Ẩn" :
+                               r.isActive === true ? "Hoạt động" :
+                               r.isActive === false ? "Bị khóa" :
+                               (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
+                               r.status === "PROCESSING" ? "Đang chuẩn bị" :
+                               r.status === "SHIPPED" ? "Đang giao" :
+                               r.status === "CANCELLED" ? "Đã hủy" :
+                               (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
+                            </span>
+                            {section === "orders" && (
+                              <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
+                                {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
                               </span>
-                              {section === "orders" && (
-                                <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
-                                  {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </td>
-                      )}
+                            )}
+                          </div>
+                        )}
+                      </td>
                       {section !== "merchandise-stories" && <td>
                         {section === "lookbook" ? (r.order ?? "—") :
                          section === "categories" ? (r.productCount ?? 0) :
-                         section === "media" ? (typeof r.size === "string" ? r.size : "—") :
-                         typeof r.totalSpent === "number" ? formatCurrency(r.totalSpent) : typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
+                         typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
                       </td>}
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            {section !== "orders" && (
+                              <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                                <Trash2 className="mr-2 size-4" /> Xóa
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
                     </>
                   )}
-                  <td>
-                    {section !== "customers" && section !== "staff" && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
-                          <MoreHorizontal className="size-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(r)}>
-                            <Edit className="mr-2 size-4" /> Chỉnh sửa
-                          </DropdownMenuItem>
-                          {section !== "orders" && (
-                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
-                              <Trash2 className="mr-2 size-4" /> Xóa
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </td>
                 </tr>
               )) : (
-                <tr><td colSpan={5} className="p-16 text-center text-neutral-400">Không tìm thấy dữ liệu.</td></tr>
+                <tr><td colSpan={6} className="p-16 text-center text-neutral-400">Không tìm thấy dữ liệu phù hợp với bộ lọc.</td></tr>
               )}
             </tbody>
           </table>
