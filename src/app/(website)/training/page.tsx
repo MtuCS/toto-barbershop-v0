@@ -3,6 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Phone, Mail } from "lucide-react"
 import { getCourses } from "@/lib/api"
+import { trainingCourses as defaultCourses } from "@/data/training"
 import { formatCurrency } from "@/lib/format"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { Breadcrumbs } from "@/components/website/breadcrumbs"
@@ -19,7 +20,8 @@ const trainingImages = {
 }
 
 export default async function TrainingPage() {
-  const trainingCourses = await getCourses()
+  const rawCourses = await getCourses()
+  const trainingCourses = rawCourses && rawCourses.length > 0 ? rawCourses : defaultCourses
 
   return (
     <MarketingPageShell>
@@ -166,7 +168,7 @@ export default async function TrainingPage() {
                 </div>
 
                 <div className="mt-8 border-t border-black/15">
-                  {(course.roadmap || []).map((item: any) => (
+                  {((course.roadmap && course.roadmap.length > 0 ? course.roadmap : defaultCourses.find((c) => c.id === course.id)?.roadmap) || []).map((item: any) => (
                     <div
                       key={item.week}
                       className="grid grid-cols-[5.5rem_1fr] gap-4 border-b border-black/10 py-3 text-sm"

@@ -40,8 +40,11 @@ export async function getServices(): Promise<Service[]> {
   return safeFetch<Service[]>('/api/services', [], { next: { revalidate: 60 } } as any);
 }
 
+import { trainingCourses as defaultCourses } from "@/data/training";
+
 export async function getCourses(): Promise<TrainingCourse[]> {
-  return safeFetch<TrainingCourse[]>('/api/courses', [], { next: { revalidate: 60 } } as any);
+  const courses = await safeFetch<TrainingCourse[]>('/api/courses', defaultCourses, { next: { revalidate: 60 } } as any);
+  return courses && courses.length > 0 ? courses : defaultCourses;
 }
 
 export async function getStories(): Promise<MerchandiseStory[]> {
