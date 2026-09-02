@@ -1,6 +1,6 @@
 "use client"
 import Image from "next/image"
-import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, KeyRound, Copy, Check, PhoneCall, Mail, ShoppingBag, UserCheck, RefreshCw, ShieldCheck, User } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, KeyRound, Copy, Check, PhoneCall, Mail, ShoppingBag, UserCheck, RefreshCw, ShieldCheck, User, UploadCloud, Images, Film, ExternalLink, Download, CheckCircle2 } from "lucide-react"
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
@@ -228,6 +228,293 @@ function generateVariants(
 }
 
 // ============================================================================
+// Media Utility: Aggregate all media assets across the entire application
+// ============================================================================
+export function getAllMediaItems(d: any) {
+  const urlMap = new Map<string, any>();
+
+  // 1. Tệp trực tiếp từ cơ sở dữ liệu Media
+  (d.media || []).forEach((m: any) => {
+    if (m && m.url) {
+      urlMap.set(m.url, {
+        id: m.id || `med-${urlMap.size + 1}`,
+        url: m.url,
+        name: m.name || m.filename || m.url.split('/').pop()?.split('?')[0] || "Tệp Media",
+        size: m.size ? (typeof m.size === 'number' ? `${(m.size / 1024 / 1024).toFixed(2)} MB` : String(m.size)) : "—",
+        type: m.type || (m.url.match(/\.(mp4|webm|mov|ogg)$/i) ? "video" : "image"),
+        createdAt: m.createdAt || new Date().toISOString(),
+        source: "Thư viện Media",
+        isDatabase: true
+      });
+    }
+  });
+
+  // 2. Hình ảnh từ tất cả Sản phẩm
+  (d.products || []).forEach((p: any) => {
+    (p.images || []).forEach((img: string, idx: number) => {
+      if (img && !urlMap.has(img)) {
+        const rawName = img.split('/').pop()?.split('?')[0] || `${p.title || 'SP'} (${idx + 1})`;
+        urlMap.set(img, {
+          id: `prod-img-${p.id}-${idx}`,
+          url: img,
+          name: rawName.replace(/[-_]/g, ' '),
+          size: "—",
+          type: img.match(/\.(mp4|webm|mov|ogg)$/i) ? "video" : "image",
+          createdAt: p.createdAt || new Date().toISOString(),
+          source: `Sản phẩm: ${p.title || 'Sản phẩm'}`
+        });
+      }
+    });
+  });
+
+  // 3. Hình ảnh từ Lookbook
+  (d.lookbook || []).forEach((lb: any, idx: number) => {
+    if (lb.image && !urlMap.has(lb.image)) {
+      const rawName = lb.image.split('/').pop()?.split('?')[0] || `Lookbook ${lb.title || idx + 1}`;
+      urlMap.set(lb.image, {
+        id: `lb-img-${lb.id || idx}`,
+        url: lb.image,
+        name: lb.title || rawName.replace(/[-_]/g, ' '),
+        size: "—",
+        type: lb.image.match(/\.(mp4|webm|mov|ogg)$/i) ? "video" : "image",
+        createdAt: lb.createdAt || new Date().toISOString(),
+        source: "Bộ sưu tập Lookbook"
+      });
+    }
+  });
+
+  // 4. Hình ảnh từ Stories
+  (d.stories || []).forEach((st: any) => {
+    if (st.heroImage && !urlMap.has(st.heroImage)) {
+      urlMap.set(st.heroImage, {
+        id: `story-hero-${st.id}`,
+        url: st.heroImage,
+        name: `Story: ${st.title || 'Ảnh bìa'}`,
+        size: "—",
+        type: "image",
+        createdAt: st.createdAt || new Date().toISOString(),
+        source: "Câu chuyện sản phẩm"
+      });
+    }
+    (st.blocks || []).forEach((b: any, bIdx: number) => {
+      if (b.type === 'image' && b.image && !urlMap.has(b.image)) {
+        urlMap.set(b.image, {
+          id: `story-block-${st.id}-${bIdx}`,
+          url: b.image,
+          name: `Story Khối ${bIdx + 1}`,
+          size: "—",
+          type: "image",
+          createdAt: st.createdAt || new Date().toISOString(),
+          source: "Câu chuyện sản phẩm"
+        });
+      }
+    });
+  });
+
+  return Array.from(urlMap.values());
+}
+
+// ============================================================================
+// Reusable Media Picker Modal Component
+// ============================================================================
+export function MediaPickerModal({
+  open,
+  onClose,
+  onSelect,
+  multiple = true,
+  mediaList = [],
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (urls: string[]) => void;
+  multiple?: boolean;
+  mediaList: any[];
+}) {
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const d = useDataStore();
+
+  useEffect(() => {
+    if (open) {
+      setSelectedUrls([]);
+      setSearch("");
+      setTypeFilter("ALL");
+    }
+  }, [open]);
+
+  const filtered = mediaList.filter((m) => {
+    const text = (m.name || m.url || "").toLowerCase();
+    if (search && !text.includes(search.toLowerCase())) return false;
+    if (typeFilter !== "ALL" && m.type !== typeFilter) return false;
+    return true;
+  });
+
+  const toggleSelect = (url: string) => {
+    if (multiple) {
+      if (selectedUrls.includes(url)) {
+        setSelectedUrls(selectedUrls.filter((u) => u !== url));
+      } else {
+        setSelectedUrls([...selectedUrls, url]);
+      }
+    } else {
+      setSelectedUrls([url]);
+    }
+  };
+
+  const handleConfirm = () => {
+    if (selectedUrls.length > 0) {
+      onSelect(selectedUrls);
+      onClose();
+    }
+  };
+
+  const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setUploading(true);
+    const token = useAuthStore.getState().session?.token;
+    for (const file of files) {
+      try {
+        const fd = new FormData();
+        fd.append("image", file);
+        const res = await fetch("/api/upload/image", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          await d.addMedia({
+            url: data.url,
+            name: file.name,
+            size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+            type: file.type.startsWith("video") ? "video" : "image",
+          });
+          if (!multiple) {
+            setSelectedUrls([data.url]);
+          } else {
+            setSelectedUrls((prev) => [...prev, data.url]);
+          }
+          toast.success(`Đã tải lên: ${file.name}`);
+        }
+      } catch (err) {
+        toast.error("Tải ảnh thất bại");
+      }
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[850px] max-h-[85vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="p-4 pb-3 border-b">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Images className="size-5 text-emerald-600" />
+              Thư viện Media ({mediaList.length} tệp)
+            </DialogTitle>
+            <label className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 cursor-pointer transition-colors shadow-sm">
+              <UploadCloud className="size-3.5" />
+              {uploading ? "Đang tải..." : "Tải ảnh mới từ máy"}
+              <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleDirectUpload} disabled={uploading} />
+            </label>
+          </div>
+        </DialogHeader>
+
+        {/* Toolbar lọc và tìm kiếm */}
+        <div className="p-3 border-b bg-neutral-50 flex flex-wrap gap-2 items-center">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-neutral-400" />
+            <input
+              placeholder="Tìm kiếm theo tên ảnh, tệp..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-8 pl-8 pr-3 text-xs bg-white border border-neutral-200 rounded-md outline-none focus:border-primary"
+            />
+          </div>
+
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="h-8 px-2 text-xs bg-white border border-neutral-200 rounded-md outline-none cursor-pointer"
+          >
+            <option value="ALL">Tất cả định dạng</option>
+            <option value="image">Chỉ hình ảnh</option>
+            <option value="video">Chỉ video</option>
+          </select>
+        </div>
+
+        {/* Lưới hình ảnh Media */}
+        <div className="flex-1 overflow-y-auto p-4 max-h-[420px]">
+          {filtered.length > 0 ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              {filtered.map((item, idx) => {
+                const isSelected = selectedUrls.includes(item.url);
+                return (
+                  <div
+                    key={item.id || idx}
+                    onClick={() => toggleSelect(item.url)}
+                    className={`group relative aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                      isSelected
+                        ? "border-emerald-600 ring-2 ring-emerald-500/30 scale-95"
+                        : "border-neutral-200 hover:border-neutral-400"
+                    }`}
+                  >
+                    {item.type === "video" ? (
+                      <div className="w-full h-full bg-neutral-900 flex items-center justify-center text-white">
+                        <Film className="size-8 text-neutral-400" />
+                      </div>
+                    ) : (
+                      <img src={item.url} alt={item.name || ""} className="w-full h-full object-cover" />
+                    )}
+
+                    {/* Dấu tích chọn */}
+                    {isSelected && (
+                      <div className="absolute top-1.5 right-1.5 bg-emerald-600 text-white rounded-full p-0.5 shadow-md">
+                        <Check className="size-3.5 stroke-[3]" />
+                      </div>
+                    )}
+
+                    {/* Chú thích tên ảnh */}
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1.5 pt-4 text-[10px] text-white/90 truncate font-medium">
+                      <div className="truncate">{item.name}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-16 text-center text-neutral-400 text-sm">Không tìm thấy tệp media nào phù hợp.</div>
+          )}
+        </div>
+
+        {/* Footer chọn ảnh */}
+        <div className="p-3 border-t bg-neutral-50 flex items-center justify-between">
+          <div className="text-xs text-neutral-600">
+            {selectedUrls.length > 0 ? (
+              <span className="font-semibold text-emerald-700">Đã chọn {selectedUrls.length} tệp</span>
+            ) : (
+              <span className="text-neutral-400">Nhấp vào ảnh để chọn</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Hủy bỏ
+            </Button>
+            <Button size="sm" onClick={handleConfirm} disabled={selectedUrls.length === 0} className="bg-emerald-600 hover:bg-emerald-700">
+              {multiple ? `Chèn ${selectedUrls.length} ảnh đã chọn` : "Chọn ảnh này"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================================================
 // Product Form Component (smart variant builder)
 // ============================================================================
 function ProductForm({ initial, onSave, onCancel }: {
@@ -235,7 +522,10 @@ function ProductForm({ initial, onSave, onCancel }: {
   onSave: (p: Product) => void
   onCancel: () => void
 }) {
-  const { categories: allCategories } = useDataStore()
+  const d = useDataStore()
+  const { categories: allCategories } = d
+  const allMediaList = useMemo(() => getAllMediaItems(d), [d.media, d.products, d.lookbook, d.stories])
+  const [openMediaPicker, setOpenMediaPicker] = useState(false)
 
   // Basic fields
   const [title, setTitle] = useState(initial.title ?? "")
@@ -503,17 +793,29 @@ function ProductForm({ initial, onSave, onCancel }: {
           </div>
         )}
 
-        <div>
-          <input type="file" accept="image/*" multiple className="hidden" id="product-multi-upload"
-            onChange={async e => {
-              const files = Array.from(e.target.files ?? [])
-              for (const file of files) await addImageFromFile(file)
-              e.target.value = ""
-            }}
-          />
-          <label htmlFor="product-multi-upload" className="flex items-center justify-center gap-2 w-full h-20 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors text-sm text-neutral-500">
-            {uploadingImage ? <span className="animate-pulse">⏳ Đang tải ảnh lên...</span> : <>📁 Nhấn để chọn ảnh từ máy tính (có thể chọn nhiều)</>}
-          </label>
+        {/* Nút chọn ảnh từ máy và Chọn từ Thư viện Media */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <input type="file" accept="image/*" multiple className="hidden" id="product-multi-upload"
+              onChange={async e => {
+                const files = Array.from(e.target.files ?? [])
+                for (const file of files) await addImageFromFile(file)
+                e.target.value = ""
+              }}
+            />
+            <label htmlFor="product-multi-upload" className="flex items-center justify-center gap-2 w-full h-14 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors text-xs font-semibold text-neutral-600">
+              {uploadingImage ? <span className="animate-pulse">⏳ Đang tải ảnh lên...</span> : <>📁 Tải ảnh từ máy tính (nhiều tệp)</>}
+            </label>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpenMediaPicker(true)}
+            className="flex items-center justify-center gap-2 w-full h-14 border-2 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-xs font-bold text-emerald-800 transition-colors cursor-pointer shadow-sm"
+          >
+            <Images className="size-4 text-emerald-600" />
+            🖼️ Chọn từ Thư viện Media ({allMediaList.length} tệp có sẵn)
+          </button>
         </div>
 
         <div className="flex gap-2">
@@ -655,6 +957,14 @@ function ProductForm({ initial, onSave, onCancel }: {
         <Button type="button" variant="outline" onClick={onCancel}>Hủy bỏ</Button>
         <Button type="button" onClick={handleSave}>Lưu lại</Button>
       </div>
+
+      <MediaPickerModal
+        open={openMediaPicker}
+        onClose={() => setOpenMediaPicker(false)}
+        onSelect={(urls) => setImages(prev => [...prev, ...urls])}
+        multiple={true}
+        mediaList={allMediaList}
+      />
     </div>
   )
 }
@@ -1151,6 +1461,14 @@ export function CrudPage({ section }: { section: string }) {
   const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
+  // Media & Media Picker States
+  const allMediaList = useMemo(() => getAllMediaItems(d), [d.media, d.products, d.lookbook, d.stories])
+  const [previewMedia, setPreviewMedia] = useState<any | null>(null)
+  const [mediaTypeFilter, setMediaTypeFilter] = useState("ALL")
+  const [mediaSourceFilter, setMediaSourceFilter] = useState("ALL")
+  const [openGenericMediaPicker, setOpenGenericMediaPicker] = useState(false)
+  const [genericMediaField, setGenericMediaField] = useState<string | null>(null)
+
   // Customer & Staff Support States (Reset Password & Detail Drawer)
   const [resetPasswordUser, setResetPasswordUser] = useState<Row | null>(null)
   const [newPasswordValue, setNewPasswordValue] = useState("")
@@ -1204,7 +1522,7 @@ export function CrudPage({ section }: { section: string }) {
   if (section === "merchandise-stories") rows = d.stories || []
   if (section === "lookbook") rows = d.lookbook || []
   if (section === "orders") rows = d.orders || []
-  if (section === "media") rows = d.media || []
+  if (section === "media") rows = allMediaList
   if (section === "promo-codes") rows = d.promoCodes || []
   if (section === "faqs") rows = d.faqs || []
   if (section === "customers" || section === "staff") {
@@ -1294,6 +1612,11 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "faqs") {
       if (faqCategoryFilter !== "ALL" && r.category !== faqCategoryFilter) match = false;
     }
+
+    if (section === "media") {
+      if (mediaTypeFilter !== "ALL" && r.type !== mediaTypeFilter) match = false;
+      if (mediaSourceFilter !== "ALL" && !String(r.source || '').toLowerCase().includes(mediaSourceFilter.toLowerCase())) match = false;
+    }
     
     return match
   })
@@ -1347,6 +1670,7 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "promo-codes") await d.deletePromoCode(item.id)
     if (section === "faqs") await d.deleteFaq(item.id)
     if (section === "customers" || section === "staff") await d.deleteUser(item.id)
+    if (section === "media") await d.deleteMedia(item.id)
     setItemToDelete(null)
   }
 
@@ -1372,6 +1696,7 @@ export function CrudPage({ section }: { section: string }) {
     if (section === "lookbook") d.upsertLookbook(formData as any)
     if (section === "promo-codes") await d.upsertPromoCode(formData as any)
     if (section === "faqs") await d.upsertFaq(formData as any)
+    if (section === "media") await d.addMedia(formData as any)
     setModalOpen(false)
   }
 
@@ -1395,6 +1720,50 @@ export function CrudPage({ section }: { section: string }) {
         {section !== "settings" && section !== "orders" && section !== "media" && (
           <Button onClick={handleAdd} className="w-full sm:w-auto"><Plus className="mr-2 size-4" />Thêm mới</Button>
         )}
+        {section === "media" && (
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-sm font-semibold cursor-pointer transition-colors shadow-sm w-full sm:w-auto">
+              <UploadCloud className="size-4" />
+              Tải lên tệp Media từ máy
+              <input 
+                type="file" 
+                multiple 
+                accept="image/*,video/*" 
+                className="hidden" 
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  if (!files.length) return;
+                  const token = useAuthStore.getState().session?.token;
+                  toast.info(`Đang tải lên ${files.length} tệp...`);
+                  for (const file of files) {
+                    try {
+                      const fd = new FormData();
+                      fd.append("image", file);
+                      const res = await fetch("/api/upload/image", {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: fd,
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        await d.addMedia({
+                          url: data.url,
+                          name: file.name,
+                          size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                          type: file.type.startsWith("video") ? "video" : "image",
+                        });
+                      }
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }
+                  toast.success(`Đã tải lên và lưu ${files.length} tệp thành công!`);
+                  e.target.value = "";
+                }} 
+              />
+            </label>
+          </div>
+        )}
       </header>
 
       <div className="mt-8 border bg-white max-w-full overflow-hidden">
@@ -1403,12 +1772,43 @@ export function CrudPage({ section }: { section: string }) {
           <div className="relative w-full sm:max-w-xs flex items-center">
             <Search className="absolute left-3 size-4 text-neutral-400" />
             <input 
-              placeholder={section === "customers" ? "Tìm theo tên, email, sđt..." : section === "staff" ? "Tìm theo tên, email..." : "Tìm kiếm..."} 
+              placeholder={section === "customers" ? "Tìm theo tên, email, sđt..." : section === "staff" ? "Tìm theo tên, email..." : section === "media" ? "Tìm kiếm tệp media..." : "Tìm kiếm..."} 
               className="flex-1 h-9 outline-none pl-9 border border-neutral-200 rounded-md text-sm focus:border-primary" 
               value={search} 
               onChange={e => { setSearch(e.target.value); setPage(1); }} 
             />
           </div>
+
+          {/* Bộ lọc riêng cho Media */}
+          {section === "media" && (
+            <>
+              <select 
+                value={mediaTypeFilter} 
+                onChange={e => { setMediaTypeFilter(e.target.value); setPage(1); }} 
+                className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700"
+              >
+                <option value="ALL">Tất cả định dạng ({allMediaList.length})</option>
+                <option value="image">Chỉ hình ảnh ({allMediaList.filter(m => m.type !== 'video').length})</option>
+                <option value="video">Chỉ video ({allMediaList.filter(m => m.type === 'video').length})</option>
+              </select>
+
+              <select 
+                value={mediaSourceFilter} 
+                onChange={e => { setMediaSourceFilter(e.target.value); setPage(1); }} 
+                className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700"
+              >
+                <option value="ALL">Tất cả nguồn tải</option>
+                <option value="Thư viện">Thư viện Media</option>
+                <option value="Sản phẩm">Sản phẩm</option>
+                <option value="Lookbook">Lookbook</option>
+                <option value="Câu chuyện">Stories</option>
+              </select>
+
+              {(mediaTypeFilter !== "ALL" || mediaSourceFilter !== "ALL" || search) && (
+                <button onClick={() => { setSearch(""); setMediaTypeFilter("ALL"); setMediaSourceFilter("ALL"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              )}
+            </>
+          )}
 
           {/* Bộ lọc riêng cho Sản phẩm */}
           {section === "products" && (
@@ -1527,25 +1927,84 @@ export function CrudPage({ section }: { section: string }) {
         </div>
 
         {section === "media" ? (
-          <div className="p-6 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
-            {filtered.length ? filtered.map((r, i) => (
-              <div key={String(r.id ?? i)} className="group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200 shadow-sm">
-                <Image src={String(r.url)} alt={String(r.name || "Media")} fill className="object-cover transition-transform group-hover:scale-105" />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
-                  <div className="text-[10px] text-white/90 truncate font-medium bg-black/50 px-2 py-1 rounded w-fit max-w-full">
-                    {r.name}
-                  </div>
-                  <button 
-                    onClick={() => setItemToDelete(r)} 
-                    className="self-end bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-transform hover:scale-110"
-                    title="Xóa hình ảnh"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                </div>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                Hiển thị {filtered.length} / {allMediaList.length} tệp media
               </div>
-            )) : (
-              <div className="col-span-full py-16 text-center text-neutral-400">Không tìm thấy hình ảnh nào.</div>
+            </div>
+
+            {filtered.length ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {filtered.map((r, i) => (
+                  <div 
+                    key={String(r.id ?? i)} 
+                    className="group relative flex flex-col rounded-xl overflow-hidden bg-white border border-neutral-200 shadow-sm hover:shadow-md transition-all"
+                  >
+                    <div className="relative aspect-square bg-neutral-100 overflow-hidden cursor-pointer" onClick={() => setPreviewMedia(r)}>
+                      {r.type === "video" ? (
+                        <div className="w-full h-full bg-neutral-900 flex flex-col items-center justify-center text-white">
+                          <Film className="size-10 text-neutral-400 mb-1" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-black/60 px-2 py-0.5 rounded">Video</span>
+                        </div>
+                      ) : (
+                        <img src={String(r.url)} alt={String(r.name || "Media")} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                      )}
+
+                      {/* Source Badge */}
+                      <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white px-2 py-0.5 rounded text-[10px] font-medium max-w-[80%] truncate">
+                        {r.source || "Media"}
+                      </div>
+
+                      {/* Action Overlay */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button 
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setPreviewMedia(r); }} 
+                          className="bg-white/20 hover:bg-white text-white hover:text-neutral-900 p-2 rounded-full backdrop-blur-md transition-colors"
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="size-4" />
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            navigator.clipboard.writeText(r.url); 
+                            toast.success("Đã copy link tệp media vào bộ nhớ tạm!"); 
+                          }} 
+                          className="bg-white/20 hover:bg-white text-white hover:text-neutral-900 p-2 rounded-full backdrop-blur-md transition-colors"
+                          title="Sao chép link URL"
+                        >
+                          <Copy className="size-4" />
+                        </button>
+                        {r.isDatabase && (
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setItemToDelete(r); }} 
+                            className="bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full transition-colors"
+                            title="Xóa tệp khỏi thư viện"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 bg-white border-t space-y-0.5">
+                      <div className="text-xs font-bold text-neutral-800 truncate" title={r.name}>{r.name}</div>
+                      <div className="flex items-center justify-between text-[10px] text-neutral-400">
+                        <span>{r.type === 'video' ? 'Video' : 'Hình ảnh'}</span>
+                        <span>{r.size}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-20 text-center text-neutral-400 text-sm">
+                Không tìm thấy tệp media nào phù hợp với bộ lọc.
+              </div>
             )}
           </div>
         ) : (
@@ -1974,42 +2433,53 @@ export function CrudPage({ section }: { section: string }) {
                     ) : key === "url" || key === "image" || key === "heroImage" ? (
                       <div className="flex flex-col gap-2">
                         {formData[key] && (
-                          <div className="relative h-32 w-full bg-neutral-100 rounded-md overflow-hidden border">
-                            <Image src={formData[key]} alt="Preview" fill className="object-contain" />
+                          <div className="relative h-36 w-full bg-neutral-100 rounded-md overflow-hidden border">
+                            <img src={formData[key]} alt="Preview" className="w-full h-full object-contain" />
                           </div>
                         )}
-                        <div className="flex gap-2 items-center">
+                        <div className="flex flex-wrap gap-2 items-center">
                           <Input
                             value={formData[key] || ""}
                             onChange={e => handleChange(key, e.target.value)}
                             placeholder="Hoặc nhập URL trực tiếp..."
-                            className="flex-1"
+                            className="flex-1 min-w-[180px]"
                           />
-                          <label className="flex h-10 px-3 shrink-0 items-center justify-center rounded-md border bg-neutral-100 hover:bg-neutral-200 cursor-pointer text-sm font-medium transition-colors">
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                            const file = e.target.files?.[0]
-                            if (!file) return
-                            try {
-                              const token = useAuthStore.getState().session?.token
-                              const res = await fetch("/api/upload/image", {
-                                method: "POST",
-                                headers: { Authorization: `Bearer ${token}` },
-                                body: (() => { const fd = new FormData(); fd.append("image", file); return fd })()
-                              })
-                              if (res.ok) {
-                                const data = await res.json()
-                                handleChange(key, data.url)
-                                if (key === "url" && section === "media") {
-                                  const sizeMb = (file.size / 1024 / 1024).toFixed(2)
-                                  handleChange("size", `${sizeMb} MB`)
-                                  handleChange("name", file.name)
-                                }
-                                toast.success("Tải ảnh lên thành công!")
-                              } else { toast.error("Tải ảnh thất bại") }
-                            } catch(err) { toast.error("Lỗi tải ảnh") }
-                          }} />
-                          Tải ảnh lên
-                        </label>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => { setGenericMediaField(key); setOpenGenericMediaPicker(true); }}
+                            className="gap-1.5 bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 shrink-0 text-xs"
+                          >
+                            <Images className="size-3.5 text-emerald-600" />
+                            Chọn từ Media
+                          </Button>
+                          <label className="flex h-10 px-3 shrink-0 items-center justify-center rounded-md border bg-neutral-100 hover:bg-neutral-200 cursor-pointer text-xs font-medium transition-colors">
+                            <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              try {
+                                const token = useAuthStore.getState().session?.token
+                                const fd = new FormData()
+                                fd.append("image", file)
+                                const res = await fetch("/api/upload/image", {
+                                  method: "POST",
+                                  headers: { Authorization: `Bearer ${token}` },
+                                  body: fd
+                                })
+                                if (res.ok) {
+                                  const data = await res.json()
+                                  handleChange(key, data.url)
+                                  if (key === "url" && section === "media") {
+                                    const sizeMb = (file.size / 1024 / 1024).toFixed(2)
+                                    handleChange("size", `${sizeMb} MB`)
+                                    handleChange("name", file.name)
+                                  }
+                                  toast.success("Tải ảnh lên thành công!")
+                                } else { toast.error("Tải ảnh thất bại") }
+                              } catch(err) { toast.error("Lỗi tải ảnh") }
+                            }} />
+                            Tải ảnh từ máy
+                          </label>
                         </div>
                       </div>
                     ) : key === "size" && section === "media" ? (
@@ -2359,6 +2829,100 @@ export function CrudPage({ section }: { section: string }) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Modal Xem chi tiết Preview Media */}
+      {previewMedia && (
+        <Dialog open={!!previewMedia} onOpenChange={(open) => !open && setPreviewMedia(null)}>
+          <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden">
+            <DialogHeader className="p-4 pb-2 border-b">
+              <DialogTitle className="text-base truncate flex items-center gap-2">
+                {previewMedia.type === 'video' ? <Film className="size-4 text-primary" /> : <Images className="size-4 text-emerald-600" />}
+                {previewMedia.name || "Chi tiết Media"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="p-4 space-y-4">
+              <div className="relative w-full max-h-[420px] bg-neutral-950 rounded-lg overflow-hidden flex items-center justify-center">
+                {previewMedia.type === "video" ? (
+                  <video src={previewMedia.url} controls className="max-h-[420px] w-full" />
+                ) : (
+                  <img src={previewMedia.url} alt={previewMedia.name || "Preview"} className="max-h-[420px] w-auto object-contain mx-auto" />
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs bg-neutral-50 p-3 rounded-lg border">
+                <div>
+                  <span className="text-neutral-400 block">Nguồn:</span>
+                  <strong className="text-neutral-800">{previewMedia.source || "Thư viện"}</strong>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block">Định dạng:</span>
+                  <strong className="text-neutral-800 uppercase">{previewMedia.type || "Ảnh"}</strong>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block">Kích thước:</span>
+                  <strong className="text-neutral-800">{previewMedia.size || "—"}</strong>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Input value={previewMedia.url} readOnly className="text-xs font-mono bg-neutral-50" />
+                <Button 
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(previewMedia.url);
+                    toast.success("Đã sao chép đường dẫn URL!");
+                  }}
+                  className="gap-1.5 shrink-0"
+                >
+                  <Copy className="size-3.5" /> Sao chép
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  asChild
+                  className="shrink-0"
+                >
+                  <a href={previewMedia.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+
+            <DialogFooter className="p-3 border-t bg-neutral-50 flex items-center justify-between">
+              {previewMedia.isDatabase ? (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => {
+                    const target = previewMedia;
+                    setPreviewMedia(null);
+                    setItemToDelete(target);
+                  }}
+                  className="gap-1"
+                >
+                  <Trash2 className="size-3.5" /> Xóa tệp
+                </Button>
+              ) : <div />}
+              <Button size="sm" onClick={() => setPreviewMedia(null)}>Đóng</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Generic Media Picker for other CMS entities (Lookbook, Stories, Categories) */}
+      <MediaPickerModal
+        open={openGenericMediaPicker}
+        onClose={() => setOpenGenericMediaPicker(false)}
+        onSelect={(urls) => {
+          if (genericMediaField && urls[0]) {
+            handleChange(genericMediaField, urls[0]);
+          }
+        }}
+        multiple={false}
+        mediaList={allMediaList}
+      />
     </div>
   )
 }
