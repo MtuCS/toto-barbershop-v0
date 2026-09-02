@@ -1609,11 +1609,16 @@ export function CrudPage({ section }: { section: string }) {
       if (filterCategory !== "ALL" && r.category !== filterCategory) match = false
       if (filterStatus !== "ALL" && r.status !== filterStatus) match = false
       if (productStockFilter !== "ALL") {
-        const totalStock = (r.variants && r.variants.length > 0)
-          ? r.variants.reduce((acc: number, v: any) => acc + (Number(v.stock) || 0), 0)
+        const variants = (r.variants && r.variants.length > 0) ? r.variants : [];
+        const totalStock = variants.length > 0
+          ? variants.reduce((acc: number, v: any) => acc + (Number(v.stock) || 0), 0)
           : (Number(r.stock) || 0);
-        if (productStockFilter === "IN_STOCK" && totalStock <= 0) match = false;
-        if (productStockFilter === "LOW_STOCK" && (totalStock <= 0 || totalStock > 10)) match = false;
+        const hasZeroVariant = variants.some((v: any) => (Number(v.stock) || 0) === 0);
+        const hasLowVariant = variants.some((v: any) => (Number(v.stock) || 0) < 5);
+
+        if (productStockFilter === "IN_STOCK" && (totalStock <= 0 || hasZeroVariant)) match = false;
+        if (productStockFilter === "HAS_OUT_OF_STOCK_VARIANT" && !hasZeroVariant && totalStock > 0) match = false;
+        if (productStockFilter === "LOW_STOCK" && (totalStock <= 0 || (!hasLowVariant && totalStock > 10))) match = false;
         if (productStockFilter === "OUT_OF_STOCK" && totalStock > 0) match = false;
       }
     }
@@ -1880,9 +1885,10 @@ export function CrudPage({ section }: { section: string }) {
               </select>
               <select value={productStockFilter} onChange={e => { setProductStockFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
                 <option value="ALL">Tất cả tồn kho</option>
-                <option value="IN_STOCK">Còn hàng</option>
-                <option value="LOW_STOCK">Sắp hết hàng (≤ 10)</option>
-                <option value="OUT_OF_STOCK">Hết hàng (0)</option>
+                <option value="IN_STOCK">Còn hàng (Đủ loại)</option>
+                <option value="HAS_OUT_OF_STOCK_VARIANT">Có loại hết hàng (0 SP)</option>
+                <option value="LOW_STOCK">Sắp hết hàng (≤ 10 hoặc biến thể &lt; 5)</option>
+                <option value="OUT_OF_STOCK">Hết hàng toàn bộ (0)</option>
               </select>
               <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
                 <option value="ALL">Tất cả trạng thái</option>
@@ -2559,13 +2565,38 @@ export function CrudPage({ section }: { section: string }) {
                       </td>
                       <td>
                         {(() => {
-                          const totalStock = Array.isArray(r.variants) && r.variants.length > 0
-                            ? r.variants.reduce((acc: number, v: any) => acc + (v.stock || 0), 0)
-                            : (r.stock ?? 0);
+                          const variants = Array.isArray(r.variants) ? r.variants : [];
+                          const totalStock = variants.length > 0
+                            ? variants.reduce((acc: number, v: any) => acc + (Number(v.stock) || 0), 0)
+                            : (Number(r.stock) || 0);
+                          
+                          const zeroVariants = variants.filter((v: any) => (Number(v.stock) || 0) === 0);
+                          const lowVariants = variants.filter((v: any) => (Number(v.stock) || 0) > 0 && (Number(v.stock) || 0) < 5);
+
                           return (
-                            <span className={`px-2 py-0.5 text-xs font-semibold rounded ${totalStock > 10 ? 'bg-emerald-50 text-emerald-700' : totalStock > 0 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
-                              {totalStock > 0 ? `Còn ${totalStock} SP` : 'Hết hàng'}
-                            </span>
+                            <div className="flex flex-col items-start gap-1 py-1">
+                              <span className={`px-2 py-0.5 text-xs font-semibold rounded ${totalStock > 10 ? 'bg-emerald-50 text-emerald-700' : totalStock > 0 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
+                                {totalStock > 0 ? `Còn ${totalStock} SP` : 'Hết hàng (0)'}
+                              </span>
+                              
+                              {zeroVariants.length > 0 && (
+                                <span 
+                                  className="inline-flex items-center text-[10px] text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded font-medium"
+                                  title={`Biến thể hết hàng (0 SP): ${zeroVariants.map((v: any) => v.name).join(', ')}`}
+                                >
+                                  ⚠️ Hết {zeroVariants.length} loại: {zeroVariants.map((v: any) => v.name).join(', ')}
+                                </span>
+                              )}
+
+                              {zeroVariants.length === 0 && lowVariants.length > 0 && (
+                                <span 
+                                  className="inline-flex items-center text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium"
+                                  title={`Biến thể sắp hết (<5 SP): ${lowVariants.map((v: any) => `${v.name} (${v.stock})`).join(', ')}`}
+                                >
+                                  ⚡ Sắp hết {lowVariants.length} loại: {lowVariants.map((v: any) => `${v.name} (${v.stock})`).join(', ')}
+                                </span>
+                              )}
+                            </div>
                           );
                         })()}
                       </td>
