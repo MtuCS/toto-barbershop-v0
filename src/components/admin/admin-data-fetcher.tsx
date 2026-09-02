@@ -1,84 +1,59 @@
 "use client"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
-import { createClient } from "@/utils/supabase/client"
 import { toast } from "sonner"
+
+const POLL_INTERVAL_MS = 30_000; // Tự động làm mới dữ liệu mỗi 30 giây
 
 export function AdminDataFetcher() {
   const fetchPromoCodes = useDataStore((s) => s.fetchPromoCodes)
   const fetchOrders = useDataStore((s) => s.fetchOrders)
   const fetchUsers = useDataStore((s) => s.fetchUsers)
   const fetchMessages = useDataStore((s) => s.fetchMessages)
-
   const token = useAuthStore((s) => s.session?.token)
 
-  // Initial data fetch
+  const prevOrderCount = useRef<number | null>(null)
+  const prevMsgCount = useRef<number | null>(null)
+
+  // Lấy dữ liệu lần đầu khi đăng nhập
   useEffect(() => {
-    if (token) {
-      fetchPromoCodes()
-      fetchOrders()
-      fetchUsers()
-      fetchMessages()
-    }
+    if (!token) return;
+    fetchPromoCodes()
+    fetchOrders()
+    fetchUsers()
+    fetchMessages()
   }, [token, fetchPromoCodes, fetchOrders, fetchUsers, fetchMessages])
 
-  // Realtime: Lắng nghe thay đổi trên bảng Order và ContactMessage
+  // Polling mỗi 30 giây thay thế cho Supabase Realtime
   useEffect(() => {
     if (!token) return;
 
-    const supabase = createClient();
+    const interval = setInterval(async () => {
+      const ordersBefore = useDataStore.getState().orders?.length ?? 0;
+      const msgsBefore = useDataStore.getState().messages?.length ?? 0;
 
-    // 1. Kênh Realtime Đơn hàng
-    const orderChannel = supabase
-      .channel('admin-orders-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT + UPDATE + DELETE
-          schema: 'public',
-          table: 'Order',
-        },
-        (payload: any) => {
-          fetchOrders();
-          if (payload.eventType === 'INSERT') {
-            const order = payload.new;
-            toast.success(`🛒 Đơn hàng mới: #${order.orderCode || order.id} vừa được tạo!`, {
-              duration: 5000,
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            const order = payload.new;
-            toast.info(`Cập nhật đơn #${order.orderCode || order.id}: Trạng thái ${order.status}`, {
-              duration: 4000,
-            });
-          }
-        }
-      )
-      .subscribe();
+      await fetchOrders();
+      await fetchMessages();
 
-    // 2. Kênh Realtime Tin nhắn liên hệ / Đăng ký tư vấn
-    const msgChannel = supabase
-      .channel('admin-messages-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'ContactMessage',
-        },
-        (payload: any) => {
-          fetchMessages();
-          toast.info(`📩 Tin nhắn mới từ: ${payload.new?.name || 'Khách hàng'}`, {
-            duration: 5000,
-          });
-        }
-      )
-      .subscribe();
+      const ordersAfter = useDataStore.getState().orders?.length ?? 0;
+      const msgsAfter = useDataStore.getState().messages?.length ?? 0;
 
-    return () => {
-      supabase.removeChannel(orderChannel);
-      supabase.removeChannel(msgChannel);
-    };
+      // Thông báo khi có đơn hàng mới
+      if (prevOrderCount.current !== null && ordersAfter > ordersBefore) {
+        toast.success(`🛒 Có ${ordersAfter - ordersBefore} đơn hàng mới!`, { duration: 5000 });
+      }
+      prevOrderCount.current = ordersAfter;
+
+      // Thông báo khi có tin nhắn mới
+      if (prevMsgCount.current !== null && msgsAfter > msgsBefore) {
+        toast.info(`📩 Có ${msgsAfter - msgsBefore} tin nhắn liên hệ mới!`, { duration: 5000 });
+      }
+      prevMsgCount.current = msgsAfter;
+
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
   }, [token, fetchOrders, fetchMessages])
 
   return null
