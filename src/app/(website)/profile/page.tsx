@@ -575,8 +575,12 @@ function ProfileContent() {
                             <div className="space-y-4">
                               {o.items?.map((item: any, idx: number) => (
                                 <div key={idx} className="flex gap-4 items-start">
-                                  <div className="w-16 h-16 rounded-md bg-neutral-100 overflow-hidden shrink-0 border border-neutral-200">
-                                    <img src={item.image || "https://placehold.co/100x100"} alt={item.title} className="w-full h-full object-cover" />
+                                  <div className="w-16 h-16 rounded-md bg-neutral-100 overflow-hidden shrink-0 border border-neutral-200 flex items-center justify-center">
+                                    {item.image ? (
+                                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <Package className="w-6 h-6 text-neutral-400" />
+                                    )}
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-neutral-900 truncate">{item.title}</p>

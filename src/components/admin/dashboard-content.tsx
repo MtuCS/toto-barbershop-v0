@@ -34,12 +34,13 @@ const CHART_FILTERS = [
 ] as const
 
 export function DashboardContent() {
-  const orders = useDataStore(s => s.orders) || [];
-  const customers = useDataStore(s => s.customers) || [];
-  const products = useDataStore(s => s.products) || [];
+  const orders = useDataStore(s => s.orders);
+  const products = useDataStore(s => s.products);
   const [chartDays, setChartDays] = useState<number>(30)
 
   const { stats, topProductsList, revenueByMonth, pieData, lowStockProducts, totalOrdersCp } = useMemo(() => {
+    const orderList = orders || [];
+    const productList = products || [];
     const now = new Date();
     const cpStart = new Date(now);
     cpStart.setDate(cpStart.getDate() - chartDays);
@@ -51,7 +52,7 @@ export function DashboardContent() {
       return d >= start && d <= end;
     };
 
-    const allCompletedOrders = orders.filter(o => {
+    const allCompletedOrders = orderList.filter(o => {
       const st = (o.status || '').toUpperCase();
       const ps = (o.paymentStatus || '').toUpperCase();
       return st === 'COMPLETED' || (ps === 'PAID' && st !== 'CANCELLED');
@@ -60,8 +61,8 @@ export function DashboardContent() {
     const cpCompletedOrders = allCompletedOrders.filter(o => filterByDate(o.createdAt, cpStart, now));
     const ppCompletedOrders = allCompletedOrders.filter(o => filterByDate(o.createdAt, ppStart, cpStart));
 
-    const cpOrders = orders.filter(o => filterByDate(o.createdAt, cpStart, now));
-    const ppOrders = orders.filter(o => filterByDate(o.createdAt, ppStart, cpStart));
+    const cpOrders = orderList.filter(o => filterByDate(o.createdAt, cpStart, now));
+    const ppOrders = orderList.filter(o => filterByDate(o.createdAt, ppStart, cpStart));
 
     const cpRevenue = cpCompletedOrders.reduce((acc, o) => acc + o.total, 0);
     const ppRevenue = ppCompletedOrders.reduce((acc, o) => acc + o.total, 0);
@@ -151,7 +152,7 @@ export function DashboardContent() {
     const computedRevenue = Object.entries(monthlyRevenue).map(([month, revenue]) => ({ month, revenue }));
 
     const lowStock: { name: string, variant: string, stock: number, id: string, image?: string }[] = [];
-    products.forEach(p => {
+    productList.forEach(p => {
       if (p.variants && p.variants.length > 0) {
         p.variants.forEach((v: any) => {
           if (v.stock < 5) {
@@ -169,7 +170,7 @@ export function DashboardContent() {
       lowStockProducts: lowStock.sort((a, b) => a.stock - b.stock),
       totalOrdersCp: cpOrderCount
     };
-  }, [orders, customers, products, chartDays]);
+  }, [orders, products, chartDays]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -178,7 +179,7 @@ export function DashboardContent() {
           <h1 className="text-2xl font-bold tracking-tight uppercase font-display flex items-center gap-2">
             <TrendingUp className="size-6 text-primary" /> Tổng quan
           </h1>
-          <p className="text-neutral-500 mt-1">Theo dõi hoạt động kinh doanh và thống kê cửa hàng</p>
+          <p className="text-neutral-500 mt-1">Tổng hợp số liệu kinh doanh theo thời gian thực</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -309,8 +310,12 @@ export function DashboardContent() {
                     <tr key={i} className="hover:bg-neutral-50/50">
                       <td className="p-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded bg-neutral-100 overflow-hidden shrink-0">
-                            <img src={p.image || "https://placehold.co/40x40"} alt={p.name} className="w-full h-full object-cover" />
+                          <div className="w-10 h-10 rounded bg-neutral-100 overflow-hidden shrink-0 flex items-center justify-center">
+                            {p.image ? (
+                              <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <Package className="size-4 text-neutral-400" />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-bold text-neutral-900 text-xs truncate">{p.name}</p>
@@ -350,8 +355,12 @@ export function DashboardContent() {
                   <div className="size-8 rounded-full bg-neutral-100 flex items-center justify-center text-xs font-bold text-neutral-500 group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
                     {i+1}
                   </div>
-                  <div className="w-10 h-10 rounded bg-neutral-100 overflow-hidden shrink-0">
-                    <img src={p.image || "https://placehold.co/40x40"} alt={p.name} className="w-full h-full object-cover" />
+                  <div className="w-10 h-10 rounded bg-neutral-100 overflow-hidden shrink-0 flex items-center justify-center">
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Package className="size-4 text-neutral-400" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-neutral-900">{p.name}</p>

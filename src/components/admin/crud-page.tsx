@@ -534,7 +534,11 @@ function ProductForm({ initial, onSave, onCancel }: {
 }) {
   const d = useDataStore()
   const { categories: allCategories } = d
-  const allMediaList = useMemo(() => getAllMediaItems(d), [d.media, d.products, d.lookbook, d.stories])
+  const { media: dMedia, products: dProducts, lookbook: dLookbook, stories: dStories } = d
+  const allMediaList = useMemo(
+    () => getAllMediaItems({ media: dMedia, products: dProducts, lookbook: dLookbook, stories: dStories }),
+    [dMedia, dProducts, dLookbook, dStories]
+  )
   const [openMediaPicker, setOpenMediaPicker] = useState(false)
 
   // Basic fields
@@ -1472,7 +1476,11 @@ export function CrudPage({ section }: { section: string }) {
   const [showPassword, setShowPassword] = useState(false)
 
   // Media & Media Picker States
-  const allMediaList = useMemo(() => getAllMediaItems(d), [d.media, d.products, d.lookbook, d.stories])
+  const { media: cMedia, products: cProducts, lookbook: cLookbook, stories: cStories } = d
+  const allMediaList = useMemo(
+    () => getAllMediaItems({ media: cMedia, products: cProducts, lookbook: cLookbook, stories: cStories }),
+    [cMedia, cProducts, cLookbook, cStories]
+  )
   const [previewMedia, setPreviewMedia] = useState<any | null>(null)
   const [mediaTypeFilter, setMediaTypeFilter] = useState("ALL")
   const [mediaSourceFilter, setMediaSourceFilter] = useState("ALL")
@@ -2576,24 +2584,24 @@ export function CrudPage({ section }: { section: string }) {
                           return (
                             <div className="flex flex-col items-start gap-1 py-1">
                               <span className={`px-2 py-0.5 text-xs font-semibold rounded ${totalStock > 10 ? 'bg-emerald-50 text-emerald-700' : totalStock > 0 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
-                                {totalStock > 0 ? `Còn ${totalStock} SP` : 'Hết hàng (0)'}
+                                {totalStock > 0 ? `Còn ${totalStock} SP` : 'Hết hàng'}
                               </span>
                               
                               {zeroVariants.length > 0 && (
                                 <span 
-                                  className="inline-flex items-center text-[10px] text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded font-medium"
-                                  title={`Biến thể hết hàng (0 SP): ${zeroVariants.map((v: any) => v.name).join(', ')}`}
+                                  className="inline-flex items-center gap-1 text-[10px] text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded font-medium cursor-default"
+                                  title={`Hết hàng (0 SP): ${zeroVariants.map((v: any) => v.name).join(', ')}`}
                                 >
-                                  ⚠️ Hết {zeroVariants.length} loại: {zeroVariants.map((v: any) => v.name).join(', ')}
+                                  ⚠️ {zeroVariants.length} loại hết hàng
                                 </span>
                               )}
 
                               {zeroVariants.length === 0 && lowVariants.length > 0 && (
                                 <span 
-                                  className="inline-flex items-center text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium"
-                                  title={`Biến thể sắp hết (<5 SP): ${lowVariants.map((v: any) => `${v.name} (${v.stock})`).join(', ')}`}
+                                  className="inline-flex items-center gap-1 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium cursor-default"
+                                  title={`Sắp hết (<5 SP): ${lowVariants.map((v: any) => `${v.name} (${v.stock})`).join(', ')}`}
                                 >
-                                  ⚡ Sắp hết {lowVariants.length} loại: {lowVariants.map((v: any) => `${v.name} (${v.stock})`).join(', ')}
+                                  ⚡ {lowVariants.length} loại sắp hết
                                 </span>
                               )}
                             </div>

@@ -21,9 +21,9 @@ const orderStatusMap: Record<string, { label: string; icon: any; color: string; 
 }
 
 const paymentStatusMap: Record<string, { label: string; color: string; bgColor: string }> = {
-  UNPAID: { label: "Chưa TT", color: "text-neutral-700", bgColor: "bg-neutral-100" },
-  PAID: { label: "Đã TT", color: "text-emerald-700", bgColor: "bg-emerald-100" },
-  REFUNDED: { label: "Hoàn tiền", color: "text-purple-700", bgColor: "bg-purple-100" },
+  UNPAID: { label: "Chưa thanh toán", color: "text-neutral-700", bgColor: "bg-neutral-100" },
+  PAID: { label: "Đã thanh toán", color: "text-emerald-700", bgColor: "bg-emerald-100" },
+  REFUNDED: { label: "Đã hoàn tiền", color: "text-purple-700", bgColor: "bg-purple-100" },
 }
 
 const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
