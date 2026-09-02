@@ -1,8 +1,17 @@
+import type { Metadata } from "next"
 import Image from "next/image"
+import Link from "next/link"
+import { Phone, Mail, Sparkles, CheckCircle2 } from "lucide-react"
 import { getCourses } from "@/lib/api"
 import { formatCurrency } from "@/lib/format"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
-import { TrainingForm } from "@/components/website/training-form"
+import { Breadcrumbs } from "@/components/website/breadcrumbs"
+
+export const metadata: Metadata = {
+  title: "Học Viện Đào Tạo Nghề Barber — TOTO Academy",
+  description:
+    "Tìm hiểu giáo trình và các khóa đào tạo nghề Barber từ cơ bản đến chuyên sâu tại TOTO Academy. Thực hành trực tiếp trên mẫu thật cùng Master Barber.",
+}
 
 const trainingImages = {
   hero: "/images/training/training-hero.png",
@@ -16,8 +25,12 @@ export default async function TrainingPage() {
   const trainingCourses = await getCourses()
   return (
     <MarketingPageShell>
+      <div className="mx-auto max-w-[1400px] px-5 pt-6 md:px-8">
+        <Breadcrumbs items={[{ label: "Đào tạo & Khóa học Barber" }]} />
+      </div>
+
       <header className="border-b border-white/10">
-        <div className="mx-auto max-w-[1400px] px-5 pb-8 pt-14 md:px-8 md:pb-12 md:pt-20">
+        <div className="mx-auto max-w-[1400px] px-5 pb-8 pt-8 md:px-8 md:pb-12 md:pt-12">
           <div className="flex items-center justify-between border-b border-white/10 pb-4 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">
             <span className="flex items-center gap-3">
               <span className="h-px w-7 bg-[#2f7a68]" aria-hidden="true" />
@@ -34,13 +47,13 @@ export default async function TrainingPage() {
             </h1>
             <div className="space-y-7 md:col-span-3 md:col-start-10 md:pb-2">
               <p className="max-w-sm text-sm leading-7 text-white/65 md:text-base">
-                Learn through observation, hands-on repetition, and feedback from barbers who work with real clients every day.
+                Học nghề từ quan sát, thực hành liên tục trên mẫu thật và nhận phản hồi trực tiếp từ những Master Barber làm nghề mỗi ngày.
               </p>
               <a
                 href="#consultation"
                 className="inline-flex border-b border-[#79b8a7] pb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f2f5f3] transition-colors hover:border-white hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79b8a7]"
               >
-                Talk to the academy
+                Thông tin tư vấn
               </a>
             </div>
           </div>
@@ -48,7 +61,7 @@ export default async function TrainingPage() {
           <figure className="relative mt-12 aspect-[16/10] overflow-hidden border border-white/10 bg-black/30 md:mt-16 md:aspect-[2/1]">
             <Image
               src={trainingImages.hero}
-              alt="Training floor at TOTO Academy"
+              alt="Không gian thực hành đào tạo tại TOTO Academy"
               fill
               priority
               sizes="(max-width: 1439px) 100vw, 1400px"
@@ -61,68 +74,15 @@ export default async function TrainingPage() {
         </div>
       </header>
 
-      <section className="py-20 md:py-32">
-        <div className="mx-auto grid max-w-[1400px] gap-12 px-5 md:grid-cols-12 md:items-start md:gap-5 md:px-8">
-          <div className="md:col-span-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">01 / The learning floor</p>
-            <h2 className="mt-6 max-w-lg font-display text-5xl uppercase leading-[0.9] text-[#f2f5f3] md:text-7xl">
-              Your hands learn the work, not just the theory.
-            </h2>
-            <p className="mt-7 max-w-md leading-7 text-white/65 md:text-lg">
-              Every session puts you close to the rhythm of a real shop: observe the detail, practice the movement, and refine the result with direct feedback.
-            </p>
-
-            <dl className="mt-12 grid max-w-md grid-cols-3 border-t border-white/10 pt-5">
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Format</dt>
-                <dd className="mt-2 text-sm font-medium text-[#f2f5f3]">Hands-on</dd>
-              </div>
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Feedback</dt>
-                <dd className="mt-2 text-sm font-medium text-[#f2f5f3]">Direct 1:1</dd>
-              </div>
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Focus</dt>
-                <dd className="mt-2 text-sm font-medium text-[#f2f5f3]">Real craft</dd>
-              </div>
-            </dl>
-          </div>
-
-          <figure className="group relative aspect-[4/5] overflow-hidden border border-white/10 bg-black/30 md:col-span-5 md:col-start-8">
-            <Image
-              src={trainingImages.practice}
-              alt="Student practicing a haircut on a model"
-              fill
-              sizes="(max-width: 767px) 100vw, 42vw"
-              className="object-contain transition-transform duration-700 group-hover:scale-[1.02] motion-reduce:transition-none"
-            />
-          </figure>
-        </div>
-      </section>
-
-      <section className="border-y border-white/10 py-5">
-        <div className="mx-auto grid max-w-[1400px] gap-5 px-5 sm:grid-cols-3 md:px-8">
-          <figure className="group relative aspect-square overflow-hidden border border-white/10">
-            <Image src={trainingImages.teamLeft} alt="TOTO barber team in the training space" fill sizes="(max-width: 639px) 100vw, 33vw" className="object-contain transition-transform duration-700 group-hover:scale-[1.02] motion-reduce:transition-none" />
-          </figure>
-          <figure className="group relative aspect-square overflow-hidden border border-white/10 bg-black/30">
-            <Image src={trainingImages.portrait} alt="TOTO barber sharing professional tools and techniques" fill sizes="(max-width: 639px) 100vw, 33vw" className="object-contain transition-transform duration-700 group-hover:scale-[1.02] motion-reduce:transition-none" />
-          </figure>
-          <figure className="group relative aspect-square overflow-hidden border border-white/10">
-            <Image src={trainingImages.teamRight} alt="Young barbers practicing at TOTO Academy" fill sizes="(max-width: 639px) 100vw, 33vw" className="object-contain transition-transform duration-700 group-hover:scale-[1.02] motion-reduce:transition-none" />
-          </figure>
-        </div>
-      </section>
-
-      <section className="bg-[#f2f5f3] py-20 text-[#101715] md:py-32">
+      <section className="bg-[#f5f9f7] py-20 text-[#101715] md:py-32">
         <div className="mx-auto max-w-[1400px] px-5 md:px-8">
-          <div className="grid gap-8 border-b border-black/15 pb-12 md:grid-cols-12 md:items-end">
+          <div className="grid gap-8 border-b border-black/15 pb-10 md:grid-cols-12 md:items-end">
             <div className="md:col-span-7">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#2f7a68]">02 / Choose your route</p>
-              <h2 className="mt-5 max-w-3xl font-display text-5xl uppercase leading-[0.9] md:text-7xl">From foundation to your own point of view.</h2>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#2f7a68]">02 / Lộ trình học</p>
+              <h2 className="mt-5 max-w-3xl font-display text-5xl uppercase leading-[0.9] md:text-7xl">Từ nền tảng đến phong cách cá nhân.</h2>
             </div>
             <p className="max-w-sm text-sm leading-7 text-neutral-600 md:col-span-3 md:col-start-10 md:pb-1">
-              A clear rhythm for every stage, so you always know what you are learning and where it can take you.
+              Giáo trình phân chia rõ ràng từng giai đoạn, giúp bạn nắm chắc kiến thức và định hình tay nghề vững vàng.
             </p>
           </div>
 
@@ -152,23 +112,54 @@ export default async function TrainingPage() {
       </section>
 
       <section id="consultation" className="scroll-mt-24 py-20 md:py-32">
-        <div className="mx-auto grid max-w-[1400px] gap-12 px-5 md:grid-cols-12 md:items-end md:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-12 px-5 md:grid-cols-12 md:items-center md:px-8">
           <div className="md:col-span-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">03 / Your instructor</p>
-            <h2 className="mt-6 font-display text-5xl uppercase leading-[0.9] text-[#f2f5f3] md:text-6xl">Learn from someone who still does the work.</h2>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">03 / Giảng viên hướng dẫn</p>
+            <h2 className="mt-6 font-display text-5xl uppercase leading-[0.9] text-[#f2f5f3] md:text-6xl">Học từ người trực tiếp làm nghề.</h2>
             <figure className="relative mt-10 aspect-square max-w-xl overflow-hidden border border-white/10 bg-black/30">
-              <Image src="/images/instructor.png" alt="TOTO Academy instructor" fill sizes="(max-width: 767px) 100vw, 42vw" className="object-contain" />
+              <Image src="/images/instructor.png" alt="Giảng viên Master Barber tại TOTO Academy" fill sizes="(max-width: 767px) 100vw, 42vw" className="object-contain" />
             </figure>
           </div>
 
-          <div className="border-t border-white/10 pt-8 md:col-span-6 md:col-start-7 md:pb-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">Start the conversation</p>
-            <h2 className="mt-5 max-w-xl font-display text-5xl uppercase leading-[0.9] text-[#f2f5f3] md:text-6xl">Find the course that matches your next move.</h2>
-            <p className="mt-6 max-w-xl leading-7 text-white/65">
-              Leave your details and the TOTO Academy team will contact you with the path that fits your experience and goals.
+          <div className="rounded-3xl border border-white/10 bg-[#07110f]/90 p-8 md:col-span-6 md:col-start-7 md:p-12 backdrop-blur-md">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">Tư vấn & Hỗ trợ học viên</p>
+            <h2 className="mt-4 font-display text-4xl uppercase leading-[0.9] text-[#f2f5f3] md:text-5xl">Bắt đầu hành trình Barber của bạn</h2>
+            <p className="mt-5 text-sm sm:text-base leading-relaxed text-white/70">
+              Để được tư vấn chi tiết về lịch khai giảng khóa gần nhất, lộ trình học thử và chính sách hỗ trợ dụng cụ đồ nghề, bạn hãy liên hệ trực tiếp với tiệm qua Hotline hoặc ghé thăm tiệm:
             </p>
-            <div className="mt-10 bg-[#f2f5f3] p-5 text-[#101715] md:p-8">
-              <TrainingForm />
+
+            <div className="mt-8 space-y-4">
+              <a
+                href="tel:0981378179"
+                className="flex items-center justify-between rounded-2xl border border-[#79b8a7]/30 bg-[#13443B]/20 p-5 transition-all hover:bg-[#13443B]/40"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex size-11 items-center justify-center rounded-xl bg-[#79b8a7]/20 text-[#79b8a7]">
+                    <Phone className="size-5" />
+                  </div>
+                  <div>
+                    <span className="text-xs text-white/50 uppercase font-semibold">Hotline tư vấn khóa học</span>
+                    <p className="text-lg font-bold text-white">0981 378 179</p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-[#79b8a7]">Gọi tư vấn ➔</span>
+              </a>
+
+              <Link
+                href="/contact"
+                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:border-[#79b8a7]/40 hover:bg-white/10"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex size-11 items-center justify-center rounded-xl bg-white/10 text-[#79b8a7]">
+                    <Mail className="size-5" />
+                  </div>
+                  <div>
+                    <span className="text-xs text-white/50 uppercase font-semibold">Gửi lời nhắn</span>
+                    <p className="text-lg font-bold text-white">Trang liên hệ ToTo</p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-white/70">Gửi tin nhắn ➔</span>
+              </Link>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { User, Phone, MapPin, Mail, Loader2, Save, ShoppingBag, Plus, Trash2, LogOut, Package, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { Button } from "@/components/ui/button"
@@ -63,16 +63,27 @@ function OrderStepper({ status }: { status: string }) {
   )
 }
 
-export default function ProfilePage() {
+function ProfileContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
   const { user, token, setUser, logout } = useCustomerUserStore()
   const allOrders = useDataStore((s) => s.orders)
-  const orders = allOrders.filter(o => o.customer.email === user?.email)
+  const orders = allOrders.filter(o => 
+    (user?.id && Number(o.customer?.id) === Number(user.id)) ||
+    (user?.email && o.customer?.email?.toLowerCase() === user.email.toLowerCase())
+  )
 
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState("profile")
+  const [activeTab, setActiveTab] = useState(tabParam === "orders" ? "orders" : "profile")
+
+  useEffect(() => {
+    if (tabParam === "orders" || tabParam === "profile") {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
 
   const [formData, setFormData] = useState({
     name: "",
@@ -161,24 +172,49 @@ export default function ProfilePage() {
     if (!user?.id) return;
 
     const supabase = createClient();
+    const currentUserId = user.id;
+    const currentUserEmail = user.email;
+
+    const getStatusLabel = (s: string) => {
+      const upper = (s || '').toUpperCase();
+      if (upper === 'PROCESSING') return 'Đang chuẩn bị hàng';
+      if (upper === 'SHIPPED') return 'Đang giao hàng';
+      if (upper === 'COMPLETED') return 'Giao hàng thành công';
+      if (upper === 'CANCELLED') return 'Đã hủy';
+      return 'Chờ xử lý';
+    };
 
     const channel = supabase
-      .channel(`orders-user-${user.id}`)
+      .channel(`customer-orders-realtime-${currentUserId}`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'Order',
-          filter: `userId=eq.${user.id}`,
         },
-        (payload) => {
-          const updated = payload.new as { id: number; status: string; paymentStatus: string };
-          useDataStore.getState().setOrderStatusInStore(
-            updated.id,
-            updated.status.toUpperCase() as OrderStatus,
-            updated.paymentStatus.toUpperCase() as PaymentStatus
-          );
+        (payload: any) => {
+          const updated = payload.new;
+          if (!updated) return;
+
+          // Kiểm tra xem đơn hàng này có thuộc về user đang đăng nhập không
+          const isMyOrder =
+            Number(updated.userId) === Number(currentUserId) ||
+            (currentUserEmail && updated.customerEmail === currentUserEmail) ||
+            useDataStore.getState().orders.some(o => o.id.toString() === updated.id?.toString());
+
+          if (!isMyOrder) return;
+
+          if (payload.eventType === 'UPDATE' && updated.status) {
+            // ⚡ Cập nhật UI NGAY LẬP TỨC từ payload WebSocket (không cần chờ API)
+            useDataStore.getState().setOrderStatusInStore(
+              updated.id,
+              updated.status,
+              updated.paymentStatus
+            );
+            const orderCodeDisplay = updated.orderCode || `TOTO-DH${String(updated.id).padStart(4, '0')}`;
+            toast.info(`📦 Đơn hàng #${orderCodeDisplay} đã cập nhật: ${getStatusLabel(updated.status)}`);
+          }
         }
       )
       .subscribe();
@@ -186,6 +222,7 @@ export default function ProfilePage() {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
 
@@ -330,8 +367,6 @@ export default function ProfilePage() {
     const success = await useDataStore.getState().cancelOrder(id.toString(), token || "")
     if (success) {
       toast.success("Đã hủy đơn hàng thành công")
-    } else {
-      toast.error("Hủy đơn hàng thất bại")
     }
     setOrderToCancel(null)
   }
@@ -362,7 +397,7 @@ export default function ProfilePage() {
             {/* Thông tin liên hệ */}
             <div className="space-y-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 md:p-8">
               <h2 className="text-xl font-bold">Thông tin liên hệ</h2>
-              <form onSubmit={handleSave} className="space-y-5">
+              <form noValidate onSubmit={handleSave} className="space-y-5">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Email (Không thể thay đổi)</label>
                   <div className="relative">
@@ -371,17 +406,17 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Họ và tên</label>
+                  <label className="text-sm font-medium">Họ và tên*</label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="h-12 rounded-xl pl-11 focus-visible:ring-primary/20" />
+                    <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Nguyễn Văn A" className="h-12 rounded-xl pl-11 focus-visible:ring-primary/20" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Số điện thoại</label>
                   <div className="relative">
                     <Phone className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="h-12 rounded-xl pl-11 focus-visible:ring-primary/20" />
+                    <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="09xxxxxxxx" className="h-12 rounded-xl pl-11 focus-visible:ring-primary/20" />
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -734,5 +769,17 @@ export default function ProfilePage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto flex min-h-[60vh] max-w-5xl items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
   )
 }

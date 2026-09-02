@@ -105,7 +105,7 @@ export function AdminShell({children}:{children:React.ReactNode}){
           <p className="mt-1 text-[10px] uppercase tracking-[.2em] text-white/40 font-semibold">Quản trị viên</p>
         </div>
         
-        <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-none space-y-6 mt-2">
+        <div className="flex-1 overflow-y-auto px-4 py-2 space-y-6 admin-sidebar-scroll">
           {navGroups.map(group => (
             <div key={group.title}>
               <h3 className="px-3 text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-2">{group.title}</h3>
@@ -128,12 +128,17 @@ export function AdminShell({children}:{children:React.ReactNode}){
             </div>
           ))}
         </div>
-        <button 
-          onClick={() => { logout(); router.push('/admin/login'); }} 
-          className="absolute bottom-5 left-5 flex w-[calc(100%-40px)] items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/60 hover:bg-white/10 hover:text-white transition-all duration-200 cursor-pointer active:scale-95"
-        >
-          <LogOut className="size-4 text-red-400" />Đăng xuất
-        </button>
+
+        {/* Dedicated Non-Overlapping Footer */}
+        <div className="shrink-0 p-3 border-t border-neutral-800/80 bg-neutral-950">
+          <button 
+            onClick={() => { logout(); router.push('/admin/login'); }} 
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-red-400/90 hover:text-red-300 hover:bg-red-950/40 border border-red-950/60 hover:border-red-800/60 transition-all duration-200 cursor-pointer active:scale-98"
+          >
+            <LogOut className="size-4" />
+            <span>Đăng xuất</span>
+          </button>
+        </div>
       </aside>
 
       <main className="min-h-screen p-4 pt-20 lg:ml-64 lg:p-8">

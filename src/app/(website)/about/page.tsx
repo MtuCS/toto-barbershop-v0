@@ -1,6 +1,17 @@
+import type { Metadata } from "next"
 import Image from "next/image"
+import Link from "next/link"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { PageHero, SectionTitle } from "@/components/website/page-hero"
+import { Breadcrumbs } from "@/components/website/breadcrumbs"
+import { TeamSection } from "@/components/website/team-section"
+import { ShoppingBag, Scissors, ArrowRight } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Về Chúng Tôi — Câu Chuyện & Đội Ngũ",
+  description:
+    "ToTo Barbershop từ 2013 — Không gian văn hóa Barber cổ điển kết hợp phong cách đường phố đương đại tại Sài Gòn. Tìm hiểu câu chuyện thương hiệu và đội ngũ Master Barber.",
+}
 
 const stats = [
   ["13+", "Năm theo nghề"],
@@ -12,6 +23,10 @@ const stats = [
 export default function Page() {
   return (
     <MarketingPageShell>
+      <div className="mx-auto max-w-[1400px] px-5 pt-6 md:px-8">
+        <Breadcrumbs items={[{ label: "Về ToTo Barbershop" }]} />
+      </div>
+
       <PageHero
         eyebrow="Since 2013"
         title="Built by craft"
@@ -39,15 +54,47 @@ export default function Page() {
         </div>
       </section>
 
+      {/* Team Photo Section */}
+      <TeamSection />
+
+      {/* Interior Image Banner */}
       <div className="relative h-[55dvh] min-h-[420px] border-y border-white/10">
         <Image
           src="/images/interior.png"
-          alt="Không gian TOTO Barbershop"
+          alt="Không gian nội thất cổ điển tại ToTo Barbershop 85 Đồng Đen"
           fill
           sizes="100vw"
           className="object-cover"
         />
       </div>
+
+      {/* Internal Links CTA */}
+      <section className="mx-auto max-w-[1400px] px-5 py-16 md:px-8 md:py-20 text-center">
+        <div className="mx-auto max-w-2xl rounded-3xl border border-white/10 bg-[#07110f]/80 p-8 md:p-12 backdrop-blur-md">
+          <h2 className="font-agatho text-2xl md:text-4xl font-medium text-[#f2f5f3]">
+            Khám Phá Thêm Về ToTo
+          </h2>
+          <p className="mt-3 text-sm text-white/70">
+            Trải nghiệm dịch vụ chuyên nghiệp hoặc lựa chọn các dòng sáp vuốt tóc chính hãng được thợ tin dùng.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-2 rounded-full bg-[#79b8a7] px-6 py-3 text-xs md:text-sm font-bold uppercase tracking-wider text-[#050c0a] transition-all hover:bg-[#8ec7b7]"
+            >
+              <ShoppingBag className="size-4" />
+              Ghé Shop Sáp & Merch
+            </Link>
+            <Link
+              href="/services"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-xs md:text-sm font-bold uppercase tracking-wider text-white transition-all hover:border-[#79b8a7]"
+            >
+              <Scissors className="size-4 text-[#79b8a7]" />
+              Menu Dịch Vụ
+            </Link>
+          </div>
+        </div>
+      </section>
     </MarketingPageShell>
   )
 }

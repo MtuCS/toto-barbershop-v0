@@ -41,6 +41,8 @@ export function MerchTeaser() {
               src="/images/merch-lifestyle.png"
               alt="Phong cách streetwear của Toto Barbershop"
               fill
+              priority
+              loading="eager"
               sizes="(max-width: 639px) 82vw, (max-width: 1023px) 656px, 48vw"
               className="object-cover object-center"
             />
