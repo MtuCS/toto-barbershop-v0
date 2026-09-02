@@ -618,7 +618,8 @@ export const useDataStore = create<DataState>()(
         }
       },
 
-      
+
+
       addMedia: async (item) => {
         const token = useAuthStore.getState().session?.token;
         await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/media`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(item) });

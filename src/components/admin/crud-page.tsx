@@ -279,23 +279,23 @@ export function getAllMediaItems(d: any) {
   const urlMap = new Map<string, any>();
   const isValidUrl = (u: any) => typeof u === 'string' && u.trim().length > 3 && u !== 'undefined' && u !== 'null';
 
-  // 1. Tệp trực tiếp từ cơ sở dữ liệu Media
+  // 1. Tệp trực tiếp từ Cloudflare R2 & Media Database (nguồn chính xác nhất)
   (d.media || []).forEach((m: any) => {
     if (m && isValidUrl(m.url)) {
       urlMap.set(m.url, {
         id: m.id || `med-${urlMap.size + 1}`,
         url: m.url,
         name: m.name || m.filename || m.url.split('/').pop()?.split('?')[0] || "Tệp Media",
-        size: m.size ? (typeof m.size === 'number' ? `${(m.size / 1024 / 1024).toFixed(2)} MB` : String(m.size)) : "—",
-        type: m.type || (m.url.match(/\.(mp4|webm|mov|ogg)$/i) ? "video" : "image"),
+        size: m.size ? (typeof m.size === 'number' ? `${(m.size / (1024 * 1024)).toFixed(2)} MB` : String(m.size)) : "—",
+        type: m.type || (m.url.match(/\.(mp4|webm|mov|ogg|m4v)$/i) ? "video" : "image"),
         createdAt: m.createdAt || new Date().toISOString(),
-        source: "Thư viện Media",
+        source: m.source || "Thư viện Media",
         isDatabase: true
       });
     }
   });
 
-  // 2. Hình ảnh từ tất cả Sản phẩm
+  // 2. Hình ảnh từ tất cả Sản phẩm (nếu có ảnh ngoài chưa lưu vào media)
   (d.products || []).forEach((p: any) => {
     (p.images || []).forEach((img: string, idx: number) => {
       if (isValidUrl(img) && !urlMap.has(img)) {
@@ -327,50 +327,6 @@ export function getAllMediaItems(d: any) {
         source: "Bộ sưu tập Lookbook"
       });
     }
-  });
-
-  // 4. Hình ảnh từ Stories
-  (d.stories || []).forEach((st: any) => {
-    if (isValidUrl(st.heroImage) && !urlMap.has(st.heroImage)) {
-      urlMap.set(st.heroImage, {
-        id: `story-hero-${st.id}`,
-        url: st.heroImage,
-        name: `Story: ${st.title || 'Ảnh bìa'}`,
-        size: "—",
-        type: "image",
-        createdAt: st.createdAt || new Date().toISOString(),
-        source: `Câu chuyện: ${st.title || 'Stories'}`
-      });
-    }
-    (st.blocks || []).forEach((b: any, bIdx: number) => {
-      const blockImg = b.image || (b.type === 'image' ? b.url : null);
-      if (isValidUrl(blockImg) && !urlMap.has(blockImg)) {
-        const rawName = blockImg.split('/').pop()?.split('?')[0] || `${st.title || 'Story'} - Chi tiết ${bIdx + 1}`;
-        urlMap.set(blockImg, {
-          id: `story-block-${st.id}-${bIdx}`,
-          url: blockImg,
-          name: rawName.replace(/[-_]/g, ' '),
-          size: "—",
-          type: "image",
-          createdAt: st.createdAt || new Date().toISOString(),
-          source: `Câu chuyện: ${st.title || 'Stories'}`
-        });
-      }
-    });
-    (st.gallery || []).forEach((gImg: string, gIdx: number) => {
-      if (isValidUrl(gImg) && !urlMap.has(gImg)) {
-        const rawName = gImg.split('/').pop()?.split('?')[0] || `${st.title || 'Story'} - Gallery ${gIdx + 1}`;
-        urlMap.set(gImg, {
-          id: `story-gal-${st.id}-${gIdx}`,
-          url: gImg,
-          name: rawName.replace(/[-_]/g, ' '),
-          size: "—",
-          type: "image",
-          createdAt: st.createdAt || new Date().toISOString(),
-          source: `Câu chuyện: ${st.title || 'Stories'}`
-        });
-      }
-    });
   });
 
   return Array.from(urlMap.values());
