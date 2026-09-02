@@ -90,7 +90,6 @@ export default function TextType({
 
   useEffect(() => {
     if (reduceMotion) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayedText("")
     setCurrentCharIndex(0)
     setCurrentTextIndex(0)
@@ -101,7 +100,6 @@ export default function TextType({
   useEffect(() => {
     if (!reduceMotion) return
     const finalText = textArray[textArray.length - 1] ?? ""
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentTextIndex(textArray.length - 1)
     setCurrentCharIndex(finalText.length)
     setDisplayedText(reverseMode ? finalText.split("").reverse().join("") : finalText)
@@ -151,7 +149,6 @@ export default function TextType({
 
     if (isDeleting) {
       if (displayedText === "") {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsDeleting(false)
         if (currentTextIndex === textArray.length - 1 && !loop) return
         onSentenceComplete?.(textArray[currentTextIndex], currentTextIndex)

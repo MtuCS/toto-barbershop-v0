@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       ...data,
       message: data.message || "Đăng nhập thành công! Chào mừng quý khách quay trở lại."
     }, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Không thể kết nối đến máy chủ xác thực. Vui lòng thử lại sau ít phút." },
       { status: 503 }

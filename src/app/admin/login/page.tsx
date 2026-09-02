@@ -48,7 +48,7 @@ export default function Page() {
             setError(result.error ?? "Email hoặc mật khẩu quản trị không chính xác.")
             setBusy(false)
           }
-        } catch (err: any) {
+        } catch {
           setError("Không thể kết nối đến máy chủ xác thực. Vui lòng thử lại sau.")
           setBusy(false)
         }

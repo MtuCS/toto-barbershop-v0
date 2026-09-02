@@ -1,19 +1,15 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, ShoppingBag, Search, User, X, LogIn, LogOut, Dices } from "lucide-react"
-import Image from "next/image"
+import { Menu, ShoppingBag, User, LogIn, LogOut, Dices } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MAIN_NAV, SITE_NAME } from "@/lib/constants"
 import { GooeyNav } from "@/components/website/gooey-nav"
 import { useCartStore } from "@/store/cart-store"
 import { useCustomerUserStore } from "@/store/customer-user-store"
-import { useDataStore } from "@/store/data-store"
 import { useMounted } from "@/hooks/use-mounted"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu"
 import { CustomerAuthModal } from "@/components/website/customer-auth-modal"
@@ -25,9 +21,7 @@ function Logo() {
       className="group inline-flex shrink-0 items-baseline py-2 text-foreground"
       aria-label={`${SITE_NAME}, trang chủ`}
     >
-      {/* <span className="font-display text-[1.7rem] font-black leading-none tracking-[-0.075em] transition-transform duration-300 group-hover:-translate-y-px max-[374px]:text-[1.45rem]"> */}
       <span className="font-agatho text-[1.7rem] font-black leading-none tracking-[-0.075em] transition-transform duration-300 group-hover:-translate-y-px max-[374px]:text-[1.45rem]">
-        {/* <span className="font-akira text-[1.35rem] font-bold leading-none tracking-tight transition-transform duration-300 group-hover:-translate-y-px max-[374px]:text-[1.15rem]"> */}
         ToTo
       </span>
       <span className="relative ml-3 pb-0.5 text-[0.98rem] font-black leading-none tracking-[0.2em] text-primary max-[374px]:ml-2 max-[374px]:text-[0.78rem]">
@@ -50,71 +44,13 @@ export function SiteHeader() {
 
   // Stores
   const { user, isAuthModalOpen: authOpen, setAuthModalOpen: setAuthOpen, logout } = useCustomerUserStore()
-  const { products } = useDataStore()
   const totalItems = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
   )
   const openCart = useCartStore((state) => state.openCart)
 
-  // Search state
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-  const searchRef = useRef<HTMLDivElement>(null)
-
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href)
-
-  // Handle live search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([])
-      setIsSearching(false)
-      return
-    }
-
-    setIsSearching(true)
-    const q = searchQuery.toLowerCase().trim()
-
-    // Filter local products store as fallback or live result
-    const localFiltered = (products || []).filter((p: any) => {
-      const title = String(p?.title || p?.name || "").toLowerCase()
-      const desc = String(p?.description || "").toLowerCase()
-      const cat = String(
-        typeof p?.category === "object" ? p?.category?.name : p?.category || ""
-      ).toLowerCase()
-      return title.includes(q) || desc.includes(q) || cat.includes(q)
-    })
-
-    // Also attempt fetching from API if running with backend
-    fetch(`/api/products/search?q=${encodeURIComponent(q)}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && Array.isArray(data) && data.length > 0) {
-          setSearchResults(data)
-        } else {
-          setSearchResults(localFiltered)
-        }
-      })
-      .catch(() => {
-        setSearchResults(localFiltered)
-      })
-      .finally(() => {
-        setIsSearching(false)
-      })
-  }, [searchQuery, products])
-
-  // Click outside to close live search dropdown
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setIsSearchOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
 
   return (
     <header className="site-glass-header fixed inset-x-0 top-0 z-50 border-b border-white/60 text-foreground backdrop-blur-xl backdrop-saturate-150 shadow-[0_10px_40px_rgba(7,17,15,0.14),inset_0_1px_0_rgba(255,255,255,0.82)]">

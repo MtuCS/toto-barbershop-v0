@@ -7,7 +7,6 @@ import { useEffect, useMemo, useState } from "react"
 import { useCartStore } from "@/store/cart-store"
 import { useDataStore } from "@/store/data-store"
 import { formatCurrency } from "@/lib/format"
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FLAT_FEE } from "@/lib/constants"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { ProductCard } from "@/components/website/product-card"
@@ -37,7 +36,7 @@ export function CartPage() {
       setCouponInput("")
       toast.info("Giỏ hàng thay đổi, vui lòng áp dụng lại mã giảm giá.")
     }
-  }, [subtotal])
+  }, [subtotal, coupon])
 
   const applyCoupon = async () => { 
     const value = couponInput.trim().toUpperCase()
@@ -59,7 +58,7 @@ export function CartPage() {
         setDiscount(0)
         setCouponError(data.error || "Mã giảm giá không hợp lệ.")
       }
-    } catch (e) {
+    } catch {
       setCoupon(null)
       setDiscount(0)
       setCouponError("Lỗi kết nối. Vui lòng thử lại.")

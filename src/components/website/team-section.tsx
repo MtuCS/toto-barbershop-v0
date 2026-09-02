@@ -1,5 +1,5 @@
 import Image from "next/image"
-import { Scissors, Award, Sparkles } from "lucide-react"
+import { Scissors, Award } from "lucide-react"
 
 export interface BarberMember {
   name: string

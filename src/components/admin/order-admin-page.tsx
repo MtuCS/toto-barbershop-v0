@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { useDataStore } from "@/store/data-store"
 import { formatCurrency } from "@/lib/format"
 import { Button } from "@/components/ui/button"
-import { Search, Package, MapPin, Phone, User, Calendar, CreditCard, Clock, CheckCircle2, XCircle, Truck, Mail } from "lucide-react"
+import { Search, Package, MapPin, Phone, User, Calendar, CreditCard, Clock, CheckCircle2, XCircle, Truck, Mail, AlertTriangle, History, ArrowRight } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import type { Order, OrderStatus, PaymentStatus } from "@/types"
+import type { Order, OrderStatus, PaymentStatus, OrderStatusHistory } from "@/types"
 import Image from "next/image"
 
 const orderStatusMap: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
@@ -25,8 +26,20 @@ const paymentStatusMap: Record<string, { label: string; color: string; bgColor: 
   REFUNDED: { label: "Hoàn tiền", color: "text-purple-700", bgColor: "bg-purple-100" },
 }
 
+const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
+  PENDING: ['PROCESSING', 'SHIPPED', 'CANCELLED'],
+  PROCESSING: ['SHIPPED', 'COMPLETED', 'CANCELLED'],
+  SHIPPED: ['COMPLETED', 'CANCELLED'],
+  COMPLETED: [], // Trạng thái cuối
+  CANCELLED: [],  // Trạng thái cuối
+}
+
+function getValidTransitions(currentStatus: string): OrderStatus[] {
+  return VALID_TRANSITIONS[currentStatus.toUpperCase()] || []
+}
+
 export function OrderAdminPage() {
-  const { orders, updateOrderStatus, fetchOrders } = useDataStore()
+  const { orders, updateOrderStatus, fetchOrderHistory, fetchOrders } = useDataStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("ALL")
   const [filterPaymentStatus, setFilterPaymentStatus] = useState<string>("ALL")
@@ -34,11 +47,31 @@ export function OrderAdminPage() {
   const [filterFrom, setFilterFrom] = useState("")
   const [filterTo, setFilterTo] = useState("")
 
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [orderHistory, setOrderHistory] = useState<OrderStatusHistory[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+
+  // State popup xác nhận hủy đơn
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [cancelReasonInput, setCancelReasonInput] = useState("")
+
   useEffect(() => {
     fetchOrders()
   }, [fetchOrders])
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-  const [isUpdating, setIsUpdating] = useState(false)
+
+  // Load audit history khi chọn đơn hàng
+  useEffect(() => {
+    if (selectedOrder?.id) {
+      setLoadingHistory(true)
+      fetchOrderHistory(selectedOrder.id)
+        .then(history => setOrderHistory(history))
+        .catch(() => setOrderHistory([]))
+        .finally(() => setLoadingHistory(false))
+    } else {
+      setOrderHistory([])
+    }
+  }, [selectedOrder?.id, fetchOrderHistory])
 
   // Format ngày theo múi giờ Việt Nam để tránh bug ngày 23:59 UTC
   const formatDateVN = (dateStr: string | Date, opts?: Intl.DateTimeFormatOptions) => {
@@ -80,27 +113,69 @@ export function OrderAdminPage() {
     payos: 'PayOS / Chuyển khoản',
   }
 
-  const handleUpdateStatus = async (orderId: string | number, newStatus: OrderStatus) => {
+  const handleStatusClick = (newStatus: OrderStatus) => {
+    if (!selectedOrder) return
+    const currentStatus = (selectedOrder.status || 'PENDING').toUpperCase()
+    
+    // Nếu bấm đúng trạng thái hiện tại thì không làm gì
+    if (currentStatus === newStatus) return
+
+    // Kiểm tra state machine
+    const validTransitions = getValidTransitions(currentStatus)
+    if (!validTransitions.includes(newStatus)) {
+      toast.error(`Không thể chuyển trạng thái từ "${orderStatusMap[currentStatus]?.label || currentStatus}" sang "${orderStatusMap[newStatus]?.label || newStatus}"`)
+      return
+    }
+
+    // Nếu chuyển sang CANCELLED -> mở popup hủy đơn
+    if (newStatus === 'CANCELLED') {
+      setCancelReasonInput("")
+      setCancelModalOpen(true)
+      return
+    }
+
+    // Chuyển trạng thái thông thường
+    executeStatusUpdate(newStatus)
+  }
+
+  const executeStatusUpdate = async (newStatus: OrderStatus, customPaymentStatus?: PaymentStatus, reason?: string) => {
+    if (!selectedOrder) return
     setIsUpdating(true)
     try {
-      await updateOrderStatus(orderId.toString(), { status: newStatus })
-      toast.success("Đã cập nhật trạng thái đơn hàng")
-      setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null)
-    } catch (e) {
+      const payload: { status: string; paymentStatus?: string; cancelReason?: string } = {
+        status: newStatus,
+        ...(customPaymentStatus ? { paymentStatus: customPaymentStatus } : {}),
+        ...(reason ? { cancelReason: reason } : {})
+      }
+
+      const success = await updateOrderStatus(selectedOrder.id.toString(), payload)
+      if (success) {
+        setSelectedOrder(prev => prev ? { 
+          ...prev, 
+          status: newStatus, 
+          ...(customPaymentStatus ? { paymentStatus: customPaymentStatus } : {}) 
+        } : null)
+        
+        // Refresh audit log
+        fetchOrderHistory(selectedOrder.id).then(h => setOrderHistory(h)).catch(() => {})
+      }
+    } catch {
       toast.error("Lỗi khi cập nhật trạng thái")
     } finally {
       setIsUpdating(false)
+      setCancelModalOpen(false)
     }
   }
 
   const handleUpdatePaymentStatus = async (orderId: string | number, newPaymentStatus: PaymentStatus) => {
     setIsUpdating(true)
     try {
-      await updateOrderStatus(orderId.toString(), { paymentStatus: newPaymentStatus })
-
-      toast.success(`Chuyển trạng thái thanh toán thành ${paymentStatusMap[newPaymentStatus]?.label || newPaymentStatus}`)
-      setSelectedOrder(prev => prev ? { ...prev, paymentStatus: newPaymentStatus } : null)
-    } catch (e) {
+      const success = await updateOrderStatus(orderId.toString(), { paymentStatus: newPaymentStatus })
+      if (success) {
+        setSelectedOrder(prev => prev ? { ...prev, paymentStatus: newPaymentStatus } : null)
+        fetchOrderHistory(orderId).then(h => setOrderHistory(h)).catch(() => {})
+      }
+    } catch {
       toast.error("Lỗi khi cập nhật thanh toán")
     } finally {
       setIsUpdating(false)
@@ -253,6 +328,7 @@ export function OrderAdminPage() {
           {selectedOrder && (() => {
             const oStatus = (selectedOrder.status || 'PENDING').toUpperCase() as OrderStatus
             const pStatus = (selectedOrder.paymentStatus || 'UNPAID').toUpperCase() as PaymentStatus
+            const isTerminal = oStatus === 'COMPLETED' || oStatus === 'CANCELLED'
             
             return (
               <>
@@ -360,36 +436,190 @@ export function OrderAdminPage() {
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold uppercase text-neutral-500 flex items-center gap-2">
-                        <Package className="size-4" /> Trạng thái Đơn hàng
-                      </h3>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold uppercase text-neutral-500 flex items-center gap-2">
+                          <Package className="size-4" /> Trạng thái Đơn hàng
+                        </h3>
+                        {isTerminal && (
+                          <span className="text-[11px] font-semibold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">
+                            Trạng thái kết thúc
+                          </span>
+                        )}
+                      </div>
                       
                       <div className="flex flex-col gap-2">
-                        {(['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'] as OrderStatus[]).map(status => {
-                          const conf = orderStatusMap[status]
-                          const isActive = oStatus === status
-                          const StatusIcon = conf.icon
+                        {(() => {
+                          const validTransitions = getValidTransitions(oStatus);
+                          return (['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'] as OrderStatus[]).map(status => {
+                            const conf = orderStatusMap[status]
+                            const isActive = oStatus === status
+                            const isValid = validTransitions.includes(status)
+                            const StatusIcon = conf.icon
+                            const isDisabled = isUpdating || isActive || !isValid
+
+                            let tooltip = ""
+                            if (isActive) tooltip = "Trạng thái hiện tại của đơn hàng"
+                            else if (isTerminal) tooltip = "Đơn hàng đã kết thúc, không thể đổi trạng thái"
+                            else if (!isValid) tooltip = `Không thể chuyển từ "${orderStatusMap[oStatus]?.label}" sang "${conf.label}"`
+
+                            return (
+                              <Button 
+                                key={status}
+                                variant={isActive ? "default" : "outline"}
+                                disabled={isDisabled}
+                                title={tooltip}
+                                onClick={() => handleStatusClick(status)}
+                                className={`justify-start transition-all ${
+                                  isActive 
+                                    ? conf.bgColor + ' ' + conf.color + ' border-transparent font-bold cursor-default shadow-xs' 
+                                    : isValid
+                                      ? 'text-neutral-700 hover:bg-neutral-100 hover:border-neutral-300 font-medium cursor-pointer'
+                                      : 'opacity-30 text-neutral-400 bg-neutral-50/50 cursor-not-allowed border-dashed'
+                                }`}
+                              >
+                                <StatusIcon className="size-4 mr-2 shrink-0" /> {conf.label}
+                                {isActive && <CheckCircle2 className="size-4 ml-auto text-current" />}
+                              </Button>
+                            )
+                          })
+                        })()}
+                      </div>
+
+                      {oStatus === 'COMPLETED' && (
+                        <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2">
+                          <CheckCircle2 className="size-4 shrink-0" />
+                          <span>Đơn hàng đã <strong>Hoàn thành</strong> (Trạng thái kết thúc, doanh thu đã ghi nhận).</span>
+                        </div>
+                      )}
+
+                      {oStatus === 'CANCELLED' && (
+                        <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-center gap-2">
+                          <XCircle className="size-4 shrink-0" />
+                          <span>Đơn hàng đã <strong>Hủy</strong> (Trạng thái kết thúc, kho đã hoàn trả).</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Lịch sử thay đổi trạng thái (Audit Log) */}
+                  <div className="border-t border-neutral-100 pt-8 space-y-4">
+                    <h3 className="text-sm font-bold uppercase text-neutral-500 flex items-center gap-2">
+                      <History className="size-4" /> Lịch sử thay đổi trạng thái {orderHistory.length > 0 && `(${orderHistory.length})`}
+                    </h3>
+                    
+                    {loadingHistory ? (
+                      <p className="text-xs text-neutral-400 italic">Đang tải lịch sử thay đổi...</p>
+                    ) : orderHistory.length === 0 ? (
+                      <p className="text-xs text-neutral-400 italic">Chưa có lịch sử thay đổi trạng thái nào.</p>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {orderHistory.map((item) => {
+                          const oldConf = orderStatusMap[item.oldStatus?.toUpperCase()] || { label: item.oldStatus, color: 'text-neutral-600', bgColor: 'bg-neutral-100' };
+                          const newConf = orderStatusMap[item.newStatus?.toUpperCase()] || { label: item.newStatus, color: 'text-neutral-600', bgColor: 'bg-neutral-100' };
                           return (
-                            <Button 
-                              key={status}
-                              variant={isActive ? "default" : "outline"}
-                              disabled={isUpdating}
-                              onClick={() => handleUpdateStatus(selectedOrder.id, status)}
-                              className={`justify-start ${isActive ? conf.bgColor + ' ' + conf.color + ' border-transparent font-bold hover:' + conf.bgColor : 'text-neutral-600 hover:bg-neutral-50'}`}
-                            >
-                              <StatusIcon className="size-4 mr-2" /> {conf.label}
-                              {isActive && <CheckCircle2 className="size-4 ml-auto" />}
-                            </Button>
-                          )
+                            <div key={item.id} className="text-xs bg-neutral-50/80 border border-neutral-100 rounded-xl p-3 flex flex-col gap-1.5">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 font-bold">
+                                  <span className={`px-2 py-0.5 rounded text-[11px] ${oldConf.bgColor} ${oldConf.color}`}>{oldConf.label}</span>
+                                  <ArrowRight className="size-3 text-neutral-400" />
+                                  <span className={`px-2 py-0.5 rounded text-[11px] ${newConf.bgColor} ${newConf.color}`}>{newConf.label}</span>
+                                </div>
+                                <span className="text-[11px] text-neutral-400 flex items-center gap-1">
+                                  <Clock className="size-3" />
+                                  {formatDateVN(item.changedAt, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center justify-between gap-2 text-neutral-600 mt-0.5">
+                                <span>Người thực hiện: <strong className="text-neutral-800">{item.changedBy}</strong></span>
+                                {item.note && <span className="text-neutral-500 italic bg-white px-2 py-0.5 rounded border border-neutral-100">&quot;{item.note}&quot;</span>}
+                              </div>
+                            </div>
+                          );
                         })}
                       </div>
-                    </div>
+                    )}
                   </div>
 
                 </div>
               </>
             )
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal xác nhận hủy đơn & nhắc nhở hoàn tiền */}
+      <Dialog open={cancelModalOpen} onOpenChange={(open) => !open && setCancelModalOpen(false)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-red-600 flex items-center gap-2">
+              <AlertTriangle className="size-5" /> Xác nhận hủy đơn hàng
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {selectedOrder && (selectedOrder.paymentStatus || '').toUpperCase() === 'PAID' && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 space-y-2">
+                <p className="text-sm font-bold flex items-center gap-1.5">
+                  <AlertTriangle className="size-4 text-amber-600 shrink-0" />
+                  Cảnh báo: Đơn hàng đã thanh toán thành công!
+                </p>
+                <p className="text-xs leading-relaxed">
+                  Đơn này đã được thanh toán <strong>{formatCurrency(selectedOrder.total)}</strong> qua <strong>{paymentMethodLabel[selectedOrder.paymentMethod?.toLowerCase()] || selectedOrder.paymentMethod?.toUpperCase()}</strong>. Bạn có muốn đánh dấu đơn hàng cần <strong>Hoàn tiền (REFUNDED)</strong> để quản lý việc hoàn tiền cho khách không?
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-bold uppercase text-neutral-600 block mb-1.5">
+                Lý do hủy đơn hàng (sẽ gửi email báo khách & lưu audit log):
+              </label>
+              <Textarea 
+                placeholder="VD: Khách hàng yêu cầu hủy, hết hàng trong kho, sai thông tin giao hàng..."
+                value={cancelReasonInput}
+                onChange={(e) => setCancelReasonInput(e.target.value)}
+                className="text-sm min-h-[80px]"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2 border-t border-neutral-100">
+            <Button variant="ghost" size="sm" onClick={() => setCancelModalOpen(false)} disabled={isUpdating}>
+              Bỏ qua
+            </Button>
+            
+            {selectedOrder && (selectedOrder.paymentStatus || '').toUpperCase() === 'PAID' ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  disabled={isUpdating}
+                  onClick={() => executeStatusUpdate('CANCELLED', undefined, cancelReasonInput || 'Admin hủy đơn (chưa hoàn tiền)')}
+                  className="text-neutral-700"
+                >
+                  Chỉ Hủy đơn (Chưa hoàn tiền)
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  disabled={isUpdating}
+                  onClick={() => executeStatusUpdate('CANCELLED', 'REFUNDED', cancelReasonInput || 'Admin hủy đơn & Đánh dấu hoàn tiền')}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold"
+                >
+                  Hủy đơn + Đánh dấu Hoàn tiền
+                </Button>
+              </>
+            ) : (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                disabled={isUpdating}
+                onClick={() => executeStatusUpdate('CANCELLED', undefined, cancelReasonInput || 'Admin hủy đơn hàng')}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold"
+              >
+                Xác nhận Hủy đơn
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

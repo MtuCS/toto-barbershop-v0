@@ -44,13 +44,12 @@ export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
       // Freeze wheel at exact target position while modal is open
       controls.stop();
     }
-  }, [isSpinning, Boolean(result), controls]);
+  }, [isSpinning, result, controls]);
 
   const spin = async () => {
     if (isSpinning || result) return;
     setIsSpinning(true);
     setResult(null);
-    setCopied(false);
 
     // Stop idle animation immediately
     controls.stop();
