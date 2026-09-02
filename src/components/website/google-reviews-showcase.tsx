@@ -95,33 +95,33 @@ export function GoogleReviewsShowcase() {
         {googleReviewsData.slice(currentIndex, currentIndex + 3).map((review) => (
           <div
             key={review.id}
-            className="flex flex-col justify-between rounded-2xl border border-white/10 bg-white p-6 text-[#101715] shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+            className="flex flex-col justify-between rounded-xl border border-white/10 bg-white p-4 sm:p-5 text-[#101715] shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl"
           >
             <div>
               {/* Header: User Info & Google Icon */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex items-center gap-2.5">
                   <div
-                    className={`flex size-11 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm ${review.avatarBg}`}
+                    className={`flex size-9 sm:size-10 items-center justify-center rounded-full text-xs sm:text-sm font-bold text-white shadow-sm shrink-0 ${review.avatarBg}`}
                   >
                     {review.initials}
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5 font-bold text-neutral-900 text-sm md:text-base">
+                    <div className="flex items-center gap-1 font-bold text-neutral-900 text-xs sm:text-sm">
                       {review.name}
                       {review.verified && (
-                        <CheckCircle2 className="size-4 fill-blue-500 text-white" />
+                        <CheckCircle2 className="size-3.5 fill-blue-500 text-white" />
                       )}
                     </div>
-                    <p className="text-[11px] text-neutral-400 font-medium">
+                    <p className="text-[10px] text-neutral-400 font-medium">
                       {review.timeAgo}
                     </p>
                   </div>
                 </div>
 
                 {/* Google "G" Badge */}
-                <div className="flex size-7 items-center justify-center rounded-full bg-neutral-100 p-1">
-                  <svg className="size-4" viewBox="0 0 24 24">
+                <div className="flex size-6 items-center justify-center rounded-full bg-neutral-100 p-1 shrink-0">
+                  <svg className="size-3.5" viewBox="0 0 24 24">
                     <path
                       fill="#4285F4"
                       d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
@@ -143,27 +143,27 @@ export function GoogleReviewsShowcase() {
               </div>
 
               {/* Stars */}
-              <div className="mt-4 flex items-center gap-1">
+              <div className="mt-2.5 flex items-center gap-1">
                 {[...Array(review.rating)].map((_, i) => (
                   <Star
                     key={i}
-                    className="size-4 fill-amber-400 text-amber-400"
+                    className="size-3.5 fill-amber-400 text-amber-400"
                   />
                 ))}
               </div>
 
               {/* Review Text */}
-              <p className="mt-3 text-sm leading-relaxed text-neutral-700">
+              <p className="mt-2 text-xs sm:text-sm leading-relaxed text-neutral-700 line-clamp-3">
                 {review.text}
               </p>
 
               {/* Review Photos if any */}
               {review.photos && review.photos.length > 0 && (
-                <div className="mt-4 flex gap-2 overflow-hidden rounded-xl">
+                <div className="mt-2.5 flex gap-2 overflow-hidden rounded-lg">
                   {review.photos.map((photo, idx) => (
                     <div
                       key={idx}
-                      className="relative h-28 w-1/2 overflow-hidden rounded-lg border border-neutral-200"
+                      className="relative h-14 sm:h-16 w-1/2 overflow-hidden rounded-md border border-neutral-200"
                     >
                       <Image
                         src={photo}
@@ -178,7 +178,7 @@ export function GoogleReviewsShowcase() {
             </div>
 
             {/* Bottom Tag */}
-            <div className="mt-6 border-t border-neutral-100 pt-3 flex items-center justify-between text-[11px] text-neutral-400">
+            <div className="mt-3 border-t border-neutral-100 pt-2 flex items-center justify-between text-[10px] text-neutral-400">
               <span>Đã xác minh bởi Google</span>
               <span className="font-semibold text-emerald-600">✓ Trải nghiệm thực tế</span>
             </div>
@@ -187,26 +187,26 @@ export function GoogleReviewsShowcase() {
       </div>
 
       {/* Navigation Controls */}
-      <div className="mt-8 flex items-center justify-between">
+      <div className="mt-4 sm:mt-5 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={prev}
             aria-label="Xem review trước"
-            className="flex size-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-all hover:border-[#79b8a7] hover:bg-[#79b8a7] hover:text-[#050c0a]"
+            className="flex size-8 sm:size-9 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-all hover:border-[#79b8a7] hover:bg-[#79b8a7] hover:text-[#050c0a]"
           >
-            <ChevronLeft className="size-5" />
+            <ChevronLeft className="size-4" />
           </button>
           <button
             type="button"
             onClick={next}
             aria-label="Xem review tiếp theo"
-            className="flex size-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-all hover:border-[#79b8a7] hover:bg-[#79b8a7] hover:text-[#050c0a]"
+            className="flex size-8 sm:size-9 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-all hover:border-[#79b8a7] hover:bg-[#79b8a7] hover:text-[#050c0a]"
           >
-            <ChevronRight className="size-5" />
+            <ChevronRight className="size-4" />
           </button>
-          <span className="ml-3 text-xs text-white/50">
-            Hiển thị {currentIndex + 1} – {Math.min(currentIndex + 3, googleReviewsData.length)} trên {googleReviewsData.length} đánh giá
+          <span className="ml-2 text-[11px] text-white/50">
+            {currentIndex + 1} – {Math.min(currentIndex + 3, googleReviewsData.length)} / {googleReviewsData.length}
           </span>
         </div>
 
@@ -214,10 +214,10 @@ export function GoogleReviewsShowcase() {
           href="https://www.google.com/maps/place/Toto+babershop/@10.793289,106.644723,17z/data=!4m6!3m5!1s0x317529fab862286b:0x558f62689c90fdae!8m2!3d10.793289!4d106.644723!16s%2Fg%2F11sy6vhbxb?entry=ttu"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-semibold text-white/80 transition-all hover:border-[#79b8a7] hover:text-white"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 transition-all hover:border-[#79b8a7] hover:text-white"
         >
-          <span>Xem tất cả 73 đánh giá trên Google Maps</span>
-          <ExternalLink className="size-3.5" />
+          <span>Xem tất cả 73 đánh giá</span>
+          <ExternalLink className="size-3" />
         </a>
       </div>
     </div>

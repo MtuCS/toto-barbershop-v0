@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Check, ShoppingCart, Zap } from "lucide-react"
+import { Check, ShoppingCart } from "lucide-react"
 import type { Product, ProductVariant } from "@/types"
 import { cn } from "@/lib/utils"
 import { formatCurrency, discountPercent } from "@/lib/format"
@@ -51,9 +51,9 @@ export function ProductCard({ product, priority = false }: { product: Product; f
         <span className="text-xs uppercase tracking-wide text-muted-foreground">{product.collection}</span>
         <Link href={`/shop/${product.slug}`} className="mt-0.5 font-medium leading-snug hover:text-primary">{product.title}</Link>
         <div className="mt-1 flex items-center gap-2"><span className="font-display text-lg font-bold">{formatCurrency(product.basePrice)}</span>{product.compareAtPrice ? <span className="text-sm text-muted-foreground line-through">{formatCurrency(product.compareAtPrice)}</span> : null}</div>
-        <div className="mt-3 grid grid-cols-[1fr_1.35fr] gap-2">
-          <Button variant="outline" className="h-10 font-semibold" onClick={() => startAction("cart")} disabled={soldOut} aria-label={`Thêm ${product.title} vào giỏ`}><ShoppingCart className="size-4" /><span className="hidden sm:inline">Giỏ</span></Button>
-          <Button className="h-10 bg-primary font-semibold hover:bg-[#2f7a68]" onClick={() => startAction("buy")} disabled={soldOut}><Zap className="size-4" />{soldOut ? "Hết hàng" : "Mua ngay"}</Button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button variant="outline" className="h-10 font-semibold" onClick={() => startAction("cart")} disabled={soldOut} aria-label={`Thêm ${product.title} vào giỏ`}><ShoppingCart className="size-4" /><span>Giỏ</span></Button>
+          <Button className="h-10 bg-primary font-semibold hover:bg-[#2f7a68]" onClick={() => startAction("buy")} disabled={soldOut}>{soldOut ? "Hết hàng" : "Mua ngay"}</Button>
         </div>
       </div>
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>

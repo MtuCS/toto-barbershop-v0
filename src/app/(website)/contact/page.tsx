@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function Page() {
   const settings = await getSettings()
   const contact = settings?.contact || { phone: "", email: "", address: "" }
-  
+
   const contactItems = [
     [MapPin, contact?.address || "85 Đồng Đen, Phường 12, Quận Tân Bình, TP.HCM"],
     [Phone, contact?.phone || "0981 378 179"],
@@ -66,9 +66,9 @@ export default async function Page() {
       </section>
 
       {/* Map and Directions Component */}
-      <div className="border-t border-white/10">
+      {/* <div className="border-t border-white/10">
         <MapSection />
-      </div>
+      </div> */}
     </MarketingPageShell>
   )
 }

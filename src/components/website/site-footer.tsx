@@ -157,22 +157,7 @@ export function SiteFooter() {
               referrerPolicy="no-referrer-when-downgrade"
               className="absolute inset-0 size-full contrast-[1.05] grayscale-[0.2]"
             />
-            <div
-              aria-hidden="true"
-              data-testid="footer-map-marker"
-              className="pointer-events-none absolute left-1/2 top-1/2 z-10 size-0"
-            >
-              <div className="relative -translate-x-1/2 -translate-y-full">
-                <span
-                  data-testid="footer-map-marker-label"
-                  className="absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#8d211b]/70 bg-[#c93a30] px-2.5 py-1 text-xs font-bold tracking-wide text-white shadow-md"
-                >
-                  {businessName}
-                </span>
-                <MapPin className="size-11 fill-[#c93a30] stroke-[#8d211b] stroke-[1.5] drop-shadow-md" />
-                <span className="absolute bottom-[9px] left-1/2 size-2.5 -translate-x-1/2 rounded-full bg-white" />
-              </div>
-            </div>
+
           </div>
         </div>
 
