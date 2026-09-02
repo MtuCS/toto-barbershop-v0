@@ -39,7 +39,6 @@ export const metadata: Metadata = {
   },
   description:
     'Toto Barbershop — barber culture, grooming, training và merchandise. Cắt tóc chuẩn barber, sản phẩm chăm sóc và đồ streetwear mang tinh thần của tiệm.',
-  generator: 'v0.app',
   keywords: [
     'barbershop',
     'barber',
@@ -51,11 +50,12 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: '/icon-light-32x32.png', media: '(prefers-color-scheme: light)' },
-      { url: '/icon-dark-32x32.png', media: '(prefers-color-scheme: dark)' },
+      { url: '/images/T_logo.png' },
       { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' },
     ],
-    apple: '/apple-icon.png',
+    shortcut: '/images/T_logo.png',
+    apple: '/images/T_logo.png',
   },
 }
 
