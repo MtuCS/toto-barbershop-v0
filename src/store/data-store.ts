@@ -59,7 +59,8 @@ interface DataState {
   createUser: (userData: any) => Promise<void>
   updateUser: (id: string | number, userData: any) => Promise<void>
   deleteUser: (id: string | number) => Promise<void>
-  updateOrderStatus: (id: string, data: { status?: string, paymentStatus?: string }) => Promise<void>
+  updateOrderStatus: (id: string, data: { status?: string, paymentStatus?: string, cancelReason?: string }) => Promise<boolean>
+  fetchOrderHistory: (id: string | number) => Promise<any[]>
   cancelOrder: (id: string, token: string) => Promise<boolean>
   
   upsertProduct: (product: Partial<Product>) => Promise<void>
@@ -334,13 +335,34 @@ export const useDataStore = create<DataState>()(
           if (res.ok) {
             get().fetchOrders();
             toast.success("Đã cập nhật trạng thái đơn hàng!");
+            return true;
           } else {
             const err = await res.json();
             toast.error(err.error || 'Lỗi cập nhật đơn hàng');
+            return false;
           }
         } catch (error) {
           console.error("Failed to update order:", error);
           toast.error('Lỗi kết nối máy chủ');
+          return false;
+        }
+      },
+
+      fetchOrderHistory: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${id}/history`, {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          if (res.ok) {
+            return await res.json();
+          }
+          return [];
+        } catch (error) {
+          console.error("Failed to fetch order history:", error);
+          return [];
         }
       },
 

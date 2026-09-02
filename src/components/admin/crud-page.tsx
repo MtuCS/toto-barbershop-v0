@@ -1547,19 +1547,28 @@ export function CrudPage({ section }: { section: string }) {
       const phone = o.customerPhone || o.customer?.phone || (typeof o.shippingAddress === 'object' ? (o.shippingAddress as any)?.phone : '') || '';
       const name = o.customerName || o.customer?.name || (typeof o.shippingAddress === 'object' ? (o.shippingAddress as any)?.fullName || (o.shippingAddress as any)?.name : '') || 'Khách vãng lai';
       
+      const st = (o.status || '').toUpperCase();
+      const ps = (o.paymentStatus || '').toUpperCase();
+
+      // Chỉ tính vào Tổng chi tiêu nếu đơn đã hoàn thành hoặc đã thanh toán mà không bị hủy/hoàn tiền
+      const isCountedSpent = (st === 'COMPLETED' || ps === 'PAID') && st !== 'CANCELLED' && ps !== 'REFUNDED';
+      const orderAmount = isCountedSpent ? (Number(o.total) || 0) : 0;
+      // Đơn hợp lệ (không tính đơn hủy)
+      const isCountedOrder = st !== 'CANCELLED';
+
       let matched = false;
       if (emailKey && customerMap.has(emailKey)) {
         const c = customerMap.get(emailKey);
-        c.totalOrders += 1;
-        c.totalSpent += (Number(o.total) || 0);
+        if (isCountedOrder) c.totalOrders += 1;
+        c.totalSpent += orderAmount;
         if (!c.phone && phone) c.phone = phone;
         matched = true;
       }
       if (!matched && o.userId) {
         for (const c of customerMap.values()) {
           if (c.id === o.userId) {
-            c.totalOrders += 1;
-            c.totalSpent += (Number(o.total) || 0);
+            if (isCountedOrder) c.totalOrders += 1;
+            c.totalSpent += orderAmount;
             matched = true;
             break;
           }
@@ -1573,8 +1582,8 @@ export function CrudPage({ section }: { section: string }) {
           phone: phone,
           role: 'GUEST',
           createdAt: o.createdAt || new Date(),
-          totalOrders: 1,
-          totalSpent: Number(o.total) || 0,
+          totalOrders: isCountedOrder ? 1 : 0,
+          totalSpent: orderAmount,
         });
       }
     });
@@ -3102,8 +3111,13 @@ export function CrudPage({ section }: { section: string }) {
                               </span>
                             </td>
                             <td>
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${order.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : "bg-neutral-100 text-neutral-600"}`}>
-                                {order.paymentStatus === "PAID" ? "Đã trả" : "Chưa trả"}
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                (order.paymentStatus || '').toUpperCase() === "PAID" ? "bg-emerald-100 text-emerald-800" :
+                                (order.paymentStatus || '').toUpperCase() === "REFUNDED" ? "bg-purple-100 text-purple-800" :
+                                "bg-neutral-100 text-neutral-600"
+                              }`}>
+                                {(order.paymentStatus || '').toUpperCase() === "PAID" ? "Đã trả" :
+                                 (order.paymentStatus || '').toUpperCase() === "REFUNDED" ? "Hoàn tiền" : "Chưa trả"}
                               </span>
                             </td>
                             <td className="text-right pr-3 font-bold text-neutral-900">{formatCurrency(order.total || 0)}</td>
