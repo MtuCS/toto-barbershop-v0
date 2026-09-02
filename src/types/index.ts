@@ -224,6 +224,16 @@ export interface OrderTimelineEntry {
   note?: string
 }
 
+export interface OrderStatusHistory {
+  id: number
+  orderId: number
+  oldStatus: string
+  newStatus: string
+  changedBy: string
+  note?: string | null
+  changedAt: string
+}
+
 export interface Order {
   [key: string]: unknown
   id: ID
@@ -246,6 +256,7 @@ export interface Order {
   paymentStatus: PaymentStatus
   status: OrderStatus
   timeline: OrderTimelineEntry[]
+  statusHistory?: OrderStatusHistory[]
   createdAt: string
 }
 
