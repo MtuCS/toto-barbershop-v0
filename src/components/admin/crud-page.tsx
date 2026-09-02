@@ -1,6 +1,6 @@
 "use client"
 import Image from "next/image"
-import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, KeyRound, Copy, Check, PhoneCall, Mail, ShoppingBag, UserCheck, RefreshCw, ShieldCheck, User } from "lucide-react"
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
@@ -743,6 +743,128 @@ function SettingsForm() {
 
         <Button onClick={handleSave} className="sm:col-span-2 mt-4">Lưu thay đổi</Button>
       </div>
+
+      <ChangeAdminPasswordCard />
+    </div>
+  )
+}
+
+function ChangeAdminPasswordCard() {
+  const session = useAuthStore(s => s.session)
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [showPass, setShowPass] = useState(false)
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("Vui lòng điền đầy đủ các trường mật khẩu")
+      return
+    }
+    if (newPassword.length < 6) {
+      toast.error("Mật khẩu mới phải có tối thiểu 6 ký tự")
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp!")
+      return
+    }
+
+    setLoading(true)
+    try {
+      const token = useAuthStore.getState().session?.token
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || "Đổi mật khẩu thành công!")
+        setCurrentPassword("")
+        setNewPassword("")
+        setConfirmPassword("")
+      } else {
+        toast.error(data.error || "Đổi mật khẩu thất bại")
+      }
+    } catch (err: any) {
+      toast.error("Lỗi khi kết nối đến máy chủ")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="mt-8 max-w-3xl border bg-white p-6">
+      <div className="flex items-center gap-2 border-b pb-3 mb-5">
+        <KeyRound className="size-5 text-amber-600" />
+        <div>
+          <h2 className="font-bold text-lg">Bảo mật & Đổi mật khẩu của tôi</h2>
+          <p className="text-xs text-neutral-500">Đang đăng nhập với email: <strong className="text-neutral-800">{session?.email}</strong></p>
+        </div>
+      </div>
+
+      <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Mật khẩu hiện tại</label>
+          <div className="relative">
+            <Input 
+              type={showPass ? "text" : "password"} 
+              value={currentPassword} 
+              onChange={e => setCurrentPassword(e.target.value)} 
+              placeholder="Nhập mật khẩu đang sử dụng..." 
+              required
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Mật khẩu mới</label>
+          <div className="relative">
+            <Input 
+              type={showPass ? "text" : "password"} 
+              value={newPassword} 
+              onChange={e => setNewPassword(e.target.value)} 
+              placeholder="Tối thiểu 6 ký tự..." 
+              required
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-neutral-600">Xác nhận mật khẩu mới</label>
+          <div className="relative">
+            <Input 
+              type={showPass ? "text" : "password"} 
+              value={confirmPassword} 
+              onChange={e => setConfirmPassword(e.target.value)} 
+              placeholder="Nhập lại mật khẩu mới..." 
+              required
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-2">
+          <button 
+            type="button" 
+            onClick={() => setShowPass(!showPass)} 
+            className="text-xs text-neutral-500 hover:text-neutral-800 flex items-center gap-1 cursor-pointer"
+          >
+            {showPass ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            {showPass ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+          </button>
+
+          <Button type="submit" disabled={loading} className="gap-2">
+            <KeyRound className="size-4" />
+            {loading ? "Đang xử lý..." : "Cập nhật mật khẩu"}
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }
@@ -1028,6 +1150,47 @@ export function CrudPage({ section }: { section: string }) {
   const pageSize = 10
   const [itemToDelete, setItemToDelete] = useState<Row | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+
+  // Customer & Staff Support States (Reset Password & Detail Drawer)
+  const [resetPasswordUser, setResetPasswordUser] = useState<Row | null>(null)
+  const [newPasswordValue, setNewPasswordValue] = useState("")
+  const [showNewPassword, setShowNewPassword] = useState(true)
+  const [copiedPassword, setCopiedPassword] = useState(false)
+  const [viewingCustomer, setViewingCustomer] = useState<Row | null>(null)
+
+  const generateRandomPassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%";
+    let pass = "";
+    for (let i = 0; i < 10; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPasswordValue(pass);
+    setCopiedPassword(false);
+  };
+
+  const handleCopyPassword = () => {
+    if (!newPasswordValue) return;
+    navigator.clipboard.writeText(newPasswordValue);
+    setCopiedPassword(true);
+    toast.success("Đã sao chép mật khẩu vào bộ nhớ tạm!");
+    setTimeout(() => setCopiedPassword(false), 2000);
+  };
+
+  const handleConfirmResetPassword = async () => {
+    if (!resetPasswordUser?.id) return;
+    if (!newPasswordValue || newPasswordValue.length < 6) {
+      toast.error("Mật khẩu mới phải có ít nhất 6 ký tự!");
+      return;
+    }
+    try {
+      await d.updateUser(resetPasswordUser.id, { password: newPasswordValue });
+      toast.success(`Đã đổi mật khẩu cho ${resetPasswordUser.name || resetPasswordUser.email} thành công!`);
+      setResetPasswordUser(null);
+      setNewPasswordValue("");
+    } catch (err: any) {
+      toast.error(err.message || "Đổi mật khẩu thất bại!");
+    }
+  };
 
   if (section === 'messages') {
     return <MessagesForm d={d} />
@@ -1469,9 +1632,15 @@ export function CrudPage({ section }: { section: string }) {
                           <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-200/60 rounded-full outline-none">
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuItem onClick={() => setViewingCustomer(r)}>
+                              <Eye className="mr-2 size-4 text-neutral-500" /> Xem hồ sơ & Đơn hàng
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleEdit(r)}>
-                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                              <Edit className="mr-2 size-4 text-neutral-500" /> Chỉnh sửa thông tin
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setResetPasswordUser(r); setNewPasswordValue(""); setCopiedPassword(false); }}>
+                              <KeyRound className="mr-2 size-4 text-amber-600" /> Đặt lại mật khẩu
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
                               <Trash2 className="mr-2 size-4" /> Xóa tài khoản
@@ -1515,9 +1684,12 @@ export function CrudPage({ section }: { section: string }) {
                           <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-200/60 rounded-full outline-none">
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-52">
                             <DropdownMenuItem onClick={() => handleEdit(r)}>
-                              <Edit className="mr-2 size-4" /> Chỉnh sửa & Phân quyền
+                              <Edit className="mr-2 size-4 text-neutral-500" /> Chỉnh sửa & Phân quyền
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setResetPasswordUser(r); setNewPasswordValue(""); setCopiedPassword(false); }}>
+                              <KeyRound className="mr-2 size-4 text-amber-600" /> Đặt lại mật khẩu
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
                               <Trash2 className="mr-2 size-4" /> Xóa nhân viên
@@ -1984,6 +2156,209 @@ export function CrudPage({ section }: { section: string }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal Chi tiết Khách hàng & Lịch sử Đơn hàng */}
+      {viewingCustomer && (
+        <Dialog open={!!viewingCustomer} onOpenChange={(open) => !open && setViewingCustomer(null)}>
+          <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3 text-xl">
+                <div className="size-10 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-200">
+                  {String(viewingCustomer.name || viewingCustomer.email || "K").charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div>{viewingCustomer.name || "Khách hàng"}</div>
+                  <div className="text-xs font-normal text-neutral-400">ID: #{viewingCustomer.id} • Thành viên từ {viewingCustomer.createdAt ? new Date(viewingCustomer.createdAt).toLocaleDateString("vi-VN") : "—"}</div>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-6 py-2">
+              {/* Thống kê nhanh */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-neutral-50 border rounded-xl p-4">
+                  <div className="text-xs text-neutral-500 font-medium">Tổng chi tiêu</div>
+                  <div className="text-xl font-bold text-emerald-600 mt-1">{formatCurrency(viewingCustomer.totalSpent || 0)}</div>
+                </div>
+                <div className="bg-neutral-50 border rounded-xl p-4">
+                  <div className="text-xs text-neutral-500 font-medium">Tổng đơn hàng</div>
+                  <div className="text-xl font-bold text-neutral-900 mt-1">{viewingCustomer.totalOrders || 0} đơn</div>
+                </div>
+                <div className="bg-neutral-50 border rounded-xl p-4">
+                  <div className="text-xs text-neutral-500 font-medium">Vai trò tài khoản</div>
+                  <div className="text-sm font-bold text-neutral-900 mt-1.5 uppercase">{viewingCustomer.role || "CUSTOMER"}</div>
+                </div>
+              </div>
+
+              {/* Thông tin liên hệ */}
+              <div className="border rounded-xl p-4 bg-white space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400">Thông tin liên hệ & Hỗ trợ</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center justify-between p-2.5 bg-neutral-50 rounded-lg border">
+                    <div className="flex items-center gap-2 truncate">
+                      <Mail className="size-4 text-neutral-400 shrink-0" />
+                      <span className="truncate">{viewingCustomer.email || "Chưa có email"}</span>
+                    </div>
+                    {viewingCustomer.email && (
+                      <a href={`mailto:${viewingCustomer.email}`} className="text-xs text-primary hover:underline shrink-0 ml-2 font-medium">Gửi mail</a>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 bg-neutral-50 rounded-lg border">
+                    <div className="flex items-center gap-2 truncate">
+                      <PhoneCall className="size-4 text-neutral-400 shrink-0" />
+                      <span>{viewingCustomer.phone || <span className="italic text-neutral-400">Chưa có SĐT</span>}</span>
+                    </div>
+                    {viewingCustomer.phone && (
+                      <a href={`tel:${viewingCustomer.phone}`} className="text-xs text-primary hover:underline shrink-0 ml-2 font-medium">Gọi điện</a>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Lịch sử đơn hàng */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400">Lịch sử đơn hàng đã đặt</h3>
+                  <span className="text-xs text-neutral-500">
+                    {(d.orders || []).filter((o: any) => o.userId === viewingCustomer.id || o.customer?.email?.toLowerCase() === viewingCustomer.email?.toLowerCase()).length} đơn tìm thấy
+                  </span>
+                </div>
+
+                <div className="border rounded-xl overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-neutral-50 text-neutral-500 border-b">
+                      <tr>
+                        <th className="p-3">Mã đơn</th>
+                        <th>Ngày đặt</th>
+                        <th>Trạng thái</th>
+                        <th>Thanh toán</th>
+                        <th className="text-right pr-3">Tổng tiền</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {(d.orders || [])
+                        .filter((o: any) => o.userId === viewingCustomer.id || o.customer?.email?.toLowerCase() === viewingCustomer.email?.toLowerCase())
+                        .map((order: any) => (
+                          <tr key={order.id} className="hover:bg-neutral-50/50">
+                            <td className="p-3 font-bold font-mono">#{order.id}</td>
+                            <td className="text-neutral-500">{new Date(order.createdAt).toLocaleDateString("vi-VN")}</td>
+                            <td>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                order.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700" :
+                                order.status === "PENDING" ? "bg-amber-50 text-amber-700" :
+                                order.status === "CANCELLED" ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-700"
+                              }`}>
+                                {order.status === "COMPLETED" ? "Đã giao" : order.status === "PENDING" ? "Chờ xử lý" : order.status === "SHIPPED" ? "Đang giao" : order.status === "CANCELLED" ? "Đã hủy" : order.status}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${order.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : "bg-neutral-100 text-neutral-600"}`}>
+                                {order.paymentStatus === "PAID" ? "Đã trả" : "Chưa trả"}
+                              </span>
+                            </td>
+                            <td className="text-right pr-3 font-bold text-neutral-900">{formatCurrency(order.total || 0)}</td>
+                          </tr>
+                        ))}
+                      {(d.orders || []).filter((o: any) => o.userId === viewingCustomer.id || o.customer?.email?.toLowerCase() === viewingCustomer.email?.toLowerCase()).length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="p-8 text-center text-neutral-400">Khách hàng này chưa có đơn hàng nào.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="flex flex-row justify-between sm:justify-between items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => { 
+                  const target = viewingCustomer; 
+                  setViewingCustomer(null); 
+                  setResetPasswordUser(target); 
+                  setNewPasswordValue(""); 
+                }}
+              >
+                <KeyRound className="mr-1.5 size-3.5 text-amber-600" /> Đặt lại mật khẩu
+              </Button>
+              <Button size="sm" onClick={() => setViewingCustomer(null)}>Đóng</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Modal Đổi / Đặt lại Mật khẩu Hỗ trợ Khách hàng & Nhân viên */}
+      {resetPasswordUser && (
+        <Dialog open={!!resetPasswordUser} onOpenChange={(open) => !open && setResetPasswordUser(null)}>
+          <DialogContent className="sm:max-w-[460px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <KeyRound className="size-5 text-amber-600" />
+                Đặt lại mật khẩu {resetPasswordUser.role === 'ADMIN' || resetPasswordUser.role === 'STAFF' || resetPasswordUser.role === 'MANAGER' || resetPasswordUser.role === 'BARBER' ? 'Nhân viên' : 'Khách hàng'}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-3">
+              <div className="p-3 bg-neutral-50 rounded-lg border text-xs space-y-1">
+                <div><span className="text-neutral-500">Tài khoản:</span> <strong className="text-neutral-800">{resetPasswordUser.name || "Chưa có tên"}</strong></div>
+                <div><span className="text-neutral-500">Email:</span> <strong className="text-neutral-800">{resetPasswordUser.email}</strong></div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-neutral-700">Mật khẩu mới</label>
+                  <button 
+                    type="button" 
+                    onClick={generateRandomPassword}
+                    className="text-xs text-primary hover:underline font-medium flex items-center gap-1"
+                  >
+                    <RefreshCw className="size-3" /> Tạo mật khẩu ngẫu nhiên
+                  </button>
+                </div>
+
+                <div className="relative flex items-center">
+                  <Input 
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPasswordValue}
+                    onChange={e => setNewPasswordValue(e.target.value)}
+                    placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)..."
+                    className="pr-20 font-mono text-sm"
+                  />
+                  <div className="absolute right-1 flex items-center">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="p-1.5 text-neutral-400 hover:text-neutral-600 rounded"
+                      title={showNewPassword ? "Ẩn" : "Hiện"}
+                    >
+                      {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={handleCopyPassword}
+                      disabled={!newPasswordValue}
+                      className="p-1.5 text-neutral-400 hover:text-neutral-600 rounded disabled:opacity-30"
+                      title="Sao chép"
+                    >
+                      {copiedPassword ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-neutral-400">Sau khi lưu, bạn có thể copy mật khẩu này gửi cho khách hàng/nhân viên để họ đăng nhập.</p>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setResetPasswordUser(null)}>Hủy bỏ</Button>
+              <Button onClick={handleConfirmResetPassword} disabled={!newPasswordValue || newPasswordValue.length < 6}>
+                Xác nhận đổi mật khẩu
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
