@@ -21,7 +21,6 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import type { OrderStatus, PaymentStatus } from "@/types"
-import { createClient } from "@/utils/supabase/client"
 
 function OrderStepper({ status }: { status: string }) {
   const normStatus = (status || "PENDING").toUpperCase()
@@ -167,13 +166,12 @@ function ProfileContent() {
     }
   }, [user?.id, token])
 
-  // Realtime: Lắng nghe thay đổi trạng thái đơn hàng từ Supabase
+  // Realtime: Lắng nghe thay đổi trạng thái đơn hàng qua SSE (Server-Sent Events)
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !token) return;
 
-    const supabase = createClient();
-    const currentUserId = user.id;
-    const currentUserEmail = user.email;
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? '';
+    const es = new EventSource(`${apiBase}/api/orders/stream?token=${encodeURIComponent(token)}`);
 
     const getStatusLabel = (s: string) => {
       const upper = (s || '').toUpperCase();
@@ -184,46 +182,35 @@ function ProfileContent() {
       return 'Chờ xử lý';
     };
 
-    const channel = supabase
-      .channel(`customer-orders-realtime-${currentUserId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'Order',
-        },
-        (payload: any) => {
-          const updated = payload.new;
-          if (!updated) return;
+    es.addEventListener('order_updated', (e) => {
+      try {
+        const updated = JSON.parse(e.data);
+        if (!updated?.id) return;
 
-          // Kiểm tra xem đơn hàng này có thuộc về user đang đăng nhập không
-          const isMyOrder =
-            Number(updated.userId) === Number(currentUserId) ||
-            (currentUserEmail && updated.customerEmail === currentUserEmail) ||
-            useDataStore.getState().orders.some(o => o.id.toString() === updated.id?.toString());
+        // Cập nhật UI ngay lập tức
+        useDataStore.getState().setOrderStatusInStore(
+          updated.id,
+          updated.status,
+          updated.paymentStatus
+        );
+        const orderCodeDisplay = updated.orderCode || `TOTO-DH${String(updated.id).padStart(4, '0')}`;
+        toast.info(`📦 Đơn hàng #${orderCodeDisplay} đã cập nhật: ${getStatusLabel(updated.status)}`);
+      } catch {
+        // Bỏ qua nếu data không parse được
+      }
+    });
 
-          if (!isMyOrder) return;
-
-          if (payload.eventType === 'UPDATE' && updated.status) {
-            // ⚡ Cập nhật UI NGAY LẬP TỨC từ payload WebSocket (không cần chờ API)
-            useDataStore.getState().setOrderStatusInStore(
-              updated.id,
-              updated.status,
-              updated.paymentStatus
-            );
-            const orderCodeDisplay = updated.orderCode || `TOTO-DH${String(updated.id).padStart(4, '0')}`;
-            toast.info(`📦 Đơn hàng #${orderCodeDisplay} đã cập nhật: ${getStatusLabel(updated.status)}`);
-          }
-        }
-      )
-      .subscribe();
+    es.onerror = () => {
+      // Tự động reconnect do bản thân EventSource xử lý
+    };
 
     return () => {
-      supabase.removeChannel(channel);
+      es.close();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
+  }, [user?.id, token])
+
+
 
 
   const handleSave = async (e: React.FormEvent) => {
