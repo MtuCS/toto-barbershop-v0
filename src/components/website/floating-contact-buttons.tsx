@@ -69,7 +69,7 @@ const SOCIAL_CONTACTS: SocialContact[] = [
     id: "messenger",
     label: "Messenger",
     sublabel: "Fanpage ToTo",
-    href: "https://www.facebook.com/totobarbershopHCM/?locale=vi_VN",
+    href: "https://m.me/totobarbershopHCM",
     icon: <MessengerIcon className="size-5 text-white" />,
     color: "hover:bg-[#0084FF] hover:border-[#0084FF]/50",
   },
@@ -106,7 +106,7 @@ export function FloatingContactButtons() {
       ref={containerRef}
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
-      className="fixed bottom-6 right-6 z-50 flex flex-row-reverse items-center md:bottom-8 md:right-8"
+      className="fixed bottom-20 right-4 z-50 flex flex-row-reverse items-center md:bottom-8 md:right-8"
       aria-label="Cụm nút liên hệ ToTo Barbershop"
     >
       {/* Main Hub Trigger Button */}

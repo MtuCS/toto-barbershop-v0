@@ -108,14 +108,16 @@ export interface TrainingCourse {
   level: 'beginner' | 'intermediate' | 'pro'
   duration: string
   price: number
-  summary: string
-  audience: string[]
-  benefits: string[]
-  roadmap: { week: string; focus: string }[]
-  modules: TrainingModule[]
-  images: string[]
-  instructor: { name: string; role: string; bio: string; avatar: string }
-  status: 'published' | 'draft'
+  summary?: string
+  excerpt?: string
+  description?: string
+  audience?: string[]
+  benefits?: string[]
+  roadmap?: { week: string; focus: string }[]
+  modules?: TrainingModule[]
+  images?: string[]
+  instructor?: { name: string; role: string; bio: string; avatar: string }
+  status?: 'published' | 'draft' | string
 }
 
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'rejected'

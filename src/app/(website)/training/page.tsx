@@ -7,6 +7,7 @@ import { trainingCourses as defaultCourses } from "@/data/training"
 import { formatCurrency } from "@/lib/format"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { Breadcrumbs } from "@/components/website/breadcrumbs"
+import { TrainingForm } from "@/components/website/training-form"
 
 export const metadata: Metadata = {
   title: "Học Viện Đào Tạo Nghề Barber — TOTO Academy",
@@ -150,18 +151,16 @@ export default async function TrainingPage() {
                 <div className="flex flex-col">
                   <div className="flex items-start justify-between gap-6">
                     <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#2f7a68]">
-                      0{index + 1} / {course.level}
+                      0{index + 1} / {course.level || "Chuyên sâu"}
                     </p>
-                    <p className="text-sm font-medium text-neutral-500">{course.duration}</p>
+                    <p className="text-sm font-medium text-neutral-500">{course.duration || "Theo lộ trình"}</p>
                   </div>
                   <h3 className="mt-6 flex items-start font-display text-3xl uppercase leading-[0.95] sm:text-4xl md:min-h-[5.5rem] md:text-5xl">
                     {course.title}
                   </h3>
-                  {course.summary ? (
-                    <p className="mt-4 max-w-lg leading-relaxed text-neutral-600 md:min-h-[3.5rem]">
-                      {course.summary}
-                    </p>
-                  ) : null}
+                  <p className="mt-4 max-w-lg leading-relaxed text-neutral-600 md:min-h-[3.5rem]">
+                    {(course.summary || (course as any).excerpt || (course as any).description || "") as string}
+                  </p>
                   <p className="mt-6 text-xl font-bold tracking-tight">
                     {formatCurrency(course.price)}
                   </p>
@@ -186,7 +185,7 @@ export default async function TrainingPage() {
 
       {/* 5. Section 03: Giảng viên hướng dẫn & Tư vấn học viên */}
       <section id="consultation" className="scroll-mt-24 py-20 md:py-32">
-        <div className="mx-auto grid max-w-[1400px] gap-12 px-5 md:grid-cols-12 md:items-center md:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-12 px-5 md:grid-cols-12 md:items-start md:px-8">
           <div className="md:col-span-5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">
               03 / Giảng viên hướng dẫn
@@ -203,19 +202,6 @@ export default async function TrainingPage() {
                 className="object-contain"
               />
             </figure>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-[#07110f]/90 p-8 backdrop-blur-md md:col-span-6 md:col-start-7 md:p-12">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">
-              Tư vấn & Hỗ trợ học viên
-            </p>
-            <h2 className="mt-4 font-display text-4xl uppercase leading-[1.15] text-[#f2f5f3] md:text-5xl">
-              Bắt đầu hành trình Barber của bạn
-            </h2>
-            <p className="mt-5 text-sm leading-relaxed text-white/70 sm:text-base">
-              Để được tư vấn chi tiết về lịch khai giảng khóa gần nhất, lộ trình học thử và chính sách hỗ trợ dụng cụ đồ nghề, bạn hãy liên hệ trực tiếp với tiệm qua Hotline hoặc ghé thăm tiệm:
-            </p>
-
             <div className="mt-8 space-y-4">
               <a
                 href="tel:0981378179"
@@ -232,7 +218,7 @@ export default async function TrainingPage() {
                     <p className="text-lg font-bold text-white">0981 378 179</p>
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-[#79b8a7]">Gọi tư vấn ➔</span>
+                <span className="text-xs font-semibold text-[#79b8a7]">Gọi ngay ➔</span>
               </a>
 
               <Link
@@ -250,9 +236,18 @@ export default async function TrainingPage() {
                     <p className="text-lg font-bold text-white">Trang liên hệ ToTo</p>
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-white/70">Gửi tin nhắn ➔</span>
+                <span className="text-xs font-semibold text-white/70">Liên hệ ➔</span>
               </Link>
             </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-[#07110f]/90 p-8 md:col-span-7 md:p-10 backdrop-blur-md">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">Đăng ký tư vấn trực tuyến</p>
+            <h2 className="mt-3 font-display text-4xl uppercase leading-[0.9] text-[#f2f5f3] md:text-5xl">Gia nhập TOTO Academy</h2>
+            <p className="mt-3 text-sm leading-relaxed text-white/70 mb-6">
+              Để lại thông tin để nhận giáo trình chi tiết, lịch khai giảng và chính sách hỗ trợ đồ nghề:
+            </p>
+            <TrainingForm />
           </div>
         </div>
       </section>
