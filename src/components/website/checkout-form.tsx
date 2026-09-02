@@ -226,7 +226,14 @@ export function CheckoutForm() {
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity, price: item.price })),
+          items: items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            price: item.price,
+            title: item.title,
+            variantName: item.variantName,
+          })),
           customer: { name: form.name, phone: form.phone, email: form.email, address: fullAddress, note: form.note },
           email: form.email,
           address: { full: fullAddress, province: form.provinceName, district: form.districtName, ward: form.wardName, street: form.street },

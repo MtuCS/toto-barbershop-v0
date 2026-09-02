@@ -36,12 +36,20 @@ export default async function Page({
             <b className="font-mono text-neutral-900 bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200">
               {code}
             </b>
-            . Chúng tôi sẽ liên hệ xác nhận đơn hàng sớm nhất.
+            . Chúng tôi sẽ nhanh chóng chuẩn bị và giao hàng đến bạn.
           </>
         ) : (
-          "Chúng tôi sẽ liên hệ xác nhận đơn hàng của bạn trong thời gian sớm nhất."
+          "Chúng tôi sẽ nhanh chóng chuẩn bị và giao hàng đến bạn trong thời gian sớm nhất."
         )}
       </p>
+
+      {/* Lưu ý thời gian thanh toán */}
+      <div className="mt-6 rounded-xl bg-neutral-50 p-4 border border-neutral-200/80 text-xs text-neutral-500 max-w-md text-left flex items-start gap-2.5">
+        <Sparkles className="size-4 text-emerald-600 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-semibold text-neutral-800">Lưu ý thanh toán:</span> Với đơn hàng chuyển khoản qua PayOS, đơn sẽ được giữ chỗ trong <strong>15 phút</strong>. Bạn có thể xem trạng thái và thanh toán lại trong mục Đơn hàng.
+        </div>
+      </div>
 
       {/* Hành động điều hướng */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full max-w-md">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { User, Phone, MapPin, Mail, Loader2, Save, ShoppingBag, Plus, Trash2, LogOut, Package, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react"
+import { User, Phone, MapPin, Mail, Loader2, Save, ShoppingBag, Plus, Trash2, LogOut, Package, Eye, EyeOff, ChevronDown, ChevronUp, CreditCard, Clock } from "lucide-react"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -350,6 +350,34 @@ function ProfileContent() {
     }
   }
 
+  const [retryingPaymentId, setRetryingPaymentId] = useState<string | number | null>(null)
+
+  const handleRetryPayment = async (orderId: string | number) => {
+    setRetryingPaymentId(orderId)
+    try {
+      const res = await fetch(`/api/orders/${orderId}/retry-payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Không thể tạo lại link thanh toán.")
+      }
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+      } else {
+        toast.info("Vui lòng thử lại sau giây lát.")
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi tạo link thanh toán")
+    } finally {
+      setRetryingPaymentId(null)
+    }
+  }
+
   const handleCancelOrder = async (id: string | number) => {
     const success = await useDataStore.getState().cancelOrder(id.toString(), token || "")
     if (success) {
@@ -494,6 +522,17 @@ function ProfileContent() {
                         {expandedOrderId === o.id ? 'Thu gọn' : 'Xem chi tiết'}
                         {expandedOrderId === o.id ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
                       </Button>
+                      {(o.status || 'PENDING').toUpperCase() === 'PENDING' && (o.paymentStatus || '').toUpperCase() !== 'PAID' && (o.paymentMethod || '').toLowerCase() === 'payos' && (
+                        <Button 
+                          size="sm" 
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold w-full sm:w-auto shadow-sm"
+                          disabled={retryingPaymentId === o.id}
+                          onClick={() => handleRetryPayment(o.id)}
+                        >
+                          {retryingPaymentId === o.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CreditCard className="w-4 h-4 mr-2" />}
+                          Thanh toán ngay (Quét lại QR)
+                        </Button>
+                      )}
                       {(o.status || 'PENDING').toUpperCase() === 'PENDING' && (
                         <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 w-full sm:w-auto" onClick={() => setOrderToCancel(o.id)}>
                           Hủy đơn

@@ -1540,17 +1540,21 @@ export function CrudPage({ section }: { section: string }) {
   if (section === "customers" || section === "staff") {
     const customerMap = new Map();
     (d.customers || []).forEach(c => {
-      const key = (c.email || String(c.id)).toLowerCase();
+      const key = (c.email || String(c.id)).toLowerCase().trim();
       customerMap.set(key, { ...c, totalOrders: 0, totalSpent: 0 });
     });
 
     (d.orders || []).forEach(o => {
-      const emailKey = o.customer?.email?.toLowerCase();
+      const emailKey = (o.customerEmail || o.customer?.email || (typeof o.shippingAddress === 'object' ? (o.shippingAddress as any)?.email : '') || '').toLowerCase().trim();
+      const phone = o.customerPhone || o.customer?.phone || (typeof o.shippingAddress === 'object' ? (o.shippingAddress as any)?.phone : '') || '';
+      const name = o.customerName || o.customer?.name || (typeof o.shippingAddress === 'object' ? (o.shippingAddress as any)?.fullName || (o.shippingAddress as any)?.name : '') || 'Khách vãng lai';
+      
       let matched = false;
       if (emailKey && customerMap.has(emailKey)) {
         const c = customerMap.get(emailKey);
         c.totalOrders += 1;
         c.totalSpent += (Number(o.total) || 0);
+        if (!c.phone && phone) c.phone = phone;
         matched = true;
       }
       if (!matched && o.userId) {
@@ -1558,9 +1562,22 @@ export function CrudPage({ section }: { section: string }) {
           if (c.id === o.userId) {
             c.totalOrders += 1;
             c.totalSpent += (Number(o.total) || 0);
+            matched = true;
             break;
           }
         }
+      }
+      if (!matched && emailKey) {
+        customerMap.set(emailKey, {
+          id: `guest-${emailKey}`,
+          email: emailKey,
+          name: name,
+          phone: phone,
+          role: 'GUEST',
+          createdAt: o.createdAt || new Date(),
+          totalOrders: 1,
+          totalSpent: Number(o.total) || 0,
+        });
       }
     });
     
@@ -2072,12 +2089,73 @@ export function CrudPage({ section }: { section: string }) {
                   <th className="w-32">Danh mục</th>
                   <th className="w-16 text-right pr-4">Thao tác</th>
                 </tr>
+              ) : section === "lookbook" ? (
+                <tr>
+                  <th className="p-4">Tác phẩm Lookbook</th>
+                  <th>Phong cách / Nhóm</th>
+                  <th>Ngày đăng</th>
+                  <th className="text-right pr-4">Thao tác</th>
+                </tr>
+              ) : section === "services" ? (
+                <tr>
+                  <th className="p-4">Dịch vụ</th>
+                  <th>Phân nhóm</th>
+                  <th>Thời lượng</th>
+                  <th>Quy trình</th>
+                  <th>Giá niêm yết</th>
+                  <th className="text-right pr-4">Thao tác</th>
+                </tr>
+              ) : section === "training" ? (
+                <tr>
+                  <th className="p-4">Khóa học</th>
+                  <th>Thời lượng</th>
+                  <th>Khai giảng</th>
+                  <th>Học phí</th>
+                  <th>Trạng thái</th>
+                  <th className="text-right pr-4">Thao tác</th>
+                </tr>
+              ) : section === "categories" ? (
+                <tr>
+                  <th className="p-4">Tên danh mục</th>
+                  <th>Đường dẫn (Slug)</th>
+                  <th>Mô tả</th>
+                  <th>Số lượng SP</th>
+                  <th className="text-right pr-4">Thao tác</th>
+                </tr>
+              ) : section === "merchandise-stories" ? (
+                <tr>
+                  <th className="p-4">Câu chuyện sản phẩm</th>
+                  <th>Đường dẫn (Slug)</th>
+                  <th>Nội dung</th>
+                  <th>Trạng thái</th>
+                  <th>Ngày đăng</th>
+                  <th className="text-right pr-4">Thao tác</th>
+                </tr>
+              ) : section === "products" ? (
+                <tr>
+                  <th className="p-4">Sản phẩm</th>
+                  <th>Danh mục</th>
+                  <th>Giá bán</th>
+                  <th>Tồn kho</th>
+                  <th>Trạng thái</th>
+                  <th className="text-right pr-4">Thao tác</th>
+                </tr>
+              ) : section === "orders" ? (
+                <tr>
+                  <th className="p-4">Mã đơn hàng</th>
+                  <th>Khách hàng</th>
+                  <th>Phương thức</th>
+                  <th>Trạng thái đơn</th>
+                  <th>Thanh toán</th>
+                  <th>Tổng tiền</th>
+                  <th className="text-right pr-4">Thao tác</th>
+                </tr>
               ) : (
                 <tr>
                   <th className="p-4">Tên / Mã</th>
-                  <th>Loại</th>
-                  <th>{section === "categories" ? "Mô tả" : "Trạng thái"}</th>
-                  {section !== "merchandise-stories" && <th>{section === "categories" ? "Số lượng SP" : section === "lookbook" ? "Thứ tự" : "Giá trị"}</th>}
+                  <th>Phân loại</th>
+                  <th>Trạng thái</th>
+                  <th>Giá trị</th>
                   <th className="text-right pr-4">Thao tác</th>
                 </tr>
               )}
@@ -2266,53 +2344,26 @@ export function CrudPage({ section }: { section: string }) {
                         </DropdownMenu>
                       </td>
                     </>
-                  ) : (
+                  ) : section === "lookbook" ? (
                     <>
                       <td className="p-4 font-medium">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-3">
-                            {(typeof r.url === "string" || typeof r.image === "string" || (Array.isArray(r.images) && r.images[0])) && (
-                              <div className="relative size-10 shrink-0 bg-neutral-100 overflow-hidden rounded-md border">
-                                <MediaThumbnail src={typeof r.url === "string" ? r.url : typeof r.image === "string" ? r.image : r.images[0]} alt="" />
-                              </div>
-                            )}
-                            {String(r.title || r.name || r.caption || r.code || r.email || `Bản ghi ${i + 1}`)}
-                          </div>
-                          {r.slug && <span className="text-xs text-neutral-400 font-normal">{r.slug}</span>}
+                        <div className="flex items-center gap-3">
+                          {r.image && (
+                            <div className="relative size-12 shrink-0 bg-neutral-100 overflow-hidden rounded-lg border">
+                              <MediaThumbnail src={r.image} alt={r.title} />
+                            </div>
+                          )}
+                          <div className="font-bold text-neutral-900">{r.title || "Tác phẩm Lookbook"}</div>
                         </div>
                       </td>
-                      <td>{String(section === "orders" ? r.paymentMethod : section === "merchandise-stories" ? "Bài viết" : (r.role ?? r.category ?? r.parent ?? r.collection ?? r.level ?? r.type ?? "—"))}</td>
                       <td>
-                        {section === "categories" ? (
-                          <span className="text-xs text-neutral-500 line-clamp-2">{r.description ?? "—"}</span>
-                        ) : (
-                          <div className="flex flex-col gap-1 items-start">
-                            <span className={`px-2 py-1 text-xs font-semibold rounded ${r.status === "active" || r.status === "published" || r.status === "COMPLETED" || r.published === true || r.isActive === true ? "bg-emerald-50 text-emerald-700" : (r.status === "PENDING" || r.status === "pending") ? "bg-amber-50 text-amber-700" : (r.status === "CANCELLED" || r.published === false || r.isActive === false) ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-500"}`}>
-                              {r.status === "active" ? "Đang bán" : 
-                               r.status === "draft" ? "Nháp" : 
-                               (r.status === "published" || r.published === true) ? "Hiển thị" : 
-                               r.published === false ? "Ẩn" :
-                               r.isActive === true ? "Hoạt động" :
-                               r.isActive === false ? "Bị khóa" :
-                               (r.status === "pending" || r.status === "PENDING") ? "Chờ xử lý" : 
-                               r.status === "PROCESSING" ? "Đang chuẩn bị" :
-                               r.status === "SHIPPED" ? "Đang giao" :
-                               r.status === "CANCELLED" ? "Đã hủy" :
-                               (r.status === "completed" || r.status === "COMPLETED") ? "Hoàn thành" : String(r.status ?? "—")}
-                            </span>
-                            {section === "orders" && (
-                              <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
-                                {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          {r.category || "Classic"}
+                        </span>
                       </td>
-                      {section !== "merchandise-stories" && <td>
-                        {section === "lookbook" ? (r.order ?? "—") :
-                         section === "categories" ? (r.productCount ?? 0) :
-                         typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : typeof r.total === "number" ? formatCurrency(r.total) : "—"}
-                      </td>}
+                      <td className="text-xs text-neutral-500">
+                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN") : "—"}
+                      </td>
                       <td className="text-right pr-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
@@ -2322,11 +2373,297 @@ export function CrudPage({ section }: { section: string }) {
                             <DropdownMenuItem onClick={() => handleEdit(r)}>
                               <Edit className="mr-2 size-4" /> Chỉnh sửa
                             </DropdownMenuItem>
-                            {section !== "orders" && (
-                              <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
-                                <Trash2 className="mr-2 size-4" /> Xóa
-                              </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </>
+                  ) : section === "services" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex items-center gap-3">
+                          {r.image && (
+                            <div className="relative size-10 shrink-0 bg-neutral-100 overflow-hidden rounded-md border">
+                              <MediaThumbnail src={r.image} alt={r.title} />
+                            </div>
+                          )}
+                          <div className="font-bold text-neutral-900">{r.title || "Tên dịch vụ"}</div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {r.category || "Dịch vụ tóc"}
+                        </span>
+                      </td>
+                      <td className="text-sm font-semibold text-neutral-700">
+                        {r.duration || 30} phút
+                      </td>
+                      <td className="text-xs text-neutral-500">
+                        {Array.isArray(r.process) ? `${r.process.length} bước thực hiện` : typeof r.process === 'string' && r.process.trim() ? `${r.process.split('\n').filter(Boolean).length} bước thực hiện` : "Quy trình tiêu chuẩn"}
+                      </td>
+                      <td className="font-bold text-emerald-600">
+                        {typeof r.price === "number" ? formatCurrency(r.price) : "—"}
+                      </td>
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </>
+                  ) : section === "training" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-neutral-900">{r.title || "Tên khóa học"}</div>
+                          {r.excerpt && <div className="text-xs text-neutral-400 line-clamp-1">{r.excerpt}</div>}
+                        </div>
+                      </td>
+                      <td className="text-sm font-medium text-neutral-700">{r.duration || "—"}</td>
+                      <td className="text-xs text-neutral-600 font-medium">
+                        {r.startDate || <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Liên tục mở lớp</span>}
+                      </td>
+                      <td className="font-bold text-emerald-600">
+                        {typeof r.price === "number" ? formatCurrency(r.price) : "—"}
+                      </td>
+                      <td>
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${r.status === 'published' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-neutral-100 text-neutral-600'}`}>
+                          {r.status === 'published' ? 'Đang mở lớp' : 'Tạm dừng'}
+                        </span>
+                      </td>
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </>
+                  ) : section === "categories" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="font-bold text-neutral-900">{r.title || r.name || "Danh mục"}</div>
+                      </td>
+                      <td className="font-mono text-xs text-neutral-500">{r.slug || "—"}</td>
+                      <td className="text-xs text-neutral-600 line-clamp-2 max-w-xs">{r.description || "—"}</td>
+                      <td className="text-sm font-semibold text-neutral-700">
+                        {r.productCount ?? 0} sản phẩm
+                      </td>
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </>
+                  ) : section === "merchandise-stories" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex items-center gap-3">
+                          {r.heroImage && (
+                            <div className="relative size-12 shrink-0 bg-neutral-100 overflow-hidden rounded-lg border">
+                              <MediaThumbnail src={r.heroImage} alt={r.title} />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-bold text-neutral-900">{r.title || "Tiêu đề Story"}</div>
+                            {r.subtitle && <div className="text-xs text-neutral-400">{r.subtitle}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="font-mono text-xs text-neutral-500">/{r.slug}</td>
+                      <td className="text-xs text-neutral-600">
+                        {Array.isArray(r.blocks) ? `${r.blocks.length} khối nội dung` : "—"}
+                      </td>
+                      <td>
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${r.status === 'published' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-neutral-100 text-neutral-600'}`}>
+                          {r.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}
+                        </span>
+                      </td>
+                      <td className="text-xs text-neutral-500">
+                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN") : "—"}
+                      </td>
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </>
+                  ) : section === "products" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex items-center gap-3">
+                          {(Array.isArray(r.images) && r.images[0]) && (
+                            <div className="relative size-11 shrink-0 bg-neutral-100 overflow-hidden rounded-lg border">
+                              <MediaThumbnail src={r.images[0]} alt={r.title} />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-bold text-neutral-900">{r.title || "Tên sản phẩm"}</div>
+                            {r.slug && <div className="text-[11px] text-neutral-400 font-mono">{r.slug}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded ${r.category === 'grooming' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-blue-50 text-blue-800 border border-blue-200'}`}>
+                          {r.category === 'grooming' ? 'Chăm sóc tóc' : r.category === 'merchandise' ? 'Thời trang' : r.category}
+                        </span>
+                      </td>
+                      <td className="font-bold text-emerald-600">
+                        {typeof r.price === "number" ? formatCurrency(r.price) : typeof r.basePrice === "number" ? formatCurrency(r.basePrice) : "—"}
+                      </td>
+                      <td>
+                        {(() => {
+                          const totalStock = Array.isArray(r.variants) && r.variants.length > 0
+                            ? r.variants.reduce((acc: number, v: any) => acc + (v.stock || 0), 0)
+                            : (r.stock ?? 0);
+                          return (
+                            <span className={`px-2 py-0.5 text-xs font-semibold rounded ${totalStock > 10 ? 'bg-emerald-50 text-emerald-700' : totalStock > 0 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
+                              {totalStock > 0 ? `Còn ${totalStock} SP` : 'Hết hàng'}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td>
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${r.status === 'active' ? 'bg-emerald-50 text-emerald-700' : r.status === 'draft' ? 'bg-neutral-100 text-neutral-600' : 'bg-red-50 text-red-700'}`}>
+                          {r.status === 'active' ? 'Đang bán' : r.status === 'draft' ? 'Bản nháp' : 'Lưu trữ'}
+                        </span>
+                      </td>
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </>
+                  ) : section === "orders" ? (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-neutral-900 font-mono">#{r.orderCode || r.id}</div>
+                          <div className="text-xs text-neutral-400">{r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "—"}</div>
+                        </div>
+                      </td>
+                      <td className="py-3 space-y-0.5">
+                        <div className="font-semibold text-neutral-900">{r.customer?.name || r.shippingAddress?.fullName || r.shippingAddress?.name || "Khách hàng"}</div>
+                        <div className="text-xs text-neutral-500">{r.customer?.phone || r.shippingAddress?.phone || r.customer?.email || "—"}</div>
+                      </td>
+                      <td className="text-xs font-semibold uppercase text-neutral-600">
+                        {r.paymentMethod || "COD"}
+                      </td>
+                      <td>
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
+                          r.status === "COMPLETED" || r.status === "completed" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                          r.status === "SHIPPED" ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                          r.status === "PROCESSING" ? "bg-purple-50 text-purple-700 border border-purple-200" :
+                          r.status === "CANCELLED" ? "bg-red-50 text-red-700 border border-red-200" :
+                          "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}>
+                          {r.status === "COMPLETED" || r.status === "completed" ? "Hoàn thành" :
+                           r.status === "SHIPPED" ? "Đang giao" :
+                           r.status === "PROCESSING" ? "Đang chuẩn bị" :
+                           r.status === "CANCELLED" ? "Đã hủy" : "Chờ xử lý"}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${r.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-800" : r.paymentStatus === "REFUNDED" ? "bg-purple-100 text-purple-800" : "bg-neutral-100 text-neutral-600"}`}>
+                          {r.paymentStatus === "PAID" ? "Đã thanh toán" : r.paymentStatus === "REFUNDED" ? "Đã hoàn tiền" : "Chưa thanh toán"}
+                        </span>
+                      </td>
+                      <td className="font-bold text-emerald-600">
+                        {typeof r.total === "number" ? formatCurrency(r.total) : "—"}
+                      </td>
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Cập nhật trạng thái
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="p-4 font-medium">
+                        <div className="flex items-center gap-3">
+                          {r.image && (
+                            <div className="relative size-10 shrink-0 bg-neutral-100 overflow-hidden rounded-md border">
+                              <MediaThumbnail src={r.image} alt="" />
+                            </div>
+                          )}
+                          {String(r.title || r.name || `Bản ghi ${i + 1}`)}
+                        </div>
+                      </td>
+                      <td>{String(r.category || r.type || "—")}</td>
+                      <td>
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded bg-neutral-100 text-neutral-700">
+                          {String(r.status || "Hoạt động")}
+                        </span>
+                      </td>
+                      <td>{typeof r.price === "number" ? formatCurrency(r.price) : "—"}</td>
+                      <td className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger aria-label="Tác vụ" className="p-2 hover:bg-neutral-100 rounded-full outline-none">
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(r)}>
+                              <Edit className="mr-2 size-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setItemToDelete(r)} variant="destructive">
+                              <Trash2 className="mr-2 size-4" /> Xóa
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -2334,7 +2671,7 @@ export function CrudPage({ section }: { section: string }) {
                   )}
                 </tr>
               )) : (
-                <tr><td colSpan={6} className="p-16 text-center text-neutral-400">Không tìm thấy dữ liệu phù hợp với bộ lọc.</td></tr>
+                <tr><td colSpan={7} className="p-16 text-center text-neutral-400">Không tìm thấy dữ liệu phù hợp với bộ lọc.</td></tr>
               )}
             </tbody>
           </table>
