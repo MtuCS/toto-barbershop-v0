@@ -12,6 +12,7 @@ import { useDataStore } from "@/store/data-store"
 import type { ProductCategory } from "@/types"
 
 const featuredRows: { category: ProductCategory; eyebrow: string; title: string; href: string }[] = [
+  // Ẩn theo yêu cầu (không xóa):
   { category: "merchandise", eyebrow: "TOTO Supply", title: "TOTO Merchandise", href: "/shop/merchandise" },
   { category: "grooming", eyebrow: "TOTO Grooming", title: "Grooming essentials", href: "/shop/grooming" },
 ]
@@ -43,7 +44,8 @@ export function ShopLanding() {
           </div>
         </section>
       ))}
-      <Suspense fallback={null}><ShopCatalog /></Suspense>
+      {/* Ẩn theo yêu cầu (không xóa): Tất cả sản phẩm */}
+      {/* <Suspense fallback={null}><ShopCatalog /></Suspense> */}
       <ShopFaq />
       <ShopGroomingGuide />
     </div>

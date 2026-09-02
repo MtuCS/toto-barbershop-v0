@@ -5,6 +5,7 @@ import { PageHero } from "@/components/website/page-hero"
 import { ShopCarousel } from "@/components/website/lookbook/shop-carousel"
 import { Breadcrumbs } from "@/components/website/breadcrumbs"
 import { getLookbooks } from "@/lib/api"
+import { lookbookItems as defaultLookbookItems } from "@/data/lookbook"
 
 export const metadata: Metadata = {
   title: "Bộ Sưu Tập Kiểu Tóc & Lookbook Văn Hóa Barber",
@@ -13,9 +14,10 @@ export const metadata: Metadata = {
 }
 
 export default async function Page() {
-  const lookbookItems = await getLookbooks()
-  const shopItems = lookbookItems.filter((item) => item.category === "Shop")
-  const hairItems = lookbookItems.filter((item) => item.category !== "Shop")
+  const rawItems = await getLookbooks()
+  const allItems = rawItems && rawItems.length >= 16 ? rawItems : defaultLookbookItems
+  const shopItems = allItems.filter((item) => item.category === "Shop")
+  const hairItems = allItems.filter((item) => item.category !== "Shop")
 
   return (
     <MarketingPageShell>
@@ -49,7 +51,7 @@ export default async function Page() {
             title="Những kiểu tóc nổi bật"
             copy="Những tác phẩm được thực hiện tại TOTO, từ các thiết kế texture, fade đến màu sắc cá tính."
           />
-          <div className="mt-12 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-4">
             {hairItems.map((item) => (
               <figure key={item.id} className="group relative aspect-square overflow-hidden rounded-sm bg-black/30">
                 <Image

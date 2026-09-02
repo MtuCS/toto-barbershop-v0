@@ -1,6 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Inter, Oswald } from 'next/font/google'
+import { Inter, Oswald, Playfair_Display } from 'next/font/google'
 import localFont from 'next/font/local'
 import { Toaster } from '@/components/ui/sonner'
 import { GoogleAnalytics } from '@/components/website/google-analytics'
@@ -18,9 +18,9 @@ const oswald = Oswald({
   display: 'swap',
 })
 
-const agatho = localFont({
-  src: '../../public/font/Agatho_ Medium.otf',
-  weight: '500',
+const agatho = Playfair_Display({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   variable: '--font-agatho-local',
   display: 'swap',
 })

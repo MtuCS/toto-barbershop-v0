@@ -21,7 +21,7 @@ export default function HomePage() {
       <HomeValues />
       <HomeTestimonials />
       <HomeLookbook />
-      <FaqAccordion />
+      {/* <FaqAccordion /> */}
 
       {/* Tạm thời ẩn các scene theo yêu cầu */}
       {/* <MerchTeaser /> */}

@@ -8,7 +8,6 @@ import {
   ScanFace,
   ScanSearch,
   Scissors,
-  ShoppingBag,
 } from "lucide-react";
 import {
   Accordion,
@@ -18,7 +17,6 @@ import {
 } from "@/components/ui/accordion";
 import { MarketingPageShell } from "@/components/website/marketing-page-shell";
 import { Breadcrumbs } from "@/components/website/breadcrumbs";
-import { CaseStudies } from "@/components/website/case-studies";
 import { getServices, getFaqs } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 
@@ -91,49 +89,42 @@ export default async function Page() {
               Từ form cổ điển đến texture hiện đại, mỗi lần ngồi ghế là một cuộc
               trao đổi để tìm ra kiểu tóc thuộc về bạn.
             </p>
-
-            {/* Cross link to shop */}
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                href="/shop"
-                className="inline-flex items-center gap-2 rounded-full bg-[#79b8a7] px-6 py-3 text-xs md:text-sm font-bold uppercase tracking-wider text-[#050c0a] transition-all hover:bg-[#8ec7b7]"
-              >
-                <ShoppingBag className="size-4" />
-                Sáp vuốt tóc khuyên dùng
-              </Link>
-            </div>
           </div>
 
-          <div className="grid grid-cols-12 gap-3 md:col-span-7 md:pl-4">
-            <div className="relative col-span-7 row-span-2 aspect-[4/5] overflow-hidden border border-white/10 bg-[#0d211d]">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 md:col-span-7 md:pl-4 items-stretch">
+            {/* Ảnh lớn bên trái chiếm trọn chiều cao */}
+            <div className="relative md:col-span-7 aspect-[3/4] md:aspect-auto md:h-full min-h-[380px] md:min-h-[500px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
               <Image
                 src="/images/service-cut.jpg"
                 alt="Barber ToTo đang hoàn thiện kiểu tóc"
                 fill
                 priority
-                sizes="(max-width: 767px) 58vw, 38vw"
+                sizes="(max-width: 767px) 100vw, 40vw"
                 className="object-cover"
               />
             </div>
-            <div className="relative col-span-5 aspect-[4/3] overflow-hidden border border-white/10 bg-[#0d211d]">
-              <Image
-                src="/images/barber-2.png"
-                alt="Không gian phục vụ tại ToTo Barbershop"
-                fill
-                priority
-                sizes="(max-width: 767px) 40vw, 25vw"
-                className="object-cover"
-              />
-            </div>
-            <div className="relative col-span-5 aspect-[4/3] overflow-hidden border border-white/10 bg-[#0d211d]">
-              <Image
-                src="/images/service-shave.jpg"
-                alt="Dịch vụ cạo râu khăn nóng tại ToTo"
-                fill
-                priority
-                sizes="(max-width: 767px) 40vw, 25vw"
-                className="object-cover"
-              />
+            {/* 2 ảnh bên phải xếp chồng cân đối */}
+            <div className="grid grid-cols-2 md:grid-cols-1 md:grid-rows-2 gap-3 md:gap-4 md:col-span-5 md:h-full">
+              <div className="relative aspect-[4/3] md:aspect-auto md:h-full min-h-[180px] md:min-h-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
+                <Image
+                  src="/images/barber-2.png"
+                  alt="Không gian phục vụ tại ToTo Barbershop"
+                  fill
+                  priority
+                  sizes="(max-width: 767px) 50vw, 25vw"
+                  className="object-cover"
+                />
+              </div>
+              <div className="relative aspect-[4/3] md:aspect-auto md:h-full min-h-[180px] md:min-h-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
+                <Image
+                  src="/images/service-shave.jpg"
+                  alt="Dịch vụ cạo râu khăn nóng tại ToTo"
+                  fill
+                  priority
+                  sizes="(max-width: 767px) 50vw, 25vw"
+                  className="object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -196,8 +187,7 @@ export default async function Page() {
               </h2>
             </div>
             <p className="max-w-sm text-sm leading-6 text-white/60">
-              Mức giá nháp để bạn tham khảo. Liên hệ ToTo để nhận tư vấn phù hợp
-              với tình trạng tóc của bạn.
+              {/* Liên hệ ToTo để nhận tư vấn phù hợp với tình trạng tóc của bạn. */}
             </p>
           </div>
 
@@ -332,8 +322,6 @@ export default async function Page() {
         </div>
       </section>
 
-      {/* Case Studies / Transformations Section */}
-      <CaseStudies />
 
       <section className="border-t border-white/10 bg-[#0b1b18] px-5 py-16 md:px-8 md:py-24">
         <div className="mx-auto grid max-w-[1400px] gap-10 md:grid-cols-12">

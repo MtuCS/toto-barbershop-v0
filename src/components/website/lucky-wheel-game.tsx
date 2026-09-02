@@ -4,8 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, useAnimationControls } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, X, Copy, Check, Gift, HeartHandshake } from "lucide-react";
-import { toast } from "sonner";
+import { Sparkles, X, Gift, HeartHandshake } from "lucide-react";
 
 export interface Prize {
   id: string;
@@ -25,7 +24,6 @@ interface LuckyWheelGameProps {
 export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [result, setResult] = useState<Prize | null>(null);
-  const [copied, setCopied] = useState(false);
   const controls = useAnimationControls();
   const currentRotationRef = useRef(0);
 
@@ -52,7 +50,6 @@ export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
     if (isSpinning || result) return;
     setIsSpinning(true);
     setResult(null);
-    setCopied(false);
 
     // Stop idle animation immediately
     controls.stop();
@@ -95,12 +92,6 @@ export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
     onFinish?.(prizes[selectedIndex]);
   };
 
-  const copyVoucherCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    toast.success(`Đã sao chép mã: ${code}`);
-    setTimeout(() => setCopied(false), 2500);
-  };
 
   const round = (n: number) => Number(n.toFixed(4));
 
@@ -203,7 +194,7 @@ export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
         {/* Center White Circle Hub (Responsive size) */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full bg-white border-2 sm:border-4 border-neutral-100 shadow-[0_0_30px_rgba(0,0,0,0.5)] z-30 flex flex-col items-center justify-center p-1 sm:p-2 group-hover:scale-105 transition-transform duration-300 pointer-events-none">
           <span className="text-[11px] sm:text-sm md:text-base font-black uppercase text-neutral-900 tracking-tight text-center leading-tight">
-            {isSpinning ? "Đang quay..." : "Click to spin"}
+            {isSpinning ? "Đang quay..." : "Quay"}
           </span>
         </div>
       </div>
@@ -237,7 +228,7 @@ export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
               ) : (
                 <>
                   <Sparkles className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: "4s" }} />
-                  <span>Chúc Mừng Chiến Thắng!</span>
+                  <span>Chúc Mừng!</span>
                 </>
               )}
             </div>
@@ -277,24 +268,6 @@ export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
               {result.description || "Phần thưởng đã sẵn sàng để bạn sử dụng ngay tại TOTO Barbershop."}
             </p>
 
-            {/* Voucher Code Box (If applicable) */}
-            {result.code && (
-              <div className="mt-3 sm:mt-4 flex items-center justify-between gap-2 bg-white/5 border border-dashed border-white/20 rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5">
-                <div className="text-left">
-                  <p className="text-[9px] sm:text-[10px] uppercase font-bold text-white/50 tracking-wider">Mã ưu đãi của bạn</p>
-                  <p className="font-mono font-black text-base sm:text-lg tracking-widest text-[#79b8a7]">{result.code}</p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 sm:h-8 px-2.5 sm:px-3 text-[11px] sm:text-xs bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all cursor-pointer flex items-center gap-1 font-semibold"
-                  onClick={() => copyVoucherCode(result.code!)}
-                >
-                  {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                  <span>{copied ? "Đã chép" : "Sao chép"}</span>
-                </Button>
-              </div>
-            )}
 
             {/* Action CTA Button */}
             <Button

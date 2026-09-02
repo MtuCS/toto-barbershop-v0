@@ -12,7 +12,7 @@ export function ShopCarousel({ items }: { items: LookbookItem[] }) {
           <div key={set} className="flex gap-2 pr-2 md:gap-3 md:pr-3">
             {items.map((item) => (
               <figure
-                key={item.id}
+                key={`${set}-${item.id}`}
                 className="relative aspect-[4/5] w-[85vw] flex-none overflow-hidden rounded-sm sm:w-[45vw] md:w-[300px] lg:w-[305px] xl:w-[310px]"
               >
                 <Image
