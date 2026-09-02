@@ -60,6 +60,8 @@ interface DataState {
   fetchSettings: () => Promise<void>
   fetchMessages: () => Promise<void>
   createUser: (userData: any) => Promise<void>
+  updateUser: (id: string | number, userData: any) => Promise<void>
+  deleteUser: (id: string | number) => Promise<void>
   updateOrderStatus: (id: string, data: { status?: string, paymentStatus?: string }) => Promise<void>
   cancelOrder: (id: string, token: string) => Promise<boolean>
   
@@ -230,7 +232,12 @@ export const useDataStore = create<DataState>()(
 
       fetchUsers: async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/users`);
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/users`, {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
           if (res.ok) {
             const data = await res.json();
             set({ customers: data });
@@ -242,36 +249,101 @@ export const useDataStore = create<DataState>()(
 
       createUser: async (userData: any) => {
         try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/users`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify(userData)
           });
           if (res.ok) {
             const newUser = await res.json();
-            set(s => ({ customers: [newUser, ...s.customers] }));
+            set(s => ({ customers: [newUser, ...s.customers.filter(c => c.id !== newUser.id)] }));
+            toast.success("Tạo tài khoản thành công!");
           } else {
             const err = await res.json();
-            toast.error(err.error || 'Failed to create user');
+            toast.error(err.error || 'Lỗi tạo tài khoản');
           }
         } catch (error) {
           console.error("Failed to create user:", error);
-          toast.error('Failed to create user');
+          toast.error('Lỗi kết nối máy chủ');
+        }
+      },
+
+      updateUser: async (id: string | number, userData: any) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/users/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(userData)
+          });
+          if (res.ok) {
+            const updatedUser = await res.json();
+            set(s => ({
+              customers: s.customers.map(c => c.id === updatedUser.id ? { ...c, ...updatedUser } : c)
+            }));
+            toast.success("Cập nhật thông tin thành công!");
+          } else {
+            const err = await res.json();
+            toast.error(err.error || 'Cập nhật thất bại');
+          }
+        } catch (error) {
+          console.error("Failed to update user:", error);
+          toast.error('Lỗi kết nối máy chủ');
+        }
+      },
+
+      deleteUser: async (id: string | number) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/users/${id}`, {
+            method: 'DELETE',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          if (res.ok) {
+            set(s => ({
+              customers: s.customers.filter(c => String(c.id) !== String(id))
+            }));
+            toast.success("Đã xóa tài khoản thành công!");
+          } else {
+            const err = await res.json();
+            toast.error(err.error || 'Xóa tài khoản thất bại');
+          }
+        } catch (error) {
+          console.error("Failed to delete user:", error);
+          toast.error('Lỗi kết nối máy chủ');
         }
       },
 
       updateOrderStatus: async (id, data) => {
         try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${id}/status`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify(data)
           });
           if (res.ok) {
             get().fetchOrders();
+            toast.success("Đã cập nhật trạng thái đơn hàng!");
+          } else {
+            const err = await res.json();
+            toast.error(err.error || 'Lỗi cập nhật đơn hàng');
           }
         } catch (error) {
           console.error("Failed to update order:", error);
+          toast.error('Lỗi kết nối máy chủ');
         }
       },
 

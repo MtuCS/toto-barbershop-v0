@@ -13,17 +13,51 @@ export function AdminDataFetcher() {
   const fetchMessages = useDataStore((s) => s.fetchMessages)
   const token = useAuthStore((s) => s.session?.token)
 
+  const fetchProducts = useDataStore((s) => s.fetchProducts)
+  const fetchCategories = useDataStore((s) => s.fetchCategories)
+  const fetchServices = useDataStore((s) => s.fetchServices)
+  const fetchCourses = useDataStore((s) => s.fetchCourses)
+  const fetchStories = useDataStore((s) => s.fetchStories)
+  const fetchLookbook = useDataStore((s) => s.fetchLookbook)
+  const fetchMedia = useDataStore((s) => s.fetchMedia)
+  const fetchFaqs = useDataStore((s) => s.fetchFaqs)
+  const fetchSettings = useDataStore((s) => s.fetchSettings)
+
   const prevOrderCount = useRef<number | null>(null)
   const prevMsgCount = useRef<number | null>(null)
 
-  // Lấy dữ liệu lần đầu khi đăng nhập
+  // Lấy toàn bộ dữ liệu quản trị khi đăng nhập
   useEffect(() => {
     if (!token) return;
     fetchPromoCodes()
     fetchOrders()
     fetchUsers()
     fetchMessages()
-  }, [token, fetchPromoCodes, fetchOrders, fetchUsers, fetchMessages])
+    fetchProducts()
+    fetchCategories()
+    fetchServices()
+    fetchCourses()
+    fetchStories()
+    fetchLookbook()
+    fetchMedia()
+    fetchFaqs()
+    fetchSettings()
+  }, [
+    token,
+    fetchPromoCodes,
+    fetchOrders,
+    fetchUsers,
+    fetchMessages,
+    fetchProducts,
+    fetchCategories,
+    fetchServices,
+    fetchCourses,
+    fetchStories,
+    fetchLookbook,
+    fetchMedia,
+    fetchFaqs,
+    fetchSettings,
+  ])
 
   // Polling mỗi 30 giây thay thế cho Supabase Realtime
   useEffect(() => {
