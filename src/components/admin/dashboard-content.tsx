@@ -34,9 +34,9 @@ const CHART_FILTERS = [
 ] as const
 
 export function DashboardContent() {
-  const orders = useDataStore(s => s.orders);
-  const customers = useDataStore(s => s.customers);
-  const products = useDataStore(s => s.products);
+  const orders = useDataStore(s => s.orders) || [];
+  const customers = useDataStore(s => s.customers) || [];
+  const products = useDataStore(s => s.products) || [];
   const [chartDays, setChartDays] = useState<number>(30)
 
   const { stats, topProductsList, revenueByMonth, pieData, lowStockProducts, totalOrdersCp } = useMemo(() => {
