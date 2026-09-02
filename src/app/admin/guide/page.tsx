@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useState } from "react"
 import { LayoutDashboard, Package, Scissors, GraduationCap, ShoppingBag, Users, ImageIcon, Settings, Ticket, HelpCircle, MessageSquare, ChevronDown, ChevronRight, BookOpenCheck } from "lucide-react"
 
@@ -12,7 +12,7 @@ const SECTIONS = [
       "Nhấn 'Xuất báo cáo (Excel)' để tải file báo cáo chi tiết.",
       "Bảng 'Đơn hàng gần đây' hiển thị 5 đơn mới nhất.",
     ],
-    tip: "Biểu đồ chỉ hiển thị đơn trong khoảng được chọn. Thẻ thống kê luôn là toàn thời gian.",
+    tip: "Biểu đồ doanh thu và các thẻ thống kê đều lọc theo khoảng thời gian bạn chọn. File Excel xuất báo cáo sẽ chứa toàn bộ đơn hàng (có tô màu để phân biệt đơn hủy / hoàn tiền).",
   },
   {
     icon: ShoppingBag, title: "Quản lý Đơn hàng", color: "text-blue-600",
