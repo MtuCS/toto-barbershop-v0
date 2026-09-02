@@ -96,7 +96,7 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
       let data: any
       try {
         data = await res.json()
-      } catch (err) {
+      } catch {
         throw new Error("Không nhận được phản hồi hợp lệ từ máy chủ.")
       }
 
@@ -175,7 +175,7 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
       let data: any
       try {
         data = await res.json()
-      } catch (err) {
+      } catch {
         throw new Error("Không nhận được phản hồi hợp lệ từ máy chủ.")
       }
 
@@ -260,7 +260,7 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
       } else {
         setErrorMsg(data.error || "Không thể gửi lại mã lúc này. Vui lòng thử lại sau.")
       }
-    } catch (err: any) {
+    } catch {
       setErrorMsg("Không thể kết nối đến máy chủ. Vui lòng thử lại sau ít phút.")
     } finally {
       setLoading(false)
@@ -315,7 +315,7 @@ export function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
       } else {
         setErrorMsg(data.error || "Mã xác nhận không chính xác hoặc đã hết hạn.")
       }
-    } catch (err: any) {
+    } catch {
       setErrorMsg("Không thể kết nối đến máy chủ. Vui lòng thử lại sau ít phút.")
     } finally {
       setLoading(false)

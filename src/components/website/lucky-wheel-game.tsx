@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, useAnimationControls } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { Trophy, Sparkles, X, Copy, Check, Gift, HeartHandshake } from "lucide-react";
+import { Sparkles, X, Copy, Check, Gift, HeartHandshake } from "lucide-react";
 import { toast } from "sonner";
 
 export interface Prize {
@@ -46,7 +46,7 @@ export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
       // Freeze wheel at exact target position while modal is open
       controls.stop();
     }
-  }, [isSpinning, Boolean(result), controls]);
+  }, [isSpinning, result, controls]);
 
   const spin = async () => {
     if (isSpinning || result) return;

@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import { Phone, Mail, Sparkles, CheckCircle2 } from "lucide-react"
+import { Phone, Mail } from "lucide-react"
 import { getCourses } from "@/lib/api"
 import { formatCurrency } from "@/lib/format"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"

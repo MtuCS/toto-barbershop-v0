@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { User, Phone, MapPin, Mail, Loader2, Save, ShoppingBag, Plus, Trash2, LogOut, Package, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react"
+import { User, Phone, MapPin, Mail, Loader2, Save, ShoppingBag, Plus, Trash2, Package, Eye, EyeOff, ChevronDown, ChevronUp, CreditCard } from "lucide-react"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { toast } from "sonner"
-import type { OrderStatus, PaymentStatus } from "@/types"
 
 function OrderStepper({ status }: { status: string }) {
   const normStatus = (status || "PENDING").toUpperCase()
@@ -33,31 +32,56 @@ function OrderStepper({ status }: { status: string }) {
   }
 
   const steps = [
-    { id: 'PENDING', label: 'Chờ xử lý' },
-    { id: 'PROCESSING', label: 'Đang chuẩn bị' },
-    { id: 'SHIPPED', label: 'Đang giao' },
-    { id: 'COMPLETED', label: 'Hoàn thành' },
+    { key: 'PENDING', label: 'Tiếp nhận đơn' },
+    { key: 'PROCESSING', label: 'Đang xử lý / Đóng gói' },
+    { key: 'SHIPPED', label: 'Đang giao hàng' },
+    { key: 'COMPLETED', label: 'Giao hàng thành công' },
   ]
-  const currentIndex = steps.findIndex(s => s.id === normStatus)
+
+  const getStepIndex = (st: string) => {
+    switch (st) {
+      case 'PENDING': return 0
+      case 'PROCESSING': return 1
+      case 'SHIPPED': return 2
+      case 'COMPLETED': return 3
+      default: return 0
+    }
+  }
+
+  const currentIndex = getStepIndex(normStatus)
 
   return (
-    <div className="relative mt-8 mb-6 mx-4 flex items-center justify-between">
-      {/* Line background */}
-      <div className="absolute left-0 top-2.5 -translate-y-1/2 w-full h-1 bg-neutral-200 rounded"></div>
-      {/* Active line */}
-      <div className="absolute left-0 top-2.5 -translate-y-1/2 h-1 bg-emerald-500 rounded transition-all duration-500" style={{ width: `${(Math.max(0, currentIndex) / (steps.length - 1)) * 100}%` }}></div>
-      
-      {steps.map((step, index) => {
-        const isCompleted = index <= currentIndex;
-        return (
-          <div key={step.id} className="relative z-10 flex flex-col items-center gap-2">
-            <div className={`size-5 rounded-full ring-4 ${isCompleted ? 'bg-emerald-500 ring-emerald-50' : 'bg-neutral-300 ring-white'} transition-colors duration-500`}></div>
-            <span className={`absolute top-7 whitespace-nowrap text-[10px] sm:text-xs font-semibold ${isCompleted ? 'text-emerald-700' : 'text-neutral-400'}`}>
-              {step.label}
-            </span>
-          </div>
-        )
-      })}
+    <div className="w-full py-4">
+      <div className="flex items-center justify-between relative">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-neutral-200 z-0"></div>
+        <div 
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary transition-all duration-500 z-0"
+          style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
+        ></div>
+
+        {steps.map((s, idx) => {
+          const isDone = idx <= currentIndex
+          const isCurrent = idx === currentIndex
+          return (
+            <div key={s.key} className="flex flex-col items-center relative z-10">
+              <div className={`size-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                isCurrent 
+                  ? 'bg-primary text-white ring-4 ring-primary/20 scale-110' 
+                  : isDone 
+                    ? 'bg-primary text-white' 
+                    : 'bg-white border-2 border-neutral-300 text-neutral-400'
+              }`}>
+                {idx + 1}
+              </div>
+              <span className={`text-[11px] font-medium mt-2 max-w-[80px] text-center leading-tight ${
+                isCurrent ? 'text-primary font-bold' : isDone ? 'text-neutral-800' : 'text-neutral-400'
+              }`}>
+                {s.label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -67,14 +91,13 @@ function ProfileContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
   const { user, token, setUser, logout } = useCustomerUserStore()
-  const allOrders = useDataStore((s) => s.orders)
+  const allOrders = useDataStore((state) => state.orders)
   const orders = allOrders.filter(o => 
     (user?.id && Number(o.customer?.id) === Number(user.id)) ||
     (user?.email && o.customer?.email?.toLowerCase() === user.email.toLowerCase())
   )
 
   const [mounted, setMounted] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState(tabParam === "orders" ? "orders" : "profile")
 
@@ -116,7 +139,6 @@ function ProfileContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
     const urlParams = new URLSearchParams(window.location.search)
     const tab = urlParams.get('tab')
@@ -125,17 +147,17 @@ function ProfileContent() {
     }
   }, [])
 
-  const handleTokenExpired = () => {
+  const handleTokenExpired = useCallback(() => {
     toast.error("Phiên đăng nhập đã hết hạn", {
       description: "Vui lòng đăng nhập lại để tiếp tục.",
       duration: 5000,
     })
     logout()
     router.push("/")
-  }
+  }, [logout, router])
 
-  const fetchProfile = async () => {
-    setLoading(true)
+  const fetchProfile = useCallback(async () => {
+    if (!token) return
     try {
       const res = await fetch("/api/users/profile", {
         headers: { Authorization: `Bearer ${token}` }
@@ -151,10 +173,9 @@ function ProfileContent() {
       }
     } catch (err) {
       console.error(err)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [token, handleTokenExpired, setUser])
+
   useEffect(() => {
     if (mounted && !user) router.push("/")
   }, [mounted, user, router])
@@ -164,7 +185,7 @@ function ProfileContent() {
       fetchProfile()
       useDataStore.getState().fetchOrders()
     }
-  }, [user?.id, token])
+  }, [user, token, fetchProfile])
 
   // Realtime: Lắng nghe thay đổi trạng thái đơn hàng qua SSE (Server-Sent Events)
   useEffect(() => {
@@ -207,7 +228,6 @@ function ProfileContent() {
     return () => {
       es.close();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, token])
 
 
@@ -347,6 +367,34 @@ function ProfileContent() {
       if (res.ok) fetchProfile()
     } catch (e) {
       console.error(e)
+    }
+  }
+
+  const [retryingPaymentId, setRetryingPaymentId] = useState<string | number | null>(null)
+
+  const handleRetryPayment = async (orderId: string | number) => {
+    setRetryingPaymentId(orderId)
+    try {
+      const res = await fetch(`/api/orders/${orderId}/retry-payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Không thể tạo lại link thanh toán.")
+      }
+      if (data.checkoutUrl) {
+        window.location.assign(data.checkoutUrl)
+      } else {
+        toast.info("Vui lòng thử lại sau giây lát.")
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi tạo link thanh toán")
+    } finally {
+      setRetryingPaymentId(null)
     }
   }
 
@@ -494,6 +542,17 @@ function ProfileContent() {
                         {expandedOrderId === o.id ? 'Thu gọn' : 'Xem chi tiết'}
                         {expandedOrderId === o.id ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
                       </Button>
+                      {(o.status || 'PENDING').toUpperCase() === 'PENDING' && (o.paymentStatus || '').toUpperCase() !== 'PAID' && (o.paymentMethod || '').toLowerCase() === 'payos' && (
+                        <Button 
+                          size="sm" 
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold w-full sm:w-auto shadow-sm"
+                          disabled={retryingPaymentId === o.id}
+                          onClick={() => handleRetryPayment(o.id)}
+                        >
+                          {retryingPaymentId === o.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CreditCard className="w-4 h-4 mr-2" />}
+                          Thanh toán ngay (Quét lại QR)
+                        </Button>
+                      )}
                       {(o.status || 'PENDING').toUpperCase() === 'PENDING' && (
                         <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 w-full sm:w-auto" onClick={() => setOrderToCancel(o.id)}>
                           Hủy đơn

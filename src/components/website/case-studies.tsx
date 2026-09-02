@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { Sparkles, ArrowRight, Scissors } from "lucide-react"
+import { Sparkles, ArrowRight } from "lucide-react"
 
 export interface CaseStudyItem {
   title: string

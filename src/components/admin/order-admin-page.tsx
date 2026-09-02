@@ -86,7 +86,7 @@ export function OrderAdminPage() {
       await updateOrderStatus(orderId.toString(), { status: newStatus })
       toast.success("Đã cập nhật trạng thái đơn hàng")
       setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null)
-    } catch (e) {
+    } catch {
       toast.error("Lỗi khi cập nhật trạng thái")
     } finally {
       setIsUpdating(false)
@@ -100,7 +100,7 @@ export function OrderAdminPage() {
 
       toast.success(`Chuyển trạng thái thanh toán thành ${paymentStatusMap[newPaymentStatus]?.label || newPaymentStatus}`)
       setSelectedOrder(prev => prev ? { ...prev, paymentStatus: newPaymentStatus } : null)
-    } catch (e) {
+    } catch {
       toast.error("Lỗi khi cập nhật thanh toán")
     } finally {
       setIsUpdating(false)

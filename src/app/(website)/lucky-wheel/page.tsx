@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { LuckyWheelGame, Prize } from "@/components/website/lucky-wheel-game"
-import { Breadcrumbs } from "@/components/website/breadcrumbs"
 
 export const metadata: Metadata = {
   title: "Vòng Quay May Mắn — Nhận Voucher & Quà Tặng Độc Quyền",

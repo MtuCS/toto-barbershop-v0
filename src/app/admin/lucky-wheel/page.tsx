@@ -74,7 +74,7 @@ export default function AdminLuckyWheelPage() {
           </div>
 
           <div className="space-y-3">
-            {MOCK_PRIZES.map((prize, idx) => (
+            {MOCK_PRIZES.map((prize) => (
               <div key={prize.id} className="flex items-center gap-4 p-3 border border-neutral-100 rounded-lg hover:border-primary transition-colors bg-neutral-50/50">
                 <div className="w-12 h-12 rounded bg-neutral-200 shrink-0 overflow-hidden relative border border-black/5">
                   {prize.image ? (

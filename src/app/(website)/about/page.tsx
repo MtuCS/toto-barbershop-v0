@@ -5,7 +5,7 @@ import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { PageHero, SectionTitle } from "@/components/website/page-hero"
 import { Breadcrumbs } from "@/components/website/breadcrumbs"
 import { TeamSection } from "@/components/website/team-section"
-import { ShoppingBag, Scissors, ArrowRight } from "lucide-react"
+import { ShoppingBag, Scissors } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Về Chúng Tôi — Câu Chuyện & Đội Ngũ",

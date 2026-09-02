@@ -1,11 +1,10 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowDown, ArrowRight, ArrowUpRight } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
-import { ProductCard } from "@/components/website/product-card"
-import { getProducts, getStories } from "@/lib/api"
-import { PageHero, SectionTitle } from "@/components/website/page-hero"
+import { getStories } from "@/lib/api"
+import { SectionTitle } from "@/components/website/page-hero"
 
 export const metadata: Metadata = {
   title: "TOTO Merchandise — More than merchandise",
@@ -14,10 +13,7 @@ export const metadata: Metadata = {
 }
 
 export default async function Page() {
-  const products = await getProducts()
   const merchandiseStories = await getStories()
-  const merchandiseProducts = products.filter((product) => product.category === "merchandise")
-  const featuredMerchandise = merchandiseProducts.slice(0, 4)
 
   return (
     <MarketingPageShell>

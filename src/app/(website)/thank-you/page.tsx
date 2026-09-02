@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CheckCircle2, ShoppingBag, Home, Phone, ArrowRight, Sparkles } from "lucide-react"
+import { CheckCircle2, ShoppingBag, Home, Sparkles } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Cảm ơn bạn đã liên hệ | ToTo Barbershop",
