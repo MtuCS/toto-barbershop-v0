@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useDataStore } from "@/store/data-store"
 import { formatCurrency } from "@/lib/format"
 import { Button } from "@/components/ui/button"
-import { Search, Package, MapPin, Phone, User, Calendar, CreditCard, Clock, CheckCircle2, XCircle, Truck, Mail, AlertTriangle, History, ArrowRight } from "lucide-react"
+import { Search, Package, MapPin, Phone, User, Calendar, CreditCard, Clock, CheckCircle2, XCircle, Truck, Mail, AlertTriangle, History, ArrowRight, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -16,36 +16,62 @@ const orderStatusMap: Record<string, { label: string; icon: any; color: string; 
   PENDING: { label: "Chờ xử lý", icon: Clock, color: "text-amber-700", bgColor: "bg-amber-100" },
   PROCESSING: { label: "Đang chuẩn bị", icon: Package, color: "text-blue-700", bgColor: "bg-blue-100" },
   SHIPPED: { label: "Đang giao", icon: Truck, color: "text-purple-700", bgColor: "bg-purple-100" },
+  DELIVERY_FAILED: { label: "Giao thất bại", icon: AlertTriangle, color: "text-rose-700", bgColor: "bg-rose-100" },
   COMPLETED: { label: "Hoàn thành", icon: CheckCircle2, color: "text-emerald-700", bgColor: "bg-emerald-100" },
   CANCELLED: { label: "Đã hủy", icon: XCircle, color: "text-red-700", bgColor: "bg-red-100" },
 }
 
 const paymentStatusMap: Record<string, { label: string; color: string; bgColor: string }> = {
-  UNPAID: { label: "Chưa thanh toán", color: "text-neutral-700", bgColor: "bg-neutral-100" },
-  PAID: { label: "Đã thanh toán", color: "text-emerald-700", bgColor: "bg-emerald-100" },
+  UNPAID: { label: "Chờ thanh toán online", color: "text-neutral-700", bgColor: "bg-neutral-100" },
+  PAID: { label: "Đã thanh toán online", color: "text-emerald-700", bgColor: "bg-emerald-100" },
+  COD_UNPAID: { label: "COD - Chưa thu tiền", color: "text-amber-800", bgColor: "bg-amber-100" },
+  COD_COLLECTED: { label: "COD - Đã thu tiền", color: "text-emerald-800", bgColor: "bg-emerald-100" },
   REFUNDED: { label: "Đã hoàn tiền", color: "text-purple-700", bgColor: "bg-purple-100" },
 }
 
 const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
   PENDING: ['PROCESSING', 'SHIPPED', 'CANCELLED'],
   PROCESSING: ['SHIPPED', 'COMPLETED', 'CANCELLED'],
-  SHIPPED: ['COMPLETED', 'CANCELLED'],
+  SHIPPED: ['COMPLETED', 'CANCELLED', 'DELIVERY_FAILED'],
+  DELIVERY_FAILED: ['SHIPPED', 'CANCELLED'],
   COMPLETED: [], // Trạng thái cuối
-  CANCELLED: [],  // Trạng thái cuối
+  CANCELLED: [], // Trạng thái cuối
 }
 
 function getValidTransitions(currentStatus: string): OrderStatus[] {
   return VALID_TRANSITIONS[currentStatus.toUpperCase()] || []
 }
 
+function getPageNumbers(current: number, total: number): number[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, -1, total]
+  }
+  if (current >= total - 3) {
+    return [1, -1, total - 4, total - 3, total - 2, total - 1, total]
+  }
+  return [1, -1, current - 1, current, current + 1, -1, total]
+}
+
 export function OrderAdminPage() {
-  const { orders, updateOrderStatus, fetchOrderHistory, fetchOrders } = useDataStore()
+  const { orders: rawOrders, orderPagination, updateOrderStatus, fetchOrderHistory, fetchOrders, markCodCollected, blockPhone } = useDataStore()
+  const orders: Order[] = Array.isArray(rawOrders) 
+    ? rawOrders 
+    : (Array.isArray((rawOrders as any)?.data) ? (rawOrders as any).data : [])
+
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("ALL")
   const [filterPaymentStatus, setFilterPaymentStatus] = useState<string>("ALL")
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>("ALL")
   const [filterFrom, setFilterFrom] = useState("")
   const [filterTo, setFilterTo] = useState("")
+
+  // State phân trang server-side
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [isFetching, setIsFetching] = useState(false)
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -56,9 +82,30 @@ export function OrderAdminPage() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
   const [cancelReasonInput, setCancelReasonInput] = useState("")
 
+  // Gọi API phân trang và lọc server-side (Debounce ô tìm kiếm 300ms)
   useEffect(() => {
-    fetchOrders()
-  }, [fetchOrders])
+    let isMounted = true
+    setIsFetching(true)
+    const timer = setTimeout(() => {
+      fetchOrders({
+        page,
+        pageSize,
+        search: searchQuery.trim() || undefined,
+        status: filterStatus !== "ALL" ? filterStatus : undefined,
+        paymentStatus: filterPaymentStatus !== "ALL" ? filterPaymentStatus : undefined,
+        paymentMethod: filterPaymentMethod !== "ALL" ? filterPaymentMethod : undefined,
+        startDate: filterFrom || undefined,
+        endDate: filterTo || undefined,
+      }).finally(() => {
+        if (isMounted) setIsFetching(false)
+      })
+    }, searchQuery ? 300 : 0)
+
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
+  }, [page, pageSize, searchQuery, filterStatus, filterPaymentStatus, filterPaymentMethod, filterFrom, filterTo, fetchOrders])
 
   // Load audit history khi chọn đơn hàng
   useEffect(() => {
@@ -73,40 +120,16 @@ export function OrderAdminPage() {
     }
   }, [selectedOrder?.id, fetchOrderHistory])
 
-  // Format ngày theo múi giờ Việt Nam để tránh bug ngày 23:59 UTC
+  // Format ngày theo múi giờ Việt Nam
   const formatDateVN = (dateStr: string | Date, opts?: Intl.DateTimeFormatOptions) => {
     const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr
     return date.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", ...opts })
   }
 
-  // Sort orders descending by createdAt
-  const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  
-  const filteredOrders = sortedOrders.filter(o => {
-    const q = searchQuery.toLowerCase().trim();
-    const customerName = (o.customer?.name || '').toLowerCase();
-    const customerPhone = (o.customer?.phone || '');
-    const orderCode = (o as any).orderCode?.toLowerCase() || `toto-dh${o.id.toString().padStart(4, '0')}`;
-    const legacyCode = (o.code || '').toLowerCase();
-
-    const matchSearch = !q || 
-      o.id.toString().includes(q) || 
-      orderCode.includes(q) ||
-      legacyCode.includes(q) ||
-      customerName.includes(q) || 
-      customerPhone.includes(q);
-    
-    const matchStatus = filterStatus === "ALL" || (o.status || '').toUpperCase() === filterStatus.toUpperCase();
-    const matchPaymentStatus = filterPaymentStatus === "ALL" || (o.paymentStatus || '').toUpperCase() === filterPaymentStatus.toUpperCase();
-    const matchPaymentMethod = filterPaymentMethod === "ALL" || (o.paymentMethod || '').toLowerCase() === filterPaymentMethod.toLowerCase();
-    
-    // So sánh ngày theo VN timezone
-    const orderDateVN = new Date(new Date(o.createdAt).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }))
-    const matchFrom = !filterFrom || orderDateVN >= new Date(filterFrom)
-    const matchTo = !filterTo || orderDateVN <= new Date(filterTo + "T23:59:59")
-    
-    return matchSearch && matchStatus && matchPaymentStatus && matchPaymentMethod && matchFrom && matchTo
-  })
+  const totalCount = orderPagination?.total ?? orders.length
+  const totalPages = orderPagination?.totalPages ?? (Math.ceil(totalCount / pageSize) || 1)
+  const fromItem = totalCount === 0 ? 0 : (page - 1) * pageSize + 1
+  const toItem = Math.min(page * pageSize, totalCount)
 
   const paymentMethodLabel: Record<string, string> = {
     cod: 'COD (Nhận hàng)',
@@ -202,12 +225,18 @@ export function OrderAdminPage() {
               placeholder="Mã đơn, Tên KH, SĐT..." 
               className="pl-9 h-9 bg-neutral-50/50 border-neutral-200 focus-visible:bg-white"
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={e => {
+                setSearchQuery(e.target.value)
+                setPage(1)
+              }}
             />
           </div>
           <select
             value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
+            onChange={e => {
+              setFilterStatus(e.target.value)
+              setPage(1)
+            }}
             className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary cursor-pointer"
           >
             <option value="ALL">Tất cả đơn hàng</option>
@@ -217,7 +246,10 @@ export function OrderAdminPage() {
           </select>
           <select
             value={filterPaymentStatus}
-            onChange={e => setFilterPaymentStatus(e.target.value)}
+            onChange={e => {
+              setFilterPaymentStatus(e.target.value)
+              setPage(1)
+            }}
             className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary cursor-pointer"
           >
             <option value="ALL">Tất cả thanh toán</option>
@@ -227,7 +259,10 @@ export function OrderAdminPage() {
           </select>
           <select
             value={filterPaymentMethod}
-            onChange={e => setFilterPaymentMethod(e.target.value)}
+            onChange={e => {
+              setFilterPaymentMethod(e.target.value)
+              setPage(1)
+            }}
             className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm text-neutral-700 focus:outline-none focus:border-primary cursor-pointer"
           >
             <option value="ALL">Tất cả phương thức</option>
@@ -236,20 +271,35 @@ export function OrderAdminPage() {
           </select>
           <div className="flex items-center gap-2 text-sm text-neutral-600 bg-neutral-50 border border-neutral-200 rounded-md h-9 px-2 overflow-hidden">
             <span className="text-neutral-400"><Calendar className="size-4" /></span>
-            <input type="date" value={filterFrom} onChange={e => setFilterFrom(e.target.value)}
+            <input type="date" value={filterFrom} onChange={e => { setFilterFrom(e.target.value); setPage(1); }}
               className="bg-transparent focus:outline-none w-[110px]" />
             <span className="text-neutral-300">-</span>
-            <input type="date" value={filterTo} onChange={e => setFilterTo(e.target.value)}
+            <input type="date" value={filterTo} onChange={e => { setFilterTo(e.target.value); setPage(1); }}
               className="bg-transparent focus:outline-none w-[110px]" />
           </div>
           {(filterStatus !== 'ALL' || filterPaymentStatus !== 'ALL' || filterPaymentMethod !== 'ALL' || filterFrom || filterTo || searchQuery) && (
-            <button onClick={() => { setFilterStatus('ALL'); setFilterPaymentStatus('ALL'); setFilterPaymentMethod('ALL'); setFilterFrom(''); setFilterTo(''); setSearchQuery('') }}
+            <button onClick={() => { 
+              setFilterStatus('ALL'); 
+              setFilterPaymentStatus('ALL'); 
+              setFilterPaymentMethod('ALL'); 
+              setFilterFrom(''); 
+              setFilterTo(''); 
+              setSearchQuery('');
+              setPage(1);
+            }}
               className="text-xs text-primary hover:underline whitespace-nowrap px-2">Xoá lọc</button>
           )}
         </div>
-        <p className="text-xs text-neutral-400">
-          Hiển thị {filteredOrders.length} / {orders.length} đơn hàng
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-neutral-500">
+            Hiển thị {fromItem} - {toItem} trên tổng <strong className="text-neutral-800">{totalCount}</strong> đơn hàng
+          </p>
+          {isFetching && (
+            <span className="flex items-center gap-1.5 text-xs text-primary">
+              <Loader2 className="size-3.5 animate-spin" /> Đang tải dữ liệu...
+            </span>
+          )}
+        </div>
       </div>
 
         <div className="overflow-x-auto">
@@ -265,14 +315,14 @@ export function OrderAdminPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {filteredOrders.length === 0 ? (
+              {!Array.isArray(orders) || orders.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-neutral-400">
-                    Không tìm thấy đơn hàng nào phù hợp
+                    Không tìm thấy đơn hàng nào phù hợp với bộ lọc
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map(order => {
+                orders.map(order => {
                   const oStatus = (order.status || 'PENDING').toUpperCase()
                   const pStatus = (order.paymentStatus || 'UNPAID').toUpperCase()
                   const StatusIcon = orderStatusMap[oStatus]?.icon || Clock
@@ -321,6 +371,81 @@ export function OrderAdminPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Thanh Điều Hướng Phân Trang (Server-Side Pagination Controls) */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-neutral-100 bg-white">
+          <div className="flex items-center gap-3 text-xs sm:text-sm text-neutral-600">
+            <span>
+              Hiển thị <strong className="text-neutral-900 font-semibold">{fromItem} - {toItem}</strong> trên tổng <strong className="text-neutral-900 font-semibold">{totalCount}</strong> đơn
+            </span>
+            <span className="text-neutral-300">|</span>
+            <div className="flex items-center gap-1.5">
+              <span>Mỗi trang:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value))
+                  setPage(1)
+                }}
+                className="h-8 border border-neutral-200 rounded px-2 text-xs text-neutral-700 bg-neutral-50 cursor-pointer focus:outline-none focus:border-primary font-medium"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1 || isFetching}
+              className="h-8 px-2.5 text-xs gap-1 border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+            >
+              <ChevronLeft className="size-3.5" /> Trước
+            </Button>
+
+            {/* Các số trang */}
+            {getPageNumbers(page, totalPages).map((p, idx) => {
+              if (p === -1) {
+                return (
+                  <span key={`dots-${idx}`} className="px-1.5 text-xs text-neutral-400">
+                    ...
+                  </span>
+                )
+              }
+              return (
+                <Button
+                  key={p}
+                  variant={page === p ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setPage(p)}
+                  disabled={isFetching}
+                  className={`h-8 w-8 p-0 text-xs font-medium ${
+                    page === p
+                      ? "bg-primary text-white hover:bg-primary/90"
+                      : "border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                  }`}
+                >
+                  {p}
+                </Button>
+              )
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages || isFetching}
+              className="h-8 px-2.5 text-xs gap-1 border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+            >
+              Sau <ChevronRight className="size-3.5" />
+            </Button>
+          </div>
+        </div>
       </div>
 
       <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
@@ -353,7 +478,23 @@ export function OrderAdminPage() {
                       </h3>
                       <div>
                         <p className="font-semibold">{selectedOrder.customer.name}</p>
-                        <p className="text-sm mt-1 flex items-center gap-2 text-neutral-600"><Phone className="size-3.5"/> {selectedOrder.customer.phone}</p>
+                        <div className="mt-1 flex items-center justify-between flex-wrap gap-2 text-sm text-neutral-600">
+                          <span className="flex items-center gap-2"><Phone className="size-3.5"/> {selectedOrder.customer.phone}</span>
+                          {selectedOrder.customer.phone && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (confirm(`Bạn có chắc chắn muốn CHẶN số điện thoại ${selectedOrder.customer.phone} khỏi phương thức COD không?`)) {
+                                  await blockPhone(selectedOrder.customer.phone, `Khách bom hàng đơn #${selectedOrder.id}`);
+                                }
+                              }}
+                              className="text-[11px] font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2 py-0.5 rounded transition-colors"
+                              title="Chặn số điện thoại này đặt đơn COD trong tương lai"
+                            >
+                              ⛔ Chặn COD (Blacklist)
+                            </button>
+                          )}
+                        </div>
                         <p className="text-sm mt-1 flex items-center gap-2 text-neutral-600"><Mail className="size-3.5"/> {selectedOrder.customer.email}</p>
                       </div>
                     </div>
@@ -419,17 +560,59 @@ export function OrderAdminPage() {
                         <p className="text-sm text-neutral-600 mr-2">Phương thức: <strong>{paymentMethodLabel[selectedOrder.paymentMethod?.toLowerCase()] || selectedOrder.paymentMethod?.toUpperCase()}</strong></p>
                       </div>
                       
-                      <div className="flex flex-wrap gap-2">
-                        {(['UNPAID', 'PAID', 'REFUNDED'] as PaymentStatus[]).map(status => (
+                      {/* Nút hành động chuyên biệt cho đơn COD */}
+                      {selectedOrder.paymentMethod?.toLowerCase() === 'cod' && pStatus === 'COD_UNPAID' && (
+                        <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-amber-900">Thu tiền mặt khi nhận hàng:</span>
+                            <span className="text-sm font-bold text-primary">{formatCurrency(selectedOrder.total)}</span>
+                          </div>
+                          <Button 
+                            size="sm"
+                            disabled={isUpdating || (oStatus !== 'SHIPPED' && oStatus !== 'COMPLETED')}
+                            title={oStatus !== 'SHIPPED' && oStatus !== 'COMPLETED' ? 'Chỉ có thể xác nhận thu tiền khi đơn hàng đang giao (SHIPPED) hoặc đã hoàn thành (COMPLETED)' : 'Xác nhận khách đã thanh toán tiền mặt'}
+                            onClick={async () => {
+                              setIsUpdating(true)
+                              const ok = await markCodCollected(selectedOrder.id)
+                              if (ok) {
+                                setSelectedOrder(prev => prev ? { ...prev, paymentStatus: 'COD_COLLECTED' } : null)
+                                fetchOrderHistory(selectedOrder.id).then(h => setOrderHistory(h)).catch(() => {})
+                              }
+                              setIsUpdating(false)
+                            }}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 shadow-xs transition-all"
+                          >
+                            <CheckCircle2 className="size-4 mr-1.5" /> Xác nhận đã thu tiền COD
+                          </Button>
+                          {oStatus !== 'SHIPPED' && oStatus !== 'COMPLETED' && (
+                            <p className="text-[11px] text-amber-700 leading-tight">
+                              * Nút này chỉ khả dụng khi trạng thái đơn hàng là <strong>Đang giao</strong> hoặc <strong>Hoàn thành</strong>.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {selectedOrder.paymentMethod?.toLowerCase() === 'cod' && pStatus === 'COD_COLLECTED' && (
+                        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-800 font-semibold">
+                          <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                          <span>Đã thu tiền mặt {formatCurrency(selectedOrder.total)} thành công.</span>
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {(selectedOrder.paymentMethod?.toLowerCase() === 'cod' 
+                          ? ['COD_UNPAID', 'COD_COLLECTED', 'REFUNDED'] 
+                          : ['UNPAID', 'PAID', 'REFUNDED']
+                        ).map(status => (
                           <Button 
                             key={status}
                             variant={pStatus === status ? "default" : "outline"}
                             size="sm"
                             disabled={isUpdating}
-                            onClick={() => handleUpdatePaymentStatus(selectedOrder.id, status)}
-                            className={pStatus === status ? paymentStatusMap[status].bgColor + ' ' + paymentStatusMap[status].color + ' border-transparent' : ''}
+                            onClick={() => handleUpdatePaymentStatus(selectedOrder.id, status as PaymentStatus)}
+                            className={pStatus === status ? paymentStatusMap[status]?.bgColor + ' ' + paymentStatusMap[status]?.color + ' border-transparent font-bold' : ''}
                           >
-                            {paymentStatusMap[status].label}
+                            {paymentStatusMap[status]?.label || status}
                           </Button>
                         ))}
                       </div>
@@ -450,7 +633,7 @@ export function OrderAdminPage() {
                       <div className="flex flex-col gap-2">
                         {(() => {
                           const validTransitions = getValidTransitions(oStatus);
-                          return (['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'] as OrderStatus[]).map(status => {
+                          return (['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERY_FAILED', 'COMPLETED', 'CANCELLED'] as OrderStatus[]).map(status => {
                             const conf = orderStatusMap[status]
                             const isActive = oStatus === status
                             const isValid = validTransitions.includes(status)
@@ -484,6 +667,20 @@ export function OrderAdminPage() {
                           })
                         })()}
                       </div>
+
+                      {Boolean(selectedOrder.deliveryAttempts && selectedOrder.deliveryAttempts > 0) && (
+                        <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex items-center gap-2">
+                          <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+                          <span>Số lần thử giao: <strong>{selectedOrder.deliveryAttempts} lần</strong>.</span>
+                        </div>
+                      )}
+
+                      {oStatus === 'DELIVERY_FAILED' && (
+                        <div className="text-xs text-rose-800 bg-rose-50 border border-rose-200 rounded-lg p-2.5 flex items-center gap-2">
+                          <AlertTriangle className="size-4 shrink-0 text-rose-600" />
+                          <span>Đơn hàng <strong>Giao thất bại</strong>. Bạn có thể bấm <strong>Đang giao</strong> để shipper giao lại, hoặc <strong>Đã hủy</strong> nếu không thể phát hàng. (Từ 2 đơn thất bại trở lên, hệ thống sẽ tự động chặn COD của SĐT này).</span>
+                        </div>
+                      )}
 
                       {oStatus === 'COMPLETED' && (
                         <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2">

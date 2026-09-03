@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { Sparkles, ArrowRight } from "lucide-react"
+import { Scissors, ArrowRight } from "lucide-react"
 
 export interface CaseStudyItem {
   title: string
@@ -43,7 +43,7 @@ export function CaseStudies() {
     <section className="relative mx-auto w-full max-w-[1400px] px-5 py-16 md:px-8 md:py-24 text-[#f2f5f3]">
       <div className="mx-auto max-w-3xl text-center">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.25em] text-[#79b8a7]">
-          <Sparkles className="size-3.5" />
+          <Scissors className="size-3.5" />
           Phong Cách Tiêu Biểu
         </span>
         <h2 className="mt-2 font-agatho text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-[#f2f5f3]">

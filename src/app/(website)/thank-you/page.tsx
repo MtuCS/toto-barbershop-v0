@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CheckCircle2, ShoppingBag, Home, Sparkles } from "lucide-react"
+import { CheckCircle2, ShoppingBag, Home, Clock } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Cảm ơn bạn đã liên hệ | ToTo Barbershop",
@@ -34,7 +34,7 @@ export default function ThankYouPage() {
         {/* Promise Card */}
         <div className="mt-8 rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md text-left">
           <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-            <Sparkles className="size-5 text-[#79b8a7]" />
+            <Clock className="size-5 text-[#79b8a7]" />
             <h2 className="text-sm font-semibold text-white/90">Trong lúc chờ phản hồi:</h2>
           </div>
           <ul className="mt-4 space-y-3 text-xs sm:text-sm text-white/70">

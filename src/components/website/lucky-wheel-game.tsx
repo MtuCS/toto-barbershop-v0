@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, useAnimationControls } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, X, Gift, HeartHandshake } from "lucide-react";
+import { Trophy, X, Gift, HeartHandshake } from "lucide-react";
 
 export interface Prize {
   id: string;
@@ -227,7 +227,7 @@ export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: "4s" }} />
+                  <Trophy className="w-3.5 h-3.5 text-amber-300" />
                   <span>Chúc Mừng!</span>
                 </>
               )}
@@ -248,7 +248,7 @@ export function LuckyWheelGame({ prizes, onFinish }: LuckyWheelGameProps) {
               ) : isLuckPrize ? (
                 <div className="flex flex-col items-center justify-center text-white/60 gap-2">
                   <div className="p-3 sm:p-4 rounded-full bg-white/5 border border-white/10 text-amber-400">
-                    <Sparkles className="w-8 h-8 sm:w-10 sm:h-10" />
+                    <HeartHandshake className="w-8 h-8 sm:w-10 sm:h-10" />
                   </div>
                 </div>
               ) : (

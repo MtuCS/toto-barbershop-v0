@@ -216,7 +216,7 @@ export function GoogleReviewsShowcase() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 transition-all hover:border-[#79b8a7] hover:text-white"
         >
-          <span>Xem tất cả 73 đánh giá</span>
+          <span>Xem tất cả 74 đánh giá</span>
           <ExternalLink className="size-3" />
         </a>
       </div>

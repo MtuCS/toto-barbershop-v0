@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, Save, Settings, Trash2, Trophy, Sparkles, CheckCircle2, AlertCircle } from "lucide-react"
+import { Plus, Save, Settings, Trash2, Trophy, Info, CheckCircle2, AlertCircle } from "lucide-react"
 import Image from "next/image"
 import { toast } from "sonner"
 
@@ -109,7 +109,7 @@ export default function AdminLuckyWheelPage() {
       </div>
 
       <div className="bg-emerald-50/70 border border-emerald-200/80 text-emerald-900 p-4 rounded-xl flex items-start gap-3 text-sm">
-        <Sparkles className="size-5 shrink-0 text-emerald-600 mt-0.5" />
+        <Info className="size-5 shrink-0 text-emerald-600 mt-0.5" />
         <div className="space-y-0.5">
           <p className="font-semibold text-emerald-950">Cấu hình khuyến mãi trực tiếp</p>
           <p className="text-emerald-800/90 text-xs sm:text-sm">
