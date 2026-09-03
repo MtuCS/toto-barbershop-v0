@@ -854,14 +854,14 @@ export function OrderAdminPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {selectedOrder && (selectedOrder.paymentStatus || '').toUpperCase() === 'PAID' && (
+            {selectedOrder && ((selectedOrder.paymentStatus || '').toUpperCase() === 'PAID' || (selectedOrder.paymentStatus || '').toUpperCase() === 'COD_COLLECTED') && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 space-y-2">
                 <p className="text-sm font-bold flex items-center gap-1.5">
                   <AlertTriangle className="size-4 text-amber-600 shrink-0" />
-                  Cảnh báo: Đơn hàng đã thanh toán thành công!
+                  Cảnh báo: Đơn hàng đã thu tiền khách ({selectedOrder.paymentStatus === 'PAID' ? 'Chuyển khoản PayOS' : 'Tiền mặt COD'})!
                 </p>
                 <p className="text-xs leading-relaxed">
-                  Đơn này đã được thanh toán <strong>{formatCurrency(selectedOrder.total)}</strong> qua <strong>{paymentMethodLabel[selectedOrder.paymentMethod?.toLowerCase()] || selectedOrder.paymentMethod?.toUpperCase()}</strong>. Bạn có muốn đánh dấu đơn hàng cần <strong>Hoàn tiền (REFUNDED)</strong> để quản lý việc hoàn tiền cho khách không?
+                  Đơn hàng này đã thu <strong>{formatCurrency(selectedOrder.total)}</strong>. Khi hủy đơn, quy định hệ thống bắt buộc phải cập nhật trạng thái thanh toán sang <strong>Đã hoàn tiền (REFUNDED)</strong> để ghi nhận nghĩa vụ hoàn trả cho khách hàng và lưu vết minh bạch sổ sách.
                 </p>
               </div>
             )}
@@ -884,34 +884,23 @@ export function OrderAdminPage() {
               Bỏ qua
             </Button>
             
-            {selectedOrder && (selectedOrder.paymentStatus || '').toUpperCase() === 'PAID' ? (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  disabled={isUpdating}
-                  onClick={() => executeStatusUpdate('CANCELLED', undefined, cancelReasonInput || 'Admin hủy đơn (chưa hoàn tiền)')}
-                  className="text-neutral-700"
-                >
-                  Chỉ Hủy đơn (Chưa hoàn tiền)
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  disabled={isUpdating}
-                  onClick={() => executeStatusUpdate('CANCELLED', 'REFUNDED', cancelReasonInput || 'Admin hủy đơn & Đánh dấu hoàn tiền')}
-                  className="bg-red-600 hover:bg-red-700 text-white font-bold"
-                >
-                  Hủy đơn + Đánh dấu Hoàn tiền
-                </Button>
-              </>
+            {selectedOrder && ((selectedOrder.paymentStatus || '').toUpperCase() === 'PAID' || (selectedOrder.paymentStatus || '').toUpperCase() === 'COD_COLLECTED') ? (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                disabled={isUpdating}
+                onClick={() => executeStatusUpdate('CANCELLED', 'REFUNDED', cancelReasonInput || 'Admin hủy đơn & Đánh dấu hoàn tiền cho khách')}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold cursor-pointer"
+              >
+                Hủy đơn & Xác nhận Hoàn tiền (REFUNDED)
+              </Button>
             ) : (
               <Button 
                 variant="destructive" 
                 size="sm"
                 disabled={isUpdating}
                 onClick={() => executeStatusUpdate('CANCELLED', undefined, cancelReasonInput || 'Admin hủy đơn hàng')}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold"
+                className="bg-red-600 hover:bg-red-700 text-white font-bold cursor-pointer"
               >
                 Xác nhận Hủy đơn
               </Button>
