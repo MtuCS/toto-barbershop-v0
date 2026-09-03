@@ -159,6 +159,9 @@ function StoryBlockSection({
   }
 
   if (block.type === "image" && block.image) {
+    const rawImage = block.image.includes("merch-jacket-detail.png")
+      ? block.image.replace("merch-jacket-detail.png", "merch-jacket1.png")
+      : block.image
     return (
       <section className="my-24 md:my-36">
         <div className="mb-5 flex items-center justify-between gap-4">
@@ -167,7 +170,7 @@ function StoryBlockSection({
         </div>
         <div className="relative aspect-[4/3] overflow-hidden bg-[#10231e] md:aspect-[16/9]">
           <Image
-            src={block.image}
+            src={rawImage}
             alt={block.heading ?? `Hình ảnh trong câu chuyện ${story.title}`}
             fill
             sizes="(max-width: 1439px) 100vw, 1400px"

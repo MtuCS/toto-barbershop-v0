@@ -27,6 +27,25 @@ import { useCustomerUserStore } from "./customer-user-store"
 // edits survive reloads. Backend hook point: swap each action for an API call.
 // ============================================================================
 
+export interface OrderPagination {
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+}
+
+export interface OrderQueryParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  status?: string
+  paymentStatus?: string
+  paymentMethod?: string
+  startDate?: string
+  endDate?: string
+  all?: boolean
+}
+
 interface DataState {
   products: Product[]
 
@@ -36,6 +55,7 @@ interface DataState {
   stories: MerchandiseStory[]
   lookbook: LookbookItem[]
   orders: Order[]
+  orderPagination: OrderPagination
   promoCodes: any[]
   customers: any[]
   media: MediaItem[]
@@ -50,7 +70,7 @@ interface DataState {
   fetchStories: () => Promise<void>
   fetchLookbook: () => Promise<void>
   fetchMedia: () => Promise<void>
-  fetchOrders: () => Promise<void>
+  fetchOrders: (params?: OrderQueryParams) => Promise<void>
   fetchPromoCodes: () => Promise<void>
   fetchUsers: () => Promise<void>
   fetchFaqs: () => Promise<void>
@@ -62,6 +82,10 @@ interface DataState {
   updateOrderStatus: (id: string, data: { status?: string, paymentStatus?: string, cancelReason?: string }) => Promise<boolean>
   fetchOrderHistory: (id: string | number) => Promise<any[]>
   cancelOrder: (id: string, token: string) => Promise<boolean>
+  markCodCollected: (id: string | number) => Promise<boolean>
+  blockPhone: (phone: string, reason?: string) => Promise<boolean>
+  unblockPhone: (phone: string) => Promise<boolean>
+  fetchBlockedPhones: () => Promise<any[]>
   
   upsertProduct: (product: Partial<Product>) => Promise<void>
   deleteProduct: (id: string | number) => Promise<void>
@@ -121,6 +145,12 @@ const seed = {
   lookbook: [] as LookbookItem[],
   promoCodes: [] as any[],
   orders: [] as Order[],
+  orderPagination: {
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 1,
+  } as OrderPagination,
   customers: [] as any[],
   media: [] as MediaItem[],
   faqs: [] as any[],
@@ -198,20 +228,41 @@ export const useDataStore = create<DataState>()(
         } catch (error) { console.error(error); }
       },
 
-      fetchOrders: async () => {
+      fetchOrders: async (params?: OrderQueryParams) => {
         try {
           const adminToken = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
           const customerToken = typeof window !== 'undefined' ? useCustomerUserStore.getState().token : null;
           const token = adminToken || customerToken;
 
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders`, {
+          const query = new URLSearchParams();
+          if (params?.page) query.set('page', String(params.page));
+          if (params?.pageSize) query.set('pageSize', String(params.pageSize));
+          if (params?.search) query.set('search', params.search);
+          if (params?.status && params.status !== 'ALL') query.set('status', params.status);
+          if (params?.paymentStatus && params.paymentStatus !== 'ALL') query.set('paymentStatus', params.paymentStatus);
+          if (params?.paymentMethod && params.paymentMethod !== 'ALL') query.set('paymentMethod', params.paymentMethod);
+          if (params?.startDate) query.set('startDate', params.startDate);
+          if (params?.endDate) query.set('endDate', params.endDate);
+          if (params?.all) query.set('all', 'true');
+
+          const qs = query.toString();
+          const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders${qs ? `?${qs}` : ''}`;
+
+          const res = await fetch(url, {
             headers: {
               ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             }
           });
           if (res.ok) {
-            const data = await res.json();
-            set({ orders: data });
+            const json = await res.json();
+            const ordersList = Array.isArray(json) ? json : (json.data || []);
+            const pagination = json.pagination || {
+              page: params?.page || 1,
+              pageSize: params?.pageSize || ordersList.length,
+              total: ordersList.length,
+              totalPages: 1,
+            };
+            set({ orders: ordersList, orderPagination: pagination });
           }
         } catch (error) {
           console.error("Failed to fetch orders:", error);
@@ -348,6 +399,93 @@ export const useDataStore = create<DataState>()(
         }
       },
 
+      markCodCollected: async (id) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${id}/mark-cod-collected`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) {
+            get().fetchOrders();
+            toast.success("Đã xác nhận thu tiền mặt COD thành công!");
+            return true;
+          } else {
+            toast.error(data.error || 'Lỗi khi xác nhận thu tiền COD');
+            return false;
+          }
+        } catch (error) {
+          console.error("Failed to mark COD collected:", error);
+          toast.error('Lỗi kết nối máy chủ');
+          return false;
+        }
+      },
+
+      blockPhone: async (phone, reason) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/blacklist`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ phone, reason })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) {
+            toast.success(`Đã đưa số điện thoại ${phone} vào Blacklist COD`);
+            return true;
+          } else {
+            toast.error(data.error || 'Lỗi chặn số điện thoại');
+            return false;
+          }
+        } catch (error) {
+          console.error("Failed to block phone:", error);
+          toast.error('Lỗi kết nối máy chủ');
+          return false;
+        }
+      },
+
+      unblockPhone: async (phone) => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/blacklist/${phone}`, {
+            method: 'DELETE',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          if (res.ok) {
+            toast.success(`Đã xóa số điện thoại ${phone} khỏi Blacklist`);
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error("Failed to unblock phone:", error);
+          return false;
+        }
+      },
+
+      fetchBlockedPhones: async () => {
+        try {
+          const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/blacklist`, {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          if (res.ok) return await res.json();
+          return [];
+        } catch {
+          return [];
+        }
+      },
+
       fetchOrderHistory: async (id) => {
         try {
           const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
@@ -387,13 +525,16 @@ export const useDataStore = create<DataState>()(
       },
 
       setOrderStatusInStore: (id, status, paymentStatus) => {
-        set((state) => ({
-          orders: state.orders.map(o => o.id.toString() === id.toString() ? { 
-            ...o, 
-            status: (status ? status.toLowerCase() : o.status) as OrderStatus, 
-            paymentStatus: (paymentStatus ? paymentStatus.toLowerCase() : o.paymentStatus) as PaymentStatus 
-          } : o)
-        }))
+        set((state) => {
+          const currentOrders = Array.isArray(state.orders) ? state.orders : [];
+          return {
+            orders: currentOrders.map(o => o.id.toString() === id.toString() ? { 
+              ...o, 
+              status: (status ? status.toLowerCase() : o.status) as OrderStatus, 
+              paymentStatus: (paymentStatus ? paymentStatus.toLowerCase() : o.paymentStatus) as PaymentStatus 
+            } : o)
+          };
+        })
       },
 
       upsertProduct: async (product) => {
@@ -756,13 +897,20 @@ export const useDataStore = create<DataState>()(
     }),
     {
       name: "toto-admin-data",
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) => {
-        const state = persistedState as Partial<DataState>
-        if (version < 2 && !state.products?.length) {
-          return { ...state }
+        const state = persistedState as any
+        if (state) {
+          if (!Array.isArray(state.orders)) {
+            state.orders = Array.isArray(state.orders?.data) ? state.orders.data : []
+          }
         }
         return state as DataState
+      },
+      onRehydrateStorage: () => (state) => {
+        if (state && !Array.isArray(state.orders)) {
+          state.orders = Array.isArray((state.orders as any)?.data) ? (state.orders as any).data : []
+        }
       },
     },
   ),

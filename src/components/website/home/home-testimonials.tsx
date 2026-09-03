@@ -1,5 +1,5 @@
 import { Star } from "lucide-react"
-import { GoogleReviewsShowcase } from "@/components/website/google-reviews-showcase"
+import { ElfsightReviews } from "@/components/website/elfsight-reviews"
 
 export function HomeTestimonials() {
   return (
@@ -51,14 +51,14 @@ export function HomeTestimonials() {
                   <Star className="size-3 fill-[#F5FF00]/40 text-[#F5FF00]" />
                 </div>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-white/60">73 đánh giá trên Google Maps</p>
+              <p className="text-[10px] sm:text-[11px] text-white/60">74 đánh giá trên Google Maps</p>
             </div>
           </a>
         </div>
 
-        {/* Real Live Google Reviews Showcase */}
+        {/* Real Live Google Reviews Showcase (Elfsight Auto-sync) */}
         <div className="mt-5 md:mt-6">
-          <GoogleReviewsShowcase />
+          <ElfsightReviews />
         </div>
       </div>
     </section>
