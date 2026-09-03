@@ -557,13 +557,14 @@ export const useDataStore = create<DataState>()(
           
           if (res.ok) {
             get().fetchProducts();
+            toast.success(isUpdate ? "Đã cập nhật sản phẩm & số lượng biến thể thành công!" : "Đã tạo sản phẩm mới thành công!");
           } else {
-            const err = await res.json();
-            toast.error(err.error || 'Failed to save product');
+            const err = await res.json().catch(() => ({}));
+            toast.error(err.error || 'Lỗi khi lưu sản phẩm');
           }
         } catch (error) {
           console.error("Failed to save product:", error);
-          toast.error('Failed to save product');
+          toast.error('Lỗi kết nối máy chủ khi lưu sản phẩm');
         }
       },
       
@@ -578,12 +579,13 @@ export const useDataStore = create<DataState>()(
           });
           if (res.ok) {
             get().fetchProducts();
+            toast.success("Đã xóa sản phẩm thành công!");
           } else {
-            toast.error('Failed to delete product');
+            toast.error('Lỗi khi xóa sản phẩm');
           }
         } catch (error) {
           console.error("Failed to delete product:", error);
-          toast.error('Failed to delete product');
+          toast.error('Lỗi kết nối máy chủ khi xóa sản phẩm');
         }
       },
 
@@ -607,13 +609,14 @@ export const useDataStore = create<DataState>()(
           
           if (res.ok) {
             get().fetchCategories();
+            toast.success(isUpdate ? "Đã cập nhật danh mục thành công!" : "Đã tạo danh mục mới thành công!");
           } else {
-            const err = await res.json();
-            toast.error(err.error || 'Failed to save category');
+            const err = await res.json().catch(() => ({}));
+            toast.error(err.error || 'Lỗi khi lưu danh mục');
           }
         } catch (error) {
           console.error("Failed to save category:", error);
-          toast.error('Failed to save category');
+          toast.error('Lỗi kết nối máy chủ khi lưu danh mục');
         }
       },
       
@@ -628,12 +631,13 @@ export const useDataStore = create<DataState>()(
           });
           if (res.ok) {
             get().fetchCategories();
+            toast.success("Đã xóa danh mục thành công!");
           } else {
-            toast.error('Failed to delete category');
+            toast.error('Lỗi khi xóa danh mục');
           }
         } catch (error) {
           console.error("Failed to delete category:", error);
-          toast.error('Failed to delete category');
+          toast.error('Lỗi kết nối máy chủ khi xóa danh mục');
         }
       },
 
@@ -657,13 +661,14 @@ export const useDataStore = create<DataState>()(
           
           if (res.ok) {
             get().fetchServices();
+            toast.success(isUpdate ? "Đã cập nhật dịch vụ thành công!" : "Đã tạo dịch vụ mới thành công!");
           } else {
-            const err = await res.json();
-            toast.error(err.error || 'Failed to save service');
+            const err = await res.json().catch(() => ({}));
+            toast.error(err.error || 'Lỗi khi lưu dịch vụ');
           }
         } catch (error) {
           console.error("Failed to save service:", error);
-          toast.error('Failed to save service');
+          toast.error('Lỗi kết nối máy chủ khi lưu dịch vụ');
         }
       },
       
@@ -678,12 +683,13 @@ export const useDataStore = create<DataState>()(
           });
           if (res.ok) {
             get().fetchServices();
+            toast.success("Đã xóa dịch vụ thành công!");
           } else {
-            toast.error('Failed to delete service');
+            toast.error('Lỗi khi xóa dịch vụ');
           }
         } catch (error) {
           console.error("Failed to delete service:", error);
-          toast.error('Failed to delete service');
+          toast.error('Lỗi kết nối máy chủ khi xóa dịch vụ');
         }
       },
 
@@ -692,13 +698,23 @@ export const useDataStore = create<DataState>()(
         const token = useAuthStore.getState().session?.token;
         const isUpdate = !!course.id && !String(course.id).startsWith('t-');
         const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses/${course.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses`;
-        await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(course) });
-        get().fetchCourses();
+        const res = await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(course) });
+        if (res.ok) {
+          get().fetchCourses();
+          toast.success("Đã lưu khóa đào tạo thành công!");
+        } else {
+          toast.error("Lỗi khi lưu khóa đào tạo");
+        }
       },
       deleteCourse: async (id) => {
         const token = useAuthStore.getState().session?.token;
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-        get().fetchCourses();
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/courses/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          get().fetchCourses();
+          toast.success("Đã xóa khóa đào tạo thành công!");
+        } else {
+          toast.error("Lỗi khi xóa khóa đào tạo");
+        }
       },
 
 
@@ -706,13 +722,23 @@ export const useDataStore = create<DataState>()(
         const token = useAuthStore.getState().session?.token;
         const isUpdate = !!story.id && !String(story.id).startsWith('st-');
         const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories/${story.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories`;
-        await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(story) });
-        get().fetchStories();
+        const res = await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(story) });
+        if (res.ok) {
+          get().fetchStories();
+          toast.success("Đã lưu câu chuyện thành công!");
+        } else {
+          toast.error("Lỗi khi lưu câu chuyện");
+        }
       },
       deleteStory: async (id) => {
         const token = useAuthStore.getState().session?.token;
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-        get().fetchStories();
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/stories/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          get().fetchStories();
+          toast.success("Đã xóa câu chuyện thành công!");
+        } else {
+          toast.error("Lỗi khi xóa câu chuyện");
+        }
       },
 
 
@@ -721,13 +747,23 @@ export const useDataStore = create<DataState>()(
         const token = useAuthStore.getState().session?.token;
         const isUpdate = !!item.id && !String(item.id).startsWith('lb-');
         const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks/${item.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks`;
-        await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(item) });
-        get().fetchLookbook();
+        const res = await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(item) });
+        if (res.ok) {
+          get().fetchLookbook();
+          toast.success("Đã lưu lookbook thành công!");
+        } else {
+          toast.error("Lỗi khi lưu lookbook");
+        }
       },
       deleteLookbook: async (id) => {
         const token = useAuthStore.getState().session?.token;
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-        get().fetchLookbook();
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          get().fetchLookbook();
+          toast.success("Đã xóa lookbook thành công!");
+        } else {
+          toast.error("Lỗi khi xóa lookbook");
+        }
       },
 
       upsertPromoCode: async (promo) => {
@@ -750,13 +786,14 @@ export const useDataStore = create<DataState>()(
           
           if (res.ok) {
             get().fetchPromoCodes();
+            toast.success(isUpdate ? "Đã cập nhật mã giảm giá thành công!" : "Đã tạo mã giảm giá mới thành công!");
           } else {
-            const err = await res.json();
+            const err = await res.json().catch(() => ({}));
             toast.error(err.error || 'Lỗi lưu mã giảm giá');
           }
         } catch (error) {
           console.error(error);
-          toast.error('Lỗi lưu mã giảm giá');
+          toast.error('Lỗi kết nối máy chủ khi lưu mã giảm giá');
         }
       },
       
@@ -769,12 +806,13 @@ export const useDataStore = create<DataState>()(
           });
           if (res.ok) {
             get().fetchPromoCodes();
+            toast.success("Đã xóa mã giảm giá thành công!");
           } else {
-            toast.error('Lỗi xóa mã giảm giá');
+            toast.error('Lỗi khi xóa mã giảm giá');
           }
         } catch (error) {
           console.error(error);
-          toast.error('Lỗi xóa mã giảm giá');
+          toast.error('Lỗi kết nối máy chủ khi xóa mã giảm giá');
         }
       },
 

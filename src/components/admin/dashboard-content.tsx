@@ -8,8 +8,12 @@ import { Download, DollarSign, ShoppingBag, Users, TrendingUp, AlertTriangle, Ar
 import Link from "next/link";
 
 const STATUS_LABEL: Record<string, string> = {
-  PENDING: 'Chờ xử lý', PROCESSING: 'Đang chuẩn bị',
-  SHIPPED: 'Đang giao', COMPLETED: 'Hoàn thành', CANCELLED: 'Đã hủy',
+  PENDING: 'Chờ xử lý',
+  PROCESSING: 'Đang chuẩn bị',
+  SHIPPED: 'Đang giao',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã hủy',
+  DELIVERY_FAILED: 'Giao thất bại',
 }
 const STATUS_COLOR: Record<string, string> = {
   PENDING: 'bg-amber-100 text-amber-700',
@@ -17,6 +21,7 @@ const STATUS_COLOR: Record<string, string> = {
   SHIPPED: 'bg-purple-100 text-purple-700',
   COMPLETED: 'bg-emerald-100 text-emerald-700',
   CANCELLED: 'bg-red-100 text-red-700',
+  DELIVERY_FAILED: 'bg-rose-100 text-rose-700',
 }
 const STATUS_PIE_COLOR: Record<string, string> = {
   PENDING: '#f59e0b',
@@ -24,6 +29,7 @@ const STATUS_PIE_COLOR: Record<string, string> = {
   SHIPPED: '#8b5cf6',
   COMPLETED: '#10b981',
   CANCELLED: '#ef4444',
+  DELIVERY_FAILED: '#f43f5e',
 }
 
 const CHART_FILTERS = [
