@@ -33,10 +33,22 @@ export function CheckoutForm() {
   const { user, token, setAuthModalOpen: setAuthOpen } = useCustomerUserStore()
   const mounted = useMounted()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isSubmittingRef = useRef(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const idempotencyKeyRef = useRef<string | null>(null)
   const [couponInput, setCouponInput] = useState(storedCoupon ?? "")
   const [coupon, setCoupon] = useState<string | null>(storedCoupon)
   const [discount, setDiscount] = useState(0)
   const [couponError, setCouponError] = useState("")
+
+  // Hủy request khi component unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
 
   // Form State
   const [form, setForm] = useState({
@@ -218,7 +230,7 @@ export function CheckoutForm() {
   // Bước 1: Validate form trước khi mở Modal xác nhận
   const handlePreSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!items.length || isSubmitting) return
+    if (!items.length || isSubmitting || isSubmittingRef.current) return
 
     if (!form.name.trim()) {
       toast.error("Vui lòng nhập họ và tên người nhận hàng.")
@@ -257,19 +269,41 @@ export function CheckoutForm() {
       return
     }
 
+    // Gán hoặc giữ nguyên idempotencyKey cho phiên đặt hàng này
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = crypto.randomUUID()
+    }
+
     // Tất cả thông tin hợp lệ -> Mở modal xác nhận trước khi gửi thật
     setShowConfirmModal(true)
   }
 
   // Bước 2: Thực thi gửi đơn hàng sau khi khách xác nhận ở Modal
   const handleFinalSubmit = async () => {
-    const fullAddress = `${form.street}, ${form.wardName}, ${form.districtName}, ${form.provinceName}`
-    const idempotencyKey = crypto.randomUUID()
+    // Chặn double-click tức thời bằng synchronous ref lock
+    if (isSubmittingRef.current) {
+      clientLogger.warn("Double-click prevented by isSubmittingRef lock")
+      return
+    }
+    isSubmittingRef.current = true
     setIsSubmitting(true)
+
+    // Khởi tạo AbortController, hủy request cũ nếu có trước đó
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    const fullAddress = `${form.street}, ${form.wardName}, ${form.districtName}, ${form.provinceName}`
+    // Tái sử dụng idempotencyKey đã tạo (kể cả khi request trước bị abort hoặc mạng chập chờn)
+    const idempotencyKey = idempotencyKeyRef.current || crypto.randomUUID()
+    idempotencyKeyRef.current = idempotencyKey
     clientLogger.race(`Submitting checkout order`, { idempotencyKey, itemCount: items.length, total })
     try {
       const response = await fetch("/api/orders/checkout", {
         method: "POST",
+        signal: controller.signal,
         headers: {
           "Content-Type": "application/json",
           "X-Request-Id": idempotencyKey,
@@ -301,6 +335,7 @@ export function CheckoutForm() {
       if (response.status === 202) {
         clientLogger.warn(`Received 202 Accepted (Order is already being processed)`, { reqId: resReqId })
         clear()
+        idempotencyKeyRef.current = null
         setShowConfirmModal(false)
         toast.success("Đơn hàng đang được xử lý, bạn sẽ nhận được email ngay!")
         router.push(`/order-success`)
@@ -316,6 +351,7 @@ export function CheckoutForm() {
       const order = await response.json()
       clientLogger.info(`Order placed successfully`, { orderCode: order.orderCode, reqId: resReqId })
       clear()
+      idempotencyKeyRef.current = null
       setShowConfirmModal(false)
 
       if (order.checkoutUrl) {
@@ -323,9 +359,14 @@ export function CheckoutForm() {
         return
       }
       router.push(`/order/${order.orderCode || order.id}/success`)
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.name === "AbortError") {
+        clientLogger.info("Checkout request aborted by new submission")
+        return
+      }
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra")
     } finally {
+      isSubmittingRef.current = false
       setIsSubmitting(false)
     }
   }
