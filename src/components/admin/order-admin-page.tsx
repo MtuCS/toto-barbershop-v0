@@ -42,6 +42,88 @@ function getValidTransitions(currentStatus: string): OrderStatus[] {
   return VALID_TRANSITIONS[currentStatus.toUpperCase()] || []
 }
 
+function getPaymentTransitionInfo(
+  orderStatus: string,
+  currentPaymentStatus: string,
+  targetPaymentStatus: string,
+  paymentMethod?: string
+): { isValid: boolean; tooltip: string } {
+  const oStatus = (orderStatus || 'PENDING').toUpperCase();
+  const currentP = (currentPaymentStatus || 'UNPAID').toUpperCase();
+  const targetP = (targetPaymentStatus || 'UNPAID').toUpperCase();
+  const method = (paymentMethod || 'COD').toUpperCase();
+
+  if (currentP === targetP) {
+    return { isValid: false, tooltip: "Trạng thái thanh toán hiện tại" };
+  }
+
+  // =================================================================
+  // CÁC QUY TẮC TOÀN CỤC (GLOBAL INVARIANTS)
+  // =================================================================
+
+  // A. Không thể REFUND nếu chưa từng thu tiền
+  if (targetP === 'REFUNDED' && (currentP === 'UNPAID' || currentP === 'COD_UNPAID')) {
+    return { 
+      isValid: false, 
+      tooltip: `Không thể hoàn tiền cho đơn hàng chưa từng phát sinh thanh toán (${currentP}).` 
+    };
+  }
+
+  // B. Không thể revert đơn đã thu tiền về chưa thanh toán
+  if ((currentP === 'PAID' || currentP === 'COD_COLLECTED') && (targetP === 'UNPAID' || targetP === 'COD_UNPAID')) {
+    return { 
+      isValid: false, 
+      tooltip: `Không thể chuyển ngược đơn đã thu tiền (${currentP}) về trạng thái chưa thanh toán.` 
+    };
+  }
+
+  // C. Đã REFUNDED thì khóa vĩnh viễn
+  if (currentP === 'REFUNDED') {
+    return { isValid: false, tooltip: 'Đơn hàng đã hoàn tiền (kết thúc), không thể thay đổi thêm.' };
+  }
+
+  // =================================================================
+  // CÁC QUY TẮC THEO TRẠNG THÁI ĐƠN HÀNG
+  // =================================================================
+
+  // 1. Đơn hàng CANCELLED (Đã hủy)
+  if (oStatus === 'CANCELLED') {
+    if (targetP === 'PAID' || targetP === 'COD_COLLECTED') {
+      return { 
+        isValid: false, 
+        tooltip: `Đơn hàng đã Hủy (CANCELLED), không thể ghi nhận thu tiền (${targetP}).` 
+      };
+    }
+  }
+
+  // 2. Đơn hàng COMPLETED (Hoàn thành)
+  if (oStatus === 'COMPLETED') {
+    if (currentP === 'COD_UNPAID' && targetP !== 'COD_COLLECTED') {
+      return { isValid: false, tooltip: 'Đơn COD đã hoàn thành nhưng chưa thu tiền, chỉ có thể đổi sang "Đã thu tiền COD".' };
+    }
+  }
+
+  // 3. Đơn hàng chưa xuất giao hoặc giao thất bại
+  if (oStatus === 'PENDING' || oStatus === 'PROCESSING' || oStatus === 'DELIVERY_FAILED') {
+    if (method === 'COD' && targetP === 'COD_COLLECTED') {
+      return { 
+        isValid: false, 
+        tooltip: `Chỉ có thể xác nhận thu tiền COD khi đơn đang giao hoặc đã hoàn thành. Hiện tại đang là "${oStatus}".` 
+      };
+    }
+  }
+
+  // 4. Kiểm tra tính tương thích phương thức COD vs NON-COD
+  if (method === 'COD' && targetP === 'PAID') {
+    return { isValid: false, tooltip: 'Đơn COD dùng trạng thái "COD - Đã thu tiền".' };
+  }
+  if (method !== 'COD' && (targetP === 'COD_COLLECTED' || targetP === 'COD_UNPAID')) {
+    return { isValid: false, tooltip: 'Đơn không phải COD, không thể dùng trạng thái COD.' };
+  }
+
+  return { isValid: true, tooltip: `Chuyển sang ${targetP}` };
+}
+
 function getPageNumbers(current: number, total: number): number[] {
   if (total <= 7) {
     return Array.from({ length: total }, (_, i) => i + 1)
@@ -603,18 +685,36 @@ export function OrderAdminPage() {
                         {(selectedOrder.paymentMethod?.toLowerCase() === 'cod' 
                           ? ['COD_UNPAID', 'COD_COLLECTED', 'REFUNDED'] 
                           : ['UNPAID', 'PAID', 'REFUNDED']
-                        ).map(status => (
-                          <Button 
-                            key={status}
-                            variant={pStatus === status ? "default" : "outline"}
-                            size="sm"
-                            disabled={isUpdating}
-                            onClick={() => handleUpdatePaymentStatus(selectedOrder.id, status as PaymentStatus)}
-                            className={pStatus === status ? paymentStatusMap[status]?.bgColor + ' ' + paymentStatusMap[status]?.color + ' border-transparent font-bold' : ''}
-                          >
-                            {paymentStatusMap[status]?.label || status}
-                          </Button>
-                        ))}
+                        ).map(status => {
+                          const isCurrent = pStatus === status;
+                          const transInfo = getPaymentTransitionInfo(
+                            oStatus,
+                            pStatus,
+                            status,
+                            selectedOrder.paymentMethod
+                          );
+                          const isDisabled = isUpdating || isCurrent || !transInfo.isValid;
+
+                          return (
+                            <Button 
+                              key={status}
+                              variant={isCurrent ? "default" : "outline"}
+                              size="sm"
+                              disabled={isDisabled}
+                              title={isCurrent ? "Trạng thái thanh toán hiện tại" : transInfo.tooltip}
+                              onClick={() => handleUpdatePaymentStatus(selectedOrder.id, status as PaymentStatus)}
+                              className={
+                                isCurrent 
+                                  ? paymentStatusMap[status]?.bgColor + ' ' + paymentStatusMap[status]?.color + ' border-transparent font-bold cursor-default shadow-xs' 
+                                  : transInfo.isValid
+                                    ? 'hover:bg-neutral-100 font-medium cursor-pointer'
+                                    : 'opacity-30 text-neutral-400 bg-neutral-50/50 cursor-not-allowed border-dashed'
+                              }
+                            >
+                              {paymentStatusMap[status]?.label || status}
+                            </Button>
+                          );
+                        })}
                       </div>
                     </div>
 
