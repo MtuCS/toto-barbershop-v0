@@ -55,7 +55,7 @@ export function ShopCatalog({
               ? b.basePrice - a.basePrice
               : Number(b.featured) - Number(a.featured),
         ),
-    [activeCategory, activeSubcategory, categories, products, query, sort],
+    [activeCategory, activeParent, activeSubcategory, categories, products, query, sort],
   )
 
   return (
