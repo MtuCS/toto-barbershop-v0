@@ -3,6 +3,7 @@ import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
+import { getCategoryLabel, getParentCategory, PRODUCT_CATEGORY_PARENTS } from "@/lib/product-taxonomy"
 import { Button } from "@/components/ui/button"
 import { useState, useMemo, useEffect } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -99,7 +100,7 @@ const PRODUCT_TYPES: { value: string; label: string; dimensions: VariantDimensio
     value: "grooming",
     label: "Sản phẩm chăm sóc tóc (Pomade, Clay, ...)",
     dimensions: [
-      { key: "volume", label: "Dung tích / Trọng lượng", options: ["50g", "100g", "150g", "250ml", "500ml"] },
+      { key: "volume", label: "Quy cách bán", options: ["50g", "100g", "150g", "250ml", "500ml"] },
     ],
   },
   {
@@ -669,7 +670,8 @@ function ProductForm({ initial, onSave, onCancel }: {
   const handleApplyGenerated = () => {
     if (generatedVariants.length === 0) return
     setCurrentVariants(prev => {
-      const merged = [...prev]
+      const isNewDefault = prev.length === 1 && prev[0].name === "Mặc định" && Object.keys(prev[0].options ?? {}).length === 0
+      const merged = isNewDefault ? [] : [...prev]
       generatedVariants.forEach(gv => {
         const existingIdx = merged.findIndex(mv => mv.name === gv.name)
         if (existingIdx >= 0) {
@@ -690,7 +692,7 @@ function ProductForm({ initial, onSave, onCancel }: {
       })
       return merged
     })
-    toast.success(`Đã đồng bộ ${generatedVariants.length} biến thể vào bảng tồn kho!`)
+    toast.success(`Đã áp dụng ${generatedVariants.length} biến thể.`)
   }
 
   const addImageFromFile = async (file: File) => {
@@ -907,7 +909,7 @@ function ProductForm({ initial, onSave, onCancel }: {
           <Input value={urlInput} onChange={e => setUrlInput(e.target.value)} placeholder="Hoặc dán link ảnh URL..." onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addImageFromUrl())} />
           <Button type="button" variant="outline" onClick={addImageFromUrl} className="shrink-0">Thêm URL</Button>
         </div>
-        {images.length > 0 && <p className="text-xs text-neutral-400">💡 Hover ảnh → nhấn ⭐ để đặt làm ảnh chính</p>}
+        {images.length > 0 && <p className="text-xs text-neutral-400">Di chuột lên ảnh để đặt ảnh chính hoặc xóa.</p>}
       </section>
 
       {/* ── 3. Loại sản phẩm & Biến thể ── */}
@@ -940,13 +942,13 @@ function ProductForm({ initial, onSave, onCancel }: {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-neutral-50 px-4 py-3 border-b gap-2">
               <div>
                 <h4 className="text-sm font-bold text-neutral-800 flex items-center gap-2">
-                  <span>📦 Biến thể &amp; Tồn kho hiện có</span>
+                  <span>Biến thể bán &amp; tồn kho</span>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
                     {currentVariants.length} loại
                   </span>
                 </h4>
                 <p className="text-xs text-neutral-500 mt-0.5">
-                  Cập nhật trực tiếp số lượng tồn kho, giá bán và mã SKU cho từng biến thể riêng biệt.
+                  Giá dùng giá mặc định ở trên; chỉ sửa khi biến thể này có giá riêng. SKU được tự sinh và có thể sửa.
                 </p>
               </div>
               <Button
@@ -967,8 +969,8 @@ function ProductForm({ initial, onSave, onCancel }: {
                     <th className="px-3 py-2.5">Tên biến thể</th>
                     <th className="px-3 py-2.5 w-32 whitespace-nowrap">Trạng thái kho</th>
                     <th className="px-3 py-2.5 w-28">Tồn kho (SP)</th>
-                    <th className="px-3 py-2.5 w-32">Giá bán (VNĐ)</th>
-                    <th className="px-3 py-2.5 w-32">Mã SKU</th>
+                    <th className="px-3 py-2.5 w-32">Giá riêng (VNĐ)</th>
+                    <th className="px-3 py-2.5 w-32">SKU tự sinh</th>
                     <th className="px-3 py-2.5 w-12 text-center">Xóa</th>
                   </tr>
                 </thead>
@@ -977,6 +979,7 @@ function ProductForm({ initial, onSave, onCancel }: {
                     const stockNum = Number(v.stock) || 0
                     const isOutOfStock = stockNum === 0
                     const isLowStock = stockNum > 0 && stockNum < 5
+                    const automaticSku = v.sku || `${skuPrefix}-${skuToken(v.name || "DEFAULT")}`
 
                     return (
                       <tr key={v.id || idx} className={isOutOfStock ? "bg-red-50/40" : isLowStock ? "bg-amber-50/30" : "hover:bg-neutral-50/50"}>
@@ -992,15 +995,15 @@ function ProductForm({ initial, onSave, onCancel }: {
                         <td className="px-3 py-2 whitespace-nowrap">
                           {isOutOfStock ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100/90 px-2 py-0.5 rounded-full border border-red-200">
-                              🔴 Hết hàng (0)
+                              Hết hàng (0)
                             </span>
                           ) : isLowStock ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-200">
-                              🟡 Sắp hết ({stockNum})
+                              Sắp hết ({stockNum})
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-200">
-                              🟢 Còn hàng ({stockNum})
+                              Còn hàng ({stockNum})
                             </span>
                           )}
                         </td>
@@ -1037,9 +1040,9 @@ function ProductForm({ initial, onSave, onCancel }: {
                         <td className="px-3 py-2">
                           <input
                             type="text"
-                            value={v.sku || ""}
+                            value={automaticSku}
                             onChange={e => handleUpdateVariant(idx, "sku", e.target.value)}
-                            placeholder="Mã SKU"
+                            aria-label={`SKU của biến thể ${v.name}`}
                             className="w-full max-w-[120px] border rounded px-2 py-1 font-mono text-[11px] outline-none focus:border-primary uppercase bg-white"
                           />
                         </td>
@@ -1061,7 +1064,7 @@ function ProductForm({ initial, onSave, onCancel }: {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-neutral-50 border-t text-xs text-neutral-500 gap-2">
-              <span>💡 Tổng tồn kho cộng dồn: <strong className="text-neutral-800 font-bold">{currentVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)} SP</strong></span>
+              <span>Tổng tồn kho: <strong className="text-neutral-800 font-bold">{currentVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)} SP</strong></span>
               <Button
                 type="button"
                 variant="ghost"
@@ -1089,7 +1092,7 @@ function ProductForm({ initial, onSave, onCancel }: {
               className="flex w-full items-center justify-between bg-neutral-50 px-4 py-3 text-sm font-semibold hover:bg-neutral-100 transition-colors border-b"
             >
               <div className="flex items-center gap-2 text-left">
-                <span>⚙️ Sinh biến thể tự động theo thuộc tính</span>
+                <span>Sinh biến thể theo thuộc tính</span>
                 <span className="text-xs px-2 py-0.5 rounded bg-neutral-200 text-neutral-600 font-normal">
                   {typeConfig.label}
                 </span>
@@ -1100,17 +1103,7 @@ function ProductForm({ initial, onSave, onCancel }: {
             {variantOpen && (
               <div className="p-4 space-y-5">
                 <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center justify-between flex-wrap gap-2">
-                  <span>💡 Chọn các thuộc tính dưới đây để tổ hợp hàng loạt biến thể mới.</span>
-                  {generatedVariants.length > 0 && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleApplyGenerated}
-                      className="text-xs h-7 bg-primary text-white hover:bg-primary/90"
-                    >
-                      📥 Áp dụng {generatedVariants.length} biến thể vào bảng trên
-                    </Button>
-                  )}
+                  <span>Chọn thuộc tính để tạo các tổ hợp biến thể.</span>
                 </div>
 
                 {typeConfig.dimensions.map(dim => (
@@ -1166,7 +1159,7 @@ function ProductForm({ initial, onSave, onCancel }: {
                         onClick={handleApplyGenerated}
                         className="text-xs h-7 bg-emerald-600 text-white hover:bg-emerald-700"
                       >
-                        Đồng bộ vào bảng tồn kho ➔
+                        Áp dụng {generatedVariants.length} biến thể
                       </Button>
                     </div>
 
@@ -1710,9 +1703,10 @@ export function CrudPage({ section }: { section: string }) {
   
   // Product Filters
   const [filterCategory, setFilterCategory] = useState("ALL")
+  const [filterSubcategory, setFilterSubcategory] = useState("ALL")
+  const [categoryParentTab, setCategoryParentTab] = useState("ALL")
   const [filterStatus, setFilterStatus] = useState("ALL")
   const [productStockFilter, setProductStockFilter] = useState("ALL")
-  const [sortOrder, setSortOrder] = useState("NEWEST")
 
   // Customer Filters
   const [customerTypeFilter, setCustomerTypeFilter] = useState("ALL")
@@ -1737,6 +1731,10 @@ export function CrudPage({ section }: { section: string }) {
 
   // Media & Media Picker States
   const { media: cMedia, products: cProducts, lookbook: cLookbook, stories: cStories } = d
+  const productSubcategories = useMemo(
+    () => filterCategory === "ALL" ? [] : d.categories.filter(category => category.parent === filterCategory),
+    [d.categories, filterCategory],
+  )
   const allMediaList = useMemo(
     () => getAllMediaItems({ media: cMedia, products: cProducts, lookbook: cLookbook, stories: cStories }),
     [cMedia, cProducts, cLookbook, cStories]
@@ -1874,7 +1872,8 @@ export function CrudPage({ section }: { section: string }) {
     let match = text.includes(search.toLowerCase())
     
     if (section === "products") {
-      if (filterCategory !== "ALL" && r.category !== filterCategory) match = false
+      if (filterCategory !== "ALL" && getParentCategory(r.category, d.categories) !== filterCategory) match = false
+      if (filterSubcategory !== "ALL" && r.category !== filterSubcategory) match = false
       if (filterStatus !== "ALL" && r.status !== filterStatus) match = false
       if (productStockFilter !== "ALL") {
         const variants = (r.variants && r.variants.length > 0) ? r.variants : [];
@@ -1890,6 +1889,8 @@ export function CrudPage({ section }: { section: string }) {
         if (productStockFilter === "OUT_OF_STOCK" && totalStock > 0) match = false;
       }
     }
+
+    if (section === "categories" && categoryParentTab !== "ALL" && r.parent !== categoryParentTab) match = false
 
     if (section === "customers") {
       const role = (r.role || '').toUpperCase();
@@ -1933,9 +1934,7 @@ export function CrudPage({ section }: { section: string }) {
   // Sắp xếp
   if (section === "products") {
     filtered = [...filtered].sort((a, b) => {
-      if (sortOrder === "PRICE_ASC") return (Number(a.basePrice) || 0) - (Number(b.basePrice) || 0)
-      if (sortOrder === "PRICE_DESC") return (Number(b.basePrice) || 0) - (Number(a.basePrice) || 0)
-      return 0
+      return new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()
     })
   }
 
@@ -2099,6 +2098,16 @@ export function CrudPage({ section }: { section: string }) {
         )}
       </header>
 
+      {section === "categories" && (
+        <div className="mt-6 flex gap-2 border-b">
+          {[{ value: "ALL", label: "Tất cả" }, ...PRODUCT_CATEGORY_PARENTS].map(tab => (
+            <button key={tab.value} type="button" onClick={() => { setCategoryParentTab(tab.value); setPage(1) }} className={`border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${categoryParentTab === tab.value ? "border-primary text-primary" : "border-transparent text-neutral-500 hover:text-neutral-900"}`}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="mt-8 border bg-white max-w-full overflow-hidden">
         {/* Bộ lọc thanh công cụ (Toolbar Filters) */}
         <div className="flex flex-wrap items-center gap-3 border-b p-4 bg-white/50">
@@ -2146,11 +2155,14 @@ export function CrudPage({ section }: { section: string }) {
           {/* Bộ lọc riêng cho Sản phẩm */}
           {section === "products" && (
             <>
-              <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
-                <option value="ALL">Tất cả danh mục</option>
-                <option value="grooming">Chăm sóc tóc</option>
-                <option value="merchandise">Thời trang</option>
+              <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setFilterSubcategory("ALL"); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả nhóm ngành</option>
+                {PRODUCT_CATEGORY_PARENTS.map(category => <option key={category.value} value={category.value}>{category.label}</option>)}
               </select>
+              {filterCategory !== "ALL" && <select value={filterSubcategory} onChange={e => { setFilterSubcategory(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả danh mục con</option>
+                {productSubcategories.map(category => <option key={category.id} value={category.slug}>{category.name}</option>)}
+              </select>}
               <select value={productStockFilter} onChange={e => { setProductStockFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
                 <option value="ALL">Tất cả tồn kho</option>
                 <option value="IN_STOCK">Còn hàng (Đủ loại)</option>
@@ -2164,13 +2176,8 @@ export function CrudPage({ section }: { section: string }) {
                 <option value="draft">Bản nháp</option>
                 <option value="archived">Lưu trữ</option>
               </select>
-              <select value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
-                <option value="NEWEST">Mới nhất</option>
-                <option value="PRICE_ASC">Giá tăng dần</option>
-                <option value="PRICE_DESC">Giá giảm dần</option>
-              </select>
-              {(filterCategory !== "ALL" || filterStatus !== "ALL" || productStockFilter !== "ALL" || sortOrder !== "NEWEST" || search) && (
-                <button onClick={() => { setSearch(""); setFilterCategory("ALL"); setFilterStatus("ALL"); setProductStockFilter("ALL"); setSortOrder("NEWEST"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              {(filterCategory !== "ALL" || filterSubcategory !== "ALL" || filterStatus !== "ALL" || productStockFilter !== "ALL" || search) && (
+                <button onClick={() => { setSearch(""); setFilterCategory("ALL"); setFilterSubcategory("ALL"); setFilterStatus("ALL"); setProductStockFilter("ALL"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
               )}
             </>
           )}
@@ -2824,8 +2831,8 @@ export function CrudPage({ section }: { section: string }) {
                         </div>
                       </td>
                       <td>
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded ${r.category === 'grooming' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-blue-50 text-blue-800 border border-blue-200'}`}>
-                          {r.category === 'grooming' ? 'Chăm sóc tóc' : r.category === 'merchandise' ? 'Thời trang' : r.category}
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded ${getParentCategory(r.category, d.categories) === 'grooming' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-blue-50 text-blue-800 border border-blue-200'}`}>
+                          {getCategoryLabel(r.category, d.categories)}
                         </span>
                       </td>
                       <td className="font-bold text-emerald-600">
