@@ -1516,6 +1516,41 @@ function StoryBlocksEditor({
     updateBlock(blockIndex, { images })
   }
 
+  const changeBlockType = (index: number, type: StoryBlockType) => {
+    const block = blocks[index]
+    updateBlock(index, {
+      type,
+      ...(type === "gallery" && !(block.images ?? []).length ? { images: [""] } : {}),
+    })
+  }
+
+  const addGalleryImage = (blockIndex: number) => {
+    updateBlock(blockIndex, { images: [...(blocks[blockIndex].images ?? []), ""] })
+  }
+
+  const uploadGalleryImage = async (blockIndex: number, imageIndex: number, file?: File) => {
+    if (!file) return
+    try {
+      const token = useAuthStore.getState().session?.token
+      const formData = new FormData()
+      formData.append("image", file)
+      const response = await fetch("/api/upload/image", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      if (!response.ok) {
+        toast.error("Tải ảnh thất bại")
+        return
+      }
+      const data = await response.json()
+      updateGalleryImage(blockIndex, imageIndex, data.url)
+      toast.success("Tải ảnh lên thành công")
+    } catch {
+      toast.error("Lỗi tải ảnh")
+    }
+  }
+
   return (
     <div className="space-y-3 rounded-lg border border-neutral-200 bg-neutral-50/70 p-3">
       <div className="flex items-start justify-between gap-3">
@@ -1559,7 +1594,7 @@ function StoryBlocksEditor({
                     <span className="text-xs font-semibold text-neutral-600">Loại khối</span>
                     <select
                       value={block.type}
-                      onChange={(event) => updateBlock(index, { type: event.target.value as StoryBlockType })}
+                      onChange={(event) => changeBlockType(index, event.target.value as StoryBlockType)}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {STORY_BLOCK_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
@@ -1610,16 +1645,24 @@ function StoryBlocksEditor({
                         <Input value={block.heading ?? ""} onChange={(event) => updateBlock(index, { heading: event.target.value })} placeholder="Ví dụ: Chất liệu và chi tiết" />
                       </label>
                       <div className="space-y-2">
-                        <span className="text-xs font-semibold text-neutral-600">Các URL ảnh</span>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs font-semibold text-neutral-600">Ảnh trong bộ</span>
+                          <span className="text-[11px] text-neutral-400">Ảnh đầu là ảnh chính, các ảnh sau là ảnh phụ.</span>
+                        </div>
                         {(block.images ?? []).map((image, imageIndex) => (
-                          <div key={`${String(block.id)}-${imageIndex}`} className="flex gap-2">
-                            <Input value={image} onChange={(event) => updateGalleryImage(index, imageIndex, event.target.value)} placeholder={`URL ảnh ${imageIndex + 1}`} />
-                            <Button type="button" variant="outline" onClick={() => onPickImage(index, imageIndex)} className="shrink-0 px-2 text-xs" aria-label={`Chọn ảnh ${imageIndex + 1} từ Media`}><Images className="size-3.5" /></Button>
-                            <button type="button" onClick={() => updateBlock(index, { images: (block.images ?? []).filter((_, itemIndex) => itemIndex !== imageIndex) })} className="px-2 text-lg leading-none text-red-400 hover:text-red-600" aria-label={`Xóa ảnh ${imageIndex + 1}`}>×</button>
+                          <div key={`${String(block.id)}-${imageIndex}`} className="grid gap-2 rounded-md border border-neutral-200 bg-neutral-50 p-2 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] sm:items-center">
+                            <span className="grid size-7 place-items-center rounded bg-neutral-900 text-[11px] font-bold text-white">{imageIndex + 1}</span>
+                            <Input value={image} onChange={(event) => updateGalleryImage(index, imageIndex, event.target.value)} placeholder={`Dán URL ảnh ${imageIndex + 1}`} />
+                            <Button type="button" variant="outline" onClick={() => onPickImage(index, imageIndex)} className="shrink-0 gap-1.5 text-xs" aria-label={`Chọn ảnh ${imageIndex + 1} từ Media`}><Images className="size-3.5" /> Media</Button>
+                            <label className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100">
+                              <input type="file" accept="image/*" className="hidden" onChange={(event) => uploadGalleryImage(index, imageIndex, event.target.files?.[0])} />
+                              <UploadCloud className="size-3.5" /> Tải lên
+                            </label>
+                            <button type="button" onClick={() => updateBlock(index, { images: (block.images ?? []).filter((_, itemIndex) => itemIndex !== imageIndex) })} className="justify-self-end px-2 text-lg leading-none text-red-400 hover:text-red-600" aria-label={`Xóa ảnh ${imageIndex + 1}`}>×</button>
                           </div>
                         ))}
-                        <button type="button" onClick={() => updateBlock(index, { images: [...(block.images ?? []), ""] })} className="text-sm font-medium text-primary hover:text-primary/80">+ Thêm URL ảnh</button>
-                        {!(block.images ?? []).length && <p className="text-xs italic text-neutral-400">Chưa có ảnh. Nhấn “+ Thêm URL ảnh”.</p>}
+                        <Button type="button" variant="outline" onClick={() => addGalleryImage(index)} className="gap-1.5 border-dashed text-sm"><Plus className="size-4" /> Thêm ảnh</Button>
+                        {!(block.images ?? []).length && <p className="text-xs italic text-neutral-400">Thêm ảnh đầu tiên để bắt đầu bộ ảnh.</p>}
                       </div>
                     </>
                   )}
