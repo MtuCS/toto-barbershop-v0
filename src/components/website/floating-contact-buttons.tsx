@@ -118,20 +118,6 @@ export function FloatingContactButtons() {
         title={isOpen ? "Đóng liên hệ" : "Liên hệ ToTo Barbershop (Click để mở)"}
         className="group relative flex size-12 items-center justify-center rounded-full border border-[#79b8a7]/40 bg-[#07110f]/95 text-white shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-[#79b8a7] hover:bg-primary active:scale-95 md:size-14 cursor-pointer"
       >
-        {/* Radar concentric pulse rings (only active when closed) */}
-        {!isOpen && (
-          <>
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full border-2 border-[#79b8a7] animate-radar-pulse"
-            />
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full border border-[#79b8a7]/70 animate-radar-pulse-delayed"
-            />
-          </>
-        )}
-
         {/* Live status dot */}
         <span
           aria-hidden="true"
