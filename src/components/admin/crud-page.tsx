@@ -190,12 +190,22 @@ function getOptionsKey(opts: Record<string, any>) {
   return Object.entries(clean).sort((a, b) => a[0].localeCompare(b[0])).map(x => `${x[0]}=${x[1]}`).join('|')
 }
 
+function skuToken(value: string, fallback = "ITEM") {
+  const token = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toUpperCase()
+  return token || fallback
+}
+
+function createSkuPrefix(title: string) {
+  return `TOTO-${skuToken(title).slice(0, 24)}`
+}
+
 function generateVariants(
   selectedOptions: Record<string, string[]>,
   dimensions: VariantDimension[],
   variantPrices: Record<string, number>,
   variantStocks: Record<string, number>,
   basePrice: number,
+  skuPrefix: string,
   initialVariants: ProductVariant[] = []
 ): ProductVariant[] {
   const activeDimensions = dimensions.filter(d => (selectedOptions[d.key]?.length ?? 0) > 0)
@@ -220,7 +230,7 @@ function generateVariants(
       options: optionMap,
       price: variantPrices[variantName] ?? existing?.price ?? basePrice,
       stock: variantStocks[variantName] ?? existing?.stock ?? 0,
-      sku: existing?.sku || `SKU-${combo.join("-").toUpperCase().replace(/\s/g, "")}`,
+      sku: existing?.sku || `${skuPrefix}-${combo.map(value => skuToken(value)).join("-")}`,
     }
   })
 }
@@ -546,13 +556,9 @@ function ProductForm({ initial, onSave, onCancel }: {
   const [description, setDescription] = useState(initial.description ?? "")
   const [basePrice, setBasePrice] = useState(initial.basePrice ?? 0)
   const [compareAtPrice, setCompareAtPrice] = useState((initial as any).compareAtPrice ?? 0)
-  const [status, setStatus] = useState<"active"|"draft"|"archived">(initial.status ?? "active")
+  const [status, setStatus] = useState<"active"|"draft"|"archived">(initial.status ?? "draft")
   const [featured, setFeatured] = useState(initial.featured ?? false)
   const [categoryId, setCategoryId] = useState(initial.category ?? "")
-  const defaultVar = initial.variants?.[0]
-  const [sku, setSku] = useState((initial as any).sku ?? defaultVar?.sku ?? "")
-  const [weight, setWeight] = useState((initial as any).weight ?? (defaultVar as any)?.weight ?? 0)
-  const [stock, setStock] = useState((initial as any).stock ?? defaultVar?.stock ?? 0)
 
   // Images (multiple)
   const [images, setImages] = useState<string[]>(initial.images ?? [])
@@ -575,7 +581,7 @@ function ProductForm({ initial, onSave, onCancel }: {
         color: v.color,
       }))
     }
-    return []
+    return [{ id: `variant-${Math.random().toString(36).slice(2, 9)}`, name: "Mặc định", price: initial.basePrice ?? 0, stock: 0, sku: "", options: {} }]
   })
 
   const handleUpdateVariant = (index: number, field: keyof ProductVariant, value: any) => {
@@ -598,7 +604,7 @@ function ProductForm({ initial, onSave, onCancel }: {
         name: `Biến thể mới ${prev.length + 1}`,
         price: basePrice,
         stock: 10,
-        sku: `SKU-${Date.now().toString().slice(-4)}`,
+        sku: `${createSkuPrefix(title)}-${prev.length + 1}`,
         options: {},
       }
     ])
@@ -653,11 +659,12 @@ function ProductForm({ initial, onSave, onCancel }: {
 
   const typeConfig = PRODUCT_TYPES.find(t => t.value === productType)
   const hasVariants = (typeConfig?.dimensions?.length ?? 0) > 0
+  const skuPrefix = createSkuPrefix(title)
 
   const generatedVariants = useMemo(() => {
     if (!typeConfig) return []
-    return generateVariants(selectedOptions, typeConfig.dimensions, variantPrices, variantStocks, basePrice, initial.variants as ProductVariant[])
-  }, [selectedOptions, variantPrices, variantStocks, basePrice, typeConfig, initial.variants])
+    return generateVariants(selectedOptions, typeConfig.dimensions, variantPrices, variantStocks, basePrice, skuPrefix, initial.variants as ProductVariant[])
+  }, [selectedOptions, variantPrices, variantStocks, basePrice, skuPrefix, typeConfig, initial.variants])
 
   const handleApplyGenerated = () => {
     if (generatedVariants.length === 0) return
@@ -690,29 +697,18 @@ function ProductForm({ initial, onSave, onCancel }: {
     setUploadingImage(true)
     try {
       const token = typeof window !== "undefined" ? useAuthStore.getState().session?.token : null
-      if (token) {
-        const formData = new FormData()
-        formData.append("image", file)
-        const res = await fetch("/api/upload/image", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setImages(prev => [...prev, data.url])
-          setUploadingImage(false)
-          return
-        }
-      }
-    } catch { /* fall through to base64 */ }
-    // Fallback: base64
-    const reader = new FileReader()
-    reader.onload = ev => {
-      setImages(prev => [...prev, ev.target?.result as string])
+      if (!token) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.")
+      const formData = new FormData()
+      formData.append("image", file)
+      const res = await fetch("/api/upload/image", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) throw new Error(data.error || "Không thể tải ảnh lên")
+      setImages(prev => [...prev, data.url])
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể tải ảnh lên")
+    } finally {
       setUploadingImage(false)
     }
-    reader.readAsDataURL(file)
   }
 
   const addImageFromUrl = () => {
@@ -750,6 +746,9 @@ function ProductForm({ initial, onSave, onCancel }: {
   const handleSave = () => {
     if (!title.trim()) { toast.error("Vui lòng nhập tên sản phẩm."); return }
     if (!categoryId) { toast.error("Vui lòng chọn danh mục sản phẩm."); return }
+    if (!Number.isFinite(basePrice) || basePrice <= 0) { toast.error("Giá bán phải lớn hơn 0."); return }
+    if (compareAtPrice > 0 && compareAtPrice <= basePrice) { toast.error("Giá gốc phải lớn hơn giá bán."); return }
+    if (status === "active" && images.length === 0) { toast.error("Sản phẩm đang bán cần có ít nhất một hình ảnh."); return }
 
     const finalVariants: ProductVariant[] = currentVariants.length > 0
       ? currentVariants.map(v => ({
@@ -757,9 +756,13 @@ function ProductForm({ initial, onSave, onCancel }: {
           name: v.name?.trim() || "Biến thể",
           price: typeof v.price === "number" ? v.price : basePrice,
           stock: Math.max(0, Number(v.stock) || 0),
-          sku: v.sku?.trim() || `SKU-${(v.name || "VAR").toUpperCase().replace(/\s/g, "")}`,
+          sku: v.sku?.trim() || `${skuPrefix}-${skuToken(v.name || "DEFAULT")}`,
         }))
-      : []
+      : [{ id: `variant-${Math.random().toString(36).slice(2, 9)}`, name: "Mặc định", price: basePrice, stock: 0, sku: `${skuPrefix}-DEFAULT`, options: {} }]
+
+    if (finalVariants.some(v => !Number.isInteger(v.price) || v.price <= 0 || !Number.isInteger(v.stock) || v.stock < 0)) { toast.error("Kiểm tra lại giá và tồn kho của biến thể."); return }
+    const usedSkus = new Set<string>()
+    if (finalVariants.some(v => { const value = v.sku.trim().toUpperCase(); if (usedSkus.has(value)) return true; usedSkus.add(value); return false })) { toast.error("SKU của các biến thể không được trùng nhau."); return }
 
     onSave({
       ...(initial as Product),
@@ -768,20 +771,17 @@ function ProductForm({ initial, onSave, onCancel }: {
       slug: initial.slug || title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").toLowerCase(),
       description,
       basePrice,
-      compareAtPrice,
       images,
       status,
       featured,
       category: categoryId as any,
-      collection,
+      collection: collection.trim() || null,
       variants: finalVariants,
       tags: initial.tags ?? [],
       rating: initial.rating ?? 0,
       reviewCount: initial.reviewCount ?? 0,
       createdAt: initial.createdAt ?? new Date().toISOString(),
-      sku,
-      weight: weight > 0 ? weight : undefined,
-      stock: finalVariants.length > 0 ? finalVariants.reduce((sum, v) => sum + v.stock, 0) : stock,
+      compareAtPrice: compareAtPrice > 0 ? compareAtPrice : undefined,
     } as any)
   }
 
@@ -837,19 +837,6 @@ function ProductForm({ initial, onSave, onCancel }: {
               <span className="ml-1 text-neutral-400 font-normal text-xs">(bỏ trống nếu không sale)</span>
             </label>
             <Input type="number" value={compareAtPrice || ""} placeholder="VD: 480000" onChange={e => setCompareAtPrice(Number(e.target.value))} min={0} />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">Mã SKU</label>
-            <Input value={sku} onChange={e => setSku(e.target.value)} placeholder="VD: TOTO-TEE-BLK" />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">
-              Cân nặng (gram)
-              <span className="ml-1 text-neutral-400 font-normal text-xs">— tính phí ship</span>
-            </label>
-            <Input type="number" value={weight || ""} placeholder="VD: 250" onChange={e => setWeight(Number(e.target.value))} min={0} />
           </div>
 
           <div className="sm:col-span-2 flex items-center gap-2">
@@ -926,12 +913,12 @@ function ProductForm({ initial, onSave, onCancel }: {
       {/* ── 3. Loại sản phẩm & Biến thể ── */}
       {/* ── 3. Loại sản phẩm & Quản lý Biến thể ── */}
       <section className="space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b pb-2">Phân loại &amp; Biến thể</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b pb-2">Kho hàng &amp; Biến thể</h3>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">Bộ sưu tập (Phân loại hiển thị) *</label>
-            <Input value={collection} onChange={e => setCollection(e.target.value)} placeholder="VD: jacket, pomade, tee..." />
+            <label className="text-xs font-semibold text-neutral-600">Bộ sưu tập <span className="font-normal text-neutral-400">(tùy chọn)</span></label>
+            <Input value={collection} onChange={e => setCollection(e.target.value)} placeholder="VD: Core Collection, Summer 2026..." />
           </div>
 
           <div className="space-y-1.5">
@@ -1087,21 +1074,9 @@ function ProductForm({ initial, onSave, onCancel }: {
             </div>
           </div>
         ) : (
-          /* Tồn kho cho sản phẩm đơn (chưa có biến thể) */
-          <div className="space-y-1.5 p-4 border rounded-xl bg-blue-50/40 border-blue-100">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <label className="text-xs font-bold text-neutral-700">Số lượng tồn kho (Sản phẩm không có biến thể)</label>
-                <p className="text-xs text-neutral-500 mt-0.5">Sản phẩm này chưa khai báo biến thể riêng lẻ. Bạn có thể nhập tổng tồn kho bán hàng trực tiếp tại đây.</p>
-              </div>
-              <Input
-                type="number"
-                value={stock}
-                onChange={e => setStock(Math.max(0, Number(e.target.value) || 0))}
-                min={0}
-                className="w-32 font-bold text-sm bg-white"
-              />
-            </div>
+          <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/40 p-4">
+            <p className="text-xs text-neutral-600">Mỗi sản phẩm cần ít nhất một biến thể để quản lý tồn kho và SKU.</p>
+            <Button type="button" size="sm" onClick={handleAddManualVariant}>+ Thêm biến thể</Button>
           </div>
         )}
 
@@ -3049,7 +3024,7 @@ export function CrudPage({ section }: { section: string }) {
           {section === "products" ? (
             <ProductForm
               initial={editingItem ?? {}}
-              onSave={async (product) => { await d.upsertProduct(product); setModalOpen(false) }}
+              onSave={async (product) => { if (await d.upsertProduct(product)) setModalOpen(false) }}
               onCancel={() => setModalOpen(false)}
             />
           ) : section === "orders" ? (

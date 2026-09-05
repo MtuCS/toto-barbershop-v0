@@ -87,7 +87,7 @@ interface DataState {
   unblockPhone: (phone: string) => Promise<boolean>
   fetchBlockedPhones: () => Promise<any[]>
   
-  upsertProduct: (product: Partial<Product>) => Promise<void>
+  upsertProduct: (product: Partial<Product>) => Promise<boolean>
   deleteProduct: (id: string | number) => Promise<void>
 
   // Categories
@@ -558,13 +558,16 @@ export const useDataStore = create<DataState>()(
           if (res.ok) {
             get().fetchProducts();
             toast.success(isUpdate ? "Đã cập nhật sản phẩm & số lượng biến thể thành công!" : "Đã tạo sản phẩm mới thành công!");
+            return true;
           } else {
             const err = await res.json().catch(() => ({}));
             toast.error(err.error || 'Lỗi khi lưu sản phẩm');
+            return false;
           }
         } catch (error) {
           console.error("Failed to save product:", error);
           toast.error('Lỗi kết nối máy chủ khi lưu sản phẩm');
+          return false;
         }
       },
       
