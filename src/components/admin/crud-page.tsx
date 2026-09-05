@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import type { Product, ProductVariant } from "@/types"
+import type { Product, ProductVariant, StoryBlock, StoryBlockType } from "@/types"
 
 // ============================================================================
 // Config: Section labels
@@ -1451,7 +1451,188 @@ function ChangeAdminPasswordCard() {
 // ============================================================================
 const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "relatedProductIds", "timeline", "items", "modules", "roadmap", "benefits", "audience", "productCount", "totalOrders", "totalSpent", "orders", "addresses", "resetTokens"]
 // Những field dùng UI dynamic list thay vì textarea JSON
-const JSON_LIST_KEYS = ["process", "blocks", "gallery"]
+const JSON_LIST_KEYS = ["process", "gallery"]
+
+const STORY_BLOCK_TYPES: { value: StoryBlockType; label: string; hint: string }[] = [
+  { value: "text", label: "Văn bản", hint: "Một đoạn nội dung có tiêu đề tùy chọn." },
+  { value: "image", label: "Ảnh đơn", hint: "Một ảnh toàn chiều rộng của câu chuyện." },
+  { value: "quote", label: "Trích dẫn", hint: "Một câu nói hoặc quan điểm nổi bật." },
+  { value: "gallery", label: "Bộ ảnh", hint: "Nhiều ảnh trình bày theo layout editorial." },
+]
+
+function normalizeStoryBlocks(value: unknown): StoryBlock[] {
+  let raw = value
+  if (typeof raw === "string") {
+    try { raw = JSON.parse(raw) } catch { raw = [] }
+  }
+  if (!Array.isArray(raw)) return []
+
+  return raw.map((block, index) => {
+    if (typeof block === "string") {
+      return { id: `block-${index + 1}`, type: "text", body: block } as StoryBlock
+    }
+    const candidate = (block && typeof block === "object" ? block : {}) as Partial<StoryBlock>
+    const type = STORY_BLOCK_TYPES.some((item) => item.value === candidate.type)
+      ? candidate.type as StoryBlockType
+      : "text"
+    return {
+      id: candidate.id ?? `block-${index + 1}`,
+      type,
+      heading: typeof candidate.heading === "string" ? candidate.heading : "",
+      body: typeof candidate.body === "string" ? candidate.body : "",
+      image: typeof candidate.image === "string" ? candidate.image : "",
+      images: Array.isArray(candidate.images) ? candidate.images.filter((image): image is string => typeof image === "string") : [],
+    }
+  })
+}
+
+function StoryBlocksEditor({
+  value,
+  onChange,
+  onPickImage,
+}: {
+  value: unknown
+  onChange: (blocks: StoryBlock[]) => void
+  onPickImage: (blockIndex: number, imageIndex?: number) => void
+}) {
+  const blocks = normalizeStoryBlocks(value)
+
+  const updateBlock = (index: number, patch: Partial<StoryBlock>) => {
+    onChange(blocks.map((block, blockIndex) => blockIndex === index ? { ...block, ...patch } : block))
+  }
+
+  const addBlock = () => {
+    onChange([...blocks, { id: `block-${blocks.length + 1}`, type: "text", heading: "", body: "" }])
+  }
+
+  const removeBlock = (index: number) => {
+    onChange(blocks.filter((_, blockIndex) => blockIndex !== index))
+  }
+
+  const updateGalleryImage = (blockIndex: number, imageIndex: number, image: string) => {
+    const images = [...(blocks[blockIndex].images ?? [])]
+    images[imageIndex] = image
+    updateBlock(blockIndex, { images })
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border border-neutral-200 bg-neutral-50/70 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-neutral-900">Các khối nội dung</p>
+          <p className="mt-1 text-xs leading-5 text-neutral-500">Mỗi khối là một phần hiển thị trên trang story. Chọn loại khối rồi nhập nội dung tương ứng.</p>
+        </div>
+        <span className="shrink-0 rounded-md bg-white px-2 py-1 text-[11px] font-semibold text-neutral-500 ring-1 ring-neutral-200">{blocks.length} khối</span>
+      </div>
+
+      {blocks.length === 0 ? (
+        <div className="rounded-md border border-dashed border-neutral-300 bg-white px-4 py-5 text-center">
+          <p className="text-sm font-medium text-neutral-700">Story chưa có khối nội dung</p>
+          <p className="mt-1 text-xs text-neutral-500">Bắt đầu bằng một khối văn bản, ảnh hoặc trích dẫn.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {blocks.map((block, index) => {
+            const typeMeta = STORY_BLOCK_TYPES.find((item) => item.value === block.type) ?? STORY_BLOCK_TYPES[0]
+            return (
+              <div key={String(block.id)} className="rounded-md border border-neutral-200 bg-white p-3 shadow-sm">
+                <div className="flex items-center justify-between gap-3 border-b border-neutral-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="grid size-6 place-items-center rounded bg-neutral-900 text-[11px] font-bold text-white">{index + 1}</span>
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-900">{typeMeta.label}</p>
+                      <p className="text-[11px] text-neutral-400">{typeMeta.hint}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeBlock(index)}
+                    className="rounded px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
+                  >
+                    Xóa khối
+                  </button>
+                </div>
+
+                <div className="mt-3 grid gap-3">
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold text-neutral-600">Loại khối</span>
+                    <select
+                      value={block.type}
+                      onChange={(event) => updateBlock(index, { type: event.target.value as StoryBlockType })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {STORY_BLOCK_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                    </select>
+                  </label>
+
+                  {block.type === "text" && (
+                    <>
+                      <label className="space-y-1.5">
+                        <span className="text-xs font-semibold text-neutral-600">Tiêu đề khối <span className="font-normal text-neutral-400">(tùy chọn)</span></span>
+                        <Input value={block.heading ?? ""} onChange={(event) => updateBlock(index, { heading: event.target.value })} placeholder="Ví dụ: Từ xưởng đến phố" />
+                      </label>
+                      <label className="space-y-1.5">
+                        <span className="text-xs font-semibold text-neutral-600">Nội dung</span>
+                        <textarea value={block.body ?? ""} onChange={(event) => updateBlock(index, { body: event.target.value })} rows={4} placeholder="Viết nội dung của chương..." className="flex min-h-[100px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                      </label>
+                    </>
+                  )}
+
+                  {block.type === "quote" && (
+                    <label className="space-y-1.5">
+                      <span className="text-xs font-semibold text-neutral-600">Trích dẫn</span>
+                      <textarea value={block.body ?? ""} onChange={(event) => updateBlock(index, { body: event.target.value })} rows={3} placeholder="Nhập câu trích dẫn nổi bật..." className="flex min-h-[84px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                    </label>
+                  )}
+
+                  {block.type === "image" && (
+                    <>
+                      <label className="space-y-1.5">
+                        <span className="text-xs font-semibold text-neutral-600">Chú thích ảnh <span className="font-normal text-neutral-400">(tùy chọn)</span></span>
+                        <Input value={block.heading ?? ""} onChange={(event) => updateBlock(index, { heading: event.target.value })} placeholder="Mô tả ngắn cho ảnh" />
+                      </label>
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-neutral-600">Ảnh</span>
+                        <div className="flex gap-2">
+                          <Input value={block.image ?? ""} onChange={(event) => updateBlock(index, { image: event.target.value })} placeholder="Dán URL ảnh hoặc chọn từ Media" />
+                          <Button type="button" variant="outline" onClick={() => onPickImage(index)} className="shrink-0 gap-1.5 text-xs"><Images className="size-3.5" /> Chọn ảnh</Button>
+                        </div>
+                        {block.image && <MediaThumbnail src={block.image} alt={block.heading || "Ảnh trong story"} className="h-28 rounded-md object-contain" />}
+                      </div>
+                    </>
+                  )}
+
+                  {block.type === "gallery" && (
+                    <>
+                      <label className="space-y-1.5">
+                        <span className="text-xs font-semibold text-neutral-600">Tiêu đề bộ ảnh <span className="font-normal text-neutral-400">(tùy chọn)</span></span>
+                        <Input value={block.heading ?? ""} onChange={(event) => updateBlock(index, { heading: event.target.value })} placeholder="Ví dụ: Chất liệu và chi tiết" />
+                      </label>
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-neutral-600">Các URL ảnh</span>
+                        {(block.images ?? []).map((image, imageIndex) => (
+                          <div key={`${String(block.id)}-${imageIndex}`} className="flex gap-2">
+                            <Input value={image} onChange={(event) => updateGalleryImage(index, imageIndex, event.target.value)} placeholder={`URL ảnh ${imageIndex + 1}`} />
+                            <Button type="button" variant="outline" onClick={() => onPickImage(index, imageIndex)} className="shrink-0 px-2 text-xs" aria-label={`Chọn ảnh ${imageIndex + 1} từ Media`}><Images className="size-3.5" /></Button>
+                            <button type="button" onClick={() => updateBlock(index, { images: (block.images ?? []).filter((_, itemIndex) => itemIndex !== imageIndex) })} className="px-2 text-lg leading-none text-red-400 hover:text-red-600" aria-label={`Xóa ảnh ${imageIndex + 1}`}>×</button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => updateBlock(index, { images: [...(block.images ?? []), ""] })} className="text-sm font-medium text-primary hover:text-primary/80">+ Thêm URL ảnh</button>
+                        {!(block.images ?? []).length && <p className="text-xs italic text-neutral-400">Chưa có ảnh. Nhấn “+ Thêm URL ảnh”.</p>}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <Button type="button" variant="outline" onClick={addBlock} className="w-full gap-1.5 border-dashed"><Plus className="size-4" /> Thêm khối nội dung</Button>
+    </div>
+  )
+}
 
 function generateDefaultForm(section: string) {
   switch (section) {
@@ -1964,7 +2145,14 @@ export function CrudPage({ section }: { section: string }) {
 
   const handleEdit = (item: Row) => {
     setEditingItem(item)
-    setFormData({ ...item })
+    const nextFormData = { ...item }
+    if (section === "merchandise-stories") {
+      nextFormData.blocks = normalizeStoryBlocks(item.blocks)
+      if (typeof nextFormData.gallery === "string") {
+        try { nextFormData.gallery = JSON.parse(nextFormData.gallery) } catch { nextFormData.gallery = [] }
+      }
+    }
+    setFormData(nextFormData)
     setModalOpen(true)
   }
 
@@ -2015,8 +2203,8 @@ export function CrudPage({ section }: { section: string }) {
       if (!payload.slug && payload.title) {
         payload.slug = payload.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").replace(/(^-|-$)+/g, "");
       }
-      try { if (typeof payload.blocks === 'string') payload.blocks = JSON.parse(payload.blocks); } catch {}
-      try { if (typeof payload.gallery === 'string') payload.gallery = JSON.parse(payload.gallery); } catch {}
+      payload.blocks = normalizeStoryBlocks(payload.blocks)
+      try { if (typeof payload.gallery === 'string') payload.gallery = JSON.parse(payload.gallery); } catch { payload.gallery = [] }
       await d.upsertStory(payload as any)
     }
     if (section === "lookbook") {
@@ -2031,6 +2219,33 @@ export function CrudPage({ section }: { section: string }) {
   }
 
   const handleChange = (key: string, value: any) => {
+    const blockFieldMatch = key.match(/^blocks\.(\d+)\.(heading|body|image)$/)
+    if (blockFieldMatch) {
+      const [, indexValue, field] = blockFieldMatch
+      setFormData(prev => {
+        const blocks = normalizeStoryBlocks(prev.blocks)
+        const index = Number(indexValue)
+        if (!blocks[index]) return prev
+        blocks[index] = { ...blocks[index], [field]: value }
+        return { ...prev, blocks }
+      })
+      return
+    }
+    const galleryFieldMatch = key.match(/^blocks\.(\d+)\.images\.(\d+)$/)
+    if (galleryFieldMatch) {
+      const [, blockIndexValue, imageIndexValue] = galleryFieldMatch
+      setFormData(prev => {
+        const blocks = normalizeStoryBlocks(prev.blocks)
+        const blockIndex = Number(blockIndexValue)
+        const imageIndex = Number(imageIndexValue)
+        if (!blocks[blockIndex]) return prev
+        const images = [...(blocks[blockIndex].images ?? [])]
+        images[imageIndex] = value
+        blocks[blockIndex] = { ...blocks[blockIndex], images }
+        return { ...prev, blocks }
+      })
+      return
+    }
     setFormData(prev => ({ ...prev, [key]: value }))
   }
 
@@ -3023,7 +3238,7 @@ export function CrudPage({ section }: { section: string }) {
 
       {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className={section === "products" ? "sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : "sm:max-w-[500px] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6"}>
+        <DialogContent className={section === "products" ? "sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : section === "merchandise-stories" ? "sm:max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : "sm:max-w-[500px] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6"}>
           <DialogHeader>
             <DialogTitle>{editingItem ? "Chỉnh sửa" : "Thêm mới"} {labels[section]?.toLowerCase()}</DialogTitle>
           </DialogHeader>
@@ -3221,6 +3436,15 @@ export function CrudPage({ section }: { section: string }) {
                         <option value="grooming">Grooming (Chăm sóc tóc & râu)</option>
                         <option value="merchandise">Merchandise (Thời trang)</option>
                       </select>
+                    ) : key === "blocks" && section === "merchandise-stories" ? (
+                      <StoryBlocksEditor
+                        value={formData.blocks}
+                        onChange={(blocks) => handleChange("blocks", blocks)}
+                        onPickImage={(blockIndex, imageIndex) => {
+                          setGenericMediaField(imageIndex === undefined ? `blocks.${blockIndex}.image` : `blocks.${blockIndex}.images.${imageIndex}`)
+                          setOpenGenericMediaPicker(true)
+                        }}
+                      />
                     ) : JSON_LIST_KEYS.includes(key) ? (
                       // UI Dynamic List thay vì textarea JSON thô
                       <div className="space-y-2">
