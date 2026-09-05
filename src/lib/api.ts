@@ -57,11 +57,8 @@ export async function getStoryBySlug(slug: string): Promise<MerchandiseStory | n
   return stories.find((s) => s.slug === slug) || null;
 }
 
-import { lookbookItems as defaultLookbookItems } from "@/data/lookbook";
-
 export async function getLookbooks(): Promise<LookbookItem[]> {
-  const items = await safeFetch<LookbookItem[]>('/api/lookbooks', defaultLookbookItems, { next: { revalidate: 60 } } as any);
-  return items && items.length > 0 ? items : defaultLookbookItems;
+  return safeFetch<LookbookItem[]>('/api/lookbooks', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getFaqs(): Promise<any[]> {

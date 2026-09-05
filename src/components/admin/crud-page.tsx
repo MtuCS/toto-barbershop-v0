@@ -1684,7 +1684,7 @@ function generateDefaultForm(section: string) {
     case "services": return { name: "", category: "Tóc & tạo kiểu", price: 100000, duration: 45, description: "", process: ["Tư vấn kiểu tóc", "Cắt tỉa tạo form", "Gội sấy & vuốt sáp tạo kiểu"], image: "", featured: false }
     case "training": return { title: "", duration: "2 tháng", price: 15000000, description: "", excerpt: "", startDate: "Khai giảng hàng tháng", status: "active" }
     case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", blocks: [], gallery: [], status: "published", order: 1 }
-    case "lookbook": return { title: "", category: "Classic", image: "" }
+    case "lookbook": return { title: "", category: "Classic", image: "", order: 0 }
     case "customers": return { name: "", email: "", password: "", phone: "", role: "CUSTOMER" }
     case "staff": return { name: "", email: "", password: "", phone: "", role: "ADMIN" }
     case "promo-codes": return { code: "", discountType: "PERCENT", discountValue: 0, minOrderValue: 0, maxDiscount: 0, usageLimit: 100, isActive: true, expiresAt: null }
@@ -3459,6 +3459,14 @@ export function CrudPage({ section }: { section: string }) {
                         <option value="Grooming">Grooming</option>
                         <option value="Coloring">Tẩy nhuộm</option>
                       </select>
+                    ) : key === "order" && section === "lookbook" ? (
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={formData[key] ?? 0}
+                        onChange={e => handleChange(key, Math.max(0, Number.parseInt(e.target.value, 10) || 0))}
+                      />
                     ) : key === "category" && section === "faqs" ? (
                       <select 
                         value={formData[key] || "shop"} 
