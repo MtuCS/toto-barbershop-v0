@@ -190,12 +190,27 @@ function getOptionsKey(opts: Record<string, any>) {
   return Object.entries(clean).sort((a, b) => a[0].localeCompare(b[0])).map(x => `${x[0]}=${x[1]}`).join('|')
 }
 
+function skuToken(value: string, fallback = "ITEM") {
+  const token = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toUpperCase()
+  return token || fallback
+}
+
+function createSkuPrefix(title: string) {
+  return `TOTO-${skuToken(title).slice(0, 24)}`
+}
+
 function generateVariants(
   selectedOptions: Record<string, string[]>,
   dimensions: VariantDimension[],
   variantPrices: Record<string, number>,
   variantStocks: Record<string, number>,
   basePrice: number,
+  skuPrefix: string,
   initialVariants: ProductVariant[] = []
 ): ProductVariant[] {
   const activeDimensions = dimensions.filter(d => (selectedOptions[d.key]?.length ?? 0) > 0)
@@ -220,7 +235,7 @@ function generateVariants(
       options: optionMap,
       price: variantPrices[variantName] ?? existing?.price ?? basePrice,
       stock: variantStocks[variantName] ?? existing?.stock ?? 0,
-      sku: existing?.sku || `SKU-${combo.join("-").toUpperCase().replace(/\s/g, "")}`,
+      sku: existing?.sku || `${skuPrefix}-${combo.map(value => skuToken(value)).join("-")}`,
     }
   })
 }
@@ -542,13 +557,12 @@ function ProductForm({ initial, onSave, onCancel }: {
   const [description, setDescription] = useState(initial.description ?? "")
   const [basePrice, setBasePrice] = useState(initial.basePrice ?? 0)
   const [compareAtPrice, setCompareAtPrice] = useState((initial as any).compareAtPrice ?? 0)
-  const [status, setStatus] = useState<"active"|"draft"|"archived">(initial.status ?? "active")
+  const [status, setStatus] = useState<"active"|"draft"|"archived">(initial.status ?? "draft")
   const [featured, setFeatured] = useState(initial.featured ?? false)
   const [categoryId, setCategoryId] = useState(initial.category ?? "")
   const defaultVar = initial.variants?.[0]
-  const [sku, setSku] = useState((initial as any).sku ?? defaultVar?.sku ?? "")
-  const [weight, setWeight] = useState((initial as any).weight ?? (defaultVar as any)?.weight ?? 0)
-  const [stock, setStock] = useState((initial as any).stock ?? defaultVar?.stock ?? 0)
+  const [defaultSku, setDefaultSku] = useState(defaultVar?.sku ?? "")
+  const [defaultStock, setDefaultStock] = useState(defaultVar?.stock ?? 0)
 
   // Images (multiple)
   const [images, setImages] = useState<string[]>(initial.images ?? [])
@@ -556,6 +570,10 @@ function ProductForm({ initial, onSave, onCancel }: {
   const [uploadingImage, setUploadingImage] = useState(false)
 
   const [collection, setCollection] = useState(initial.collection ?? "")
+  const [hasProductOptions, setHasProductOptions] = useState(() => {
+    const options = defaultVar?.options ?? {}
+    return (initial.variants?.length ?? 0) > 1 || Object.keys(options).length > 0
+  })
   const [productType, setProductType] = useState(() => {
     if (PRODUCT_TYPES.some(t => t.value === initial.collection)) return initial.collection;
     if (initial.variants && initial.variants.length > 0) {
@@ -597,40 +615,38 @@ function ProductForm({ initial, onSave, onCancel }: {
   const [variantOpen, setVariantOpen] = useState(true)
 
   const typeConfig = PRODUCT_TYPES.find(t => t.value === productType)
-  const hasVariants = (typeConfig?.dimensions?.length ?? 0) > 0
+  const skuPrefix = createSkuPrefix(title)
 
   const generatedVariants = useMemo(() => {
     if (!typeConfig) return []
-    return generateVariants(selectedOptions, typeConfig.dimensions, variantPrices, variantStocks, basePrice, initial.variants as ProductVariant[])
-  }, [selectedOptions, variantPrices, variantStocks, basePrice, typeConfig, initial.variants])
+    return generateVariants(selectedOptions, typeConfig.dimensions, variantPrices, variantStocks, basePrice, skuPrefix, initial.variants as ProductVariant[])
+  }, [selectedOptions, variantPrices, variantStocks, basePrice, skuPrefix, typeConfig, initial.variants])
 
   const addImageFromFile = async (file: File) => {
     setUploadingImage(true)
     try {
       const token = typeof window !== "undefined" ? useAuthStore.getState().session?.token : null
-      if (token) {
-        const formData = new FormData()
-        formData.append("image", file)
-        const res = await fetch("/api/upload/image", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setImages(prev => [...prev, data.url])
-          setUploadingImage(false)
-          return
-        }
+      if (!token) {
+        toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tải ảnh.")
+        return
       }
-    } catch { /* fall through to base64 */ }
-    // Fallback: base64
-    const reader = new FileReader()
-    reader.onload = ev => {
-      setImages(prev => [...prev, ev.target?.result as string])
+      const formData = new FormData()
+      formData.append("image", file)
+      const res = await fetch("/api/upload/image", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Không thể tải ảnh lên")
+      }
+      setImages(prev => [...prev, data.url])
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể tải ảnh lên")
+    } finally {
       setUploadingImage(false)
     }
-    reader.readAsDataURL(file)
   }
 
   const addImageFromUrl = () => {
@@ -668,10 +684,35 @@ function ProductForm({ initial, onSave, onCancel }: {
   const handleSave = () => {
     if (!title.trim()) { toast.error("Vui lòng nhập tên sản phẩm."); return }
     if (!categoryId) { toast.error("Vui lòng chọn danh mục sản phẩm."); return }
+    if (!Number.isFinite(basePrice) || basePrice <= 0) { toast.error("Giá bán phải lớn hơn 0."); return }
+    if (compareAtPrice > 0 && compareAtPrice <= basePrice) { toast.error("Giá gốc phải lớn hơn giá bán."); return }
+    if (hasProductOptions && !productType) { toast.error("Vui lòng chọn kiểu biến thể."); return }
+    if (hasProductOptions && generatedVariants.length === 0) { toast.error("Vui lòng chọn ít nhất một giá trị để tạo biến thể."); return }
+    if (status === "active" && images.length === 0) { toast.error("Sản phẩm đang bán cần có ít nhất một hình ảnh."); return }
 
-    const finalVariants: ProductVariant[] = generatedVariants.length > 0
+    const finalVariants: ProductVariant[] = hasProductOptions
       ? generatedVariants.map(v => ({ ...v, sku: variantSkus[v.name] || v.sku }))
-      : initial.variants ?? []
+      : [{
+          id: defaultVar?.id || `variant-${Math.random().toString(36).slice(2, 9)}`,
+          name: "Mặc định",
+          options: {},
+          price: basePrice,
+          compareAtPrice: compareAtPrice > 0 ? compareAtPrice : undefined,
+          stock: defaultStock,
+          sku: defaultSku.trim() || `${skuPrefix}-DEFAULT`,
+        }]
+
+    const invalidVariant = finalVariants.find(variant =>
+      !variant.sku?.trim() || !Number.isFinite(variant.price) || variant.price <= 0 || !Number.isFinite(variant.stock) || variant.stock < 0
+    )
+    if (invalidVariant) { toast.error(`Kiểm tra lại giá, tồn kho và SKU của biến thể ${invalidVariant.name}.`); return }
+    const duplicateSku = new Set<string>()
+    if (finalVariants.some(variant => {
+      const sku = variant.sku.trim().toUpperCase()
+      if (duplicateSku.has(sku)) return true
+      duplicateSku.add(sku)
+      return false
+    })) { toast.error("SKU của các biến thể không được trùng nhau."); return }
 
     onSave({
       ...(initial as Product),
@@ -685,15 +726,13 @@ function ProductForm({ initial, onSave, onCancel }: {
       status,
       featured,
       category: categoryId as any,
-      collection,
+      collection: collection.trim() || null,
       variants: finalVariants,
       tags: initial.tags ?? [],
       rating: initial.rating ?? 0,
       reviewCount: initial.reviewCount ?? 0,
       createdAt: initial.createdAt ?? new Date().toISOString(),
-      sku,
-      weight: weight > 0 ? weight : undefined,
-      stock: !hasVariants ? stock : undefined,
+      compareAtPrice: compareAtPrice > 0 ? compareAtPrice : undefined,
     } as any)
   }
 
@@ -732,8 +771,8 @@ function ProductForm({ initial, onSave, onCancel }: {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-neutral-600">Trạng thái</label>
             <select value={status} onChange={e => setStatus(e.target.value as any)} className="w-full h-10 px-3 rounded-md border text-sm outline-none bg-white focus:border-primary">
-              <option value="active">Đang bán (Active)</option>
               <option value="draft">Nháp (Draft)</option>
+              <option value="active">Đang bán (Active)</option>
               <option value="archived">Lưu trữ (Archived)</option>
             </select>
           </div>
@@ -749,19 +788,6 @@ function ProductForm({ initial, onSave, onCancel }: {
               <span className="ml-1 text-neutral-400 font-normal text-xs">(bỏ trống nếu không sale)</span>
             </label>
             <Input type="number" value={compareAtPrice || ""} placeholder="VD: 480000" onChange={e => setCompareAtPrice(Number(e.target.value))} min={0} />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">Mã SKU</label>
-            <Input value={sku} onChange={e => setSku(e.target.value)} placeholder="VD: TOTO-TEE-BLK" />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">
-              Cân nặng (gram)
-              <span className="ml-1 text-neutral-400 font-normal text-xs">— tính phí ship</span>
-            </label>
-            <Input type="number" value={weight || ""} placeholder="VD: 250" onChange={e => setWeight(Number(e.target.value))} min={0} />
           </div>
 
           <div className="sm:col-span-2 flex items-center gap-2">
@@ -835,39 +861,63 @@ function ProductForm({ initial, onSave, onCancel }: {
         {images.length > 0 && <p className="text-xs text-neutral-400">💡 Hover ảnh → nhấn ⭐ để đặt làm ảnh chính</p>}
       </section>
 
-      {/* ── 3. Loại sản phẩm & Biến thể ── */}
+      {/* ── 3. Kho hàng & Biến thể ── */}
       <section className="space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b pb-2">Loại & Biến thể</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b pb-2">Kho hàng & Biến thể</h3>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">Bộ sưu tập (Phân loại hiển thị) *</label>
-            <Input value={collection} onChange={e => setCollection(e.target.value)} placeholder="VD: jacket, pomade, tee..." />
+            <label className="text-xs font-semibold text-neutral-600">Bộ sưu tập <span className="font-normal text-neutral-400">(tùy chọn)</span></label>
+            <Input value={collection} onChange={e => setCollection(e.target.value)} placeholder="VD: Core Collection, Summer 2026..." />
           </div>
 
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm transition-colors hover:border-primary">
+            <input
+              type="checkbox"
+              checked={hasProductOptions}
+              onChange={e => {
+                setHasProductOptions(e.target.checked)
+                if (!e.target.checked) {
+                  setProductType("")
+                  setSelectedOptions({})
+                }
+              }}
+              className="mt-0.5 size-4"
+            />
+            <span><span className="block font-semibold text-neutral-800">Sản phẩm có nhiều phiên bản</span><span className="block text-xs text-neutral-500">Ví dụ: size, màu sắc hoặc dung tích khác nhau.</span></span>
+          </label>
+        </div>
+
+        {!hasProductOptions && (
+          <div className="grid gap-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 sm:grid-cols-2">
+            <div className="sm:col-span-2 text-xs text-blue-700">Sản phẩm này sẽ có một biến thể <strong>Mặc định</strong> để giỏ hàng và tồn kho được quản lý nhất quán.</div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-neutral-600">SKU <span className="font-normal text-neutral-400">(tự sinh, có thể sửa)</span></label>
+              <Input value={defaultSku} onChange={e => setDefaultSku(e.target.value)} placeholder={`${skuPrefix}-DEFAULT`} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-neutral-600">Số lượng tồn kho *</label>
+              <Input type="number" value={defaultStock} onChange={e => setDefaultStock(Number(e.target.value))} min={0} />
+            </div>
+          </div>
+        )}
+
+        {hasProductOptions && (
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">Kiểu biến thể (Kích thước / Màu sắc)</label>
+            <label className="text-xs font-semibold text-neutral-600">Kiểu biến thể *</label>
             <select
               value={productType}
               onChange={e => { setProductType(e.target.value); setSelectedOptions({}) }}
-              className="w-full border px-3 py-2 rounded-md text-sm outline-none bg-white focus:border-primary"
+              className="h-10 w-full rounded-md border bg-white px-3 text-sm outline-none focus:border-primary"
             >
-              <option value="">— Không có biến thể / Tùy chỉnh —</option>
+              <option value="">— Chọn kiểu biến thể —</option>
               {PRODUCT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
-          </div>
-        </div>
-
-        {/* Stock for single-variant products */}
-        {productType && !hasVariants && (
-          <div className="space-y-1.5 p-4 border rounded-xl bg-blue-50/50">
-            <label className="text-xs font-semibold text-neutral-600">Số lượng tồn kho</label>
-            <Input type="number" value={stock} onChange={e => setStock(Number(e.target.value))} min={0} className="w-32" />
           </div>
         )}
 
         {/* Variant builder */}
-        {typeConfig && hasVariants && (
+        {hasProductOptions && typeConfig && (
           <div className="border rounded-xl overflow-hidden">
             <button type="button" onClick={() => setVariantOpen(v => !v)}
               className="flex w-full items-center justify-between bg-neutral-50 px-4 py-3 text-sm font-semibold hover:bg-neutral-100 transition-colors">
@@ -922,7 +972,7 @@ function ProductForm({ initial, onSave, onCancel }: {
                             <th className="px-3 py-2 text-left font-semibold text-neutral-600">Biến thể</th>
                             <th className="px-3 py-2 text-left font-semibold text-neutral-600">Giá (VNĐ)</th>
                             <th className="px-3 py-2 text-left font-semibold text-neutral-600">Tồn kho</th>
-                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">SKU</th>
+                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">SKU <span className="font-normal text-neutral-400">(có thể sửa)</span></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2725,7 +2775,10 @@ export function CrudPage({ section }: { section: string }) {
           {section === "products" ? (
             <ProductForm
               initial={editingItem ?? {}}
-              onSave={async (product) => { await d.upsertProduct(product); setModalOpen(false) }}
+              onSave={async (product) => {
+                const saved = await d.upsertProduct(product)
+                if (saved) setModalOpen(false)
+              }}
               onCancel={() => setModalOpen(false)}
             />
           ) : section === "orders" ? (

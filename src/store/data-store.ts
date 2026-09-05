@@ -63,7 +63,7 @@ interface DataState {
   fetchOrderHistory: (id: string | number) => Promise<any[]>
   cancelOrder: (id: string, token: string) => Promise<boolean>
   
-  upsertProduct: (product: Partial<Product>) => Promise<void>
+  upsertProduct: (product: Partial<Product>) => Promise<boolean>
   deleteProduct: (id: string | number) => Promise<void>
 
   // Categories
@@ -416,13 +416,17 @@ export const useDataStore = create<DataState>()(
           
           if (res.ok) {
             get().fetchProducts();
+            toast.success(isUpdate ? "Đã cập nhật sản phẩm." : "Đã tạo sản phẩm.");
+            return true;
           } else {
             const err = await res.json();
             toast.error(err.error || 'Failed to save product');
+            return false;
           }
         } catch (error) {
           console.error("Failed to save product:", error);
           toast.error('Failed to save product');
+          return false;
         }
       },
       
