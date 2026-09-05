@@ -23,7 +23,7 @@ export function ShopGroomingGuide() {
             <li><strong>Dùng đúng lượng:</strong> bắt đầu bằng một hạt đậu, xoa ấm trên tay, rồi tăng dần thay vì lấy quá nhiều ngay từ đầu.</li>
           </ul>
           <p className="mt-6">
-            Khám phá theo nhu cầu: <Link href="/shop/grooming?collection=pomade" className="font-semibold underline underline-offset-4 hover:text-primary">Pomade</Link>, <Link href="/shop/grooming?collection=clay" className="font-semibold underline underline-offset-4 hover:text-primary">Clay</Link> và <Link href="/shop/grooming?collection=wax" className="font-semibold underline underline-offset-4 hover:text-primary">Wax</Link>.
+            Khám phá theo nhu cầu: <Link href="/shop/grooming?category=pomade" className="font-semibold underline underline-offset-4 hover:text-primary">Pomade</Link>, <Link href="/shop/grooming?category=clay" className="font-semibold underline underline-offset-4 hover:text-primary">Clay</Link> và <Link href="/shop/grooming?category=wax" className="font-semibold underline underline-offset-4 hover:text-primary">Wax</Link>.
           </p>
         </div>
       </article>

@@ -30,8 +30,9 @@ export interface Product {
   id: ID
   slug: string
   title: string
-  category: ProductCategory
-  /** finer collection tag, e.g. "pomade", "tee", "cap" */
+  /** Category slug; can be a child category such as "sap-vuot-toc". */
+  category: string
+  /** Optional merchandising group, not a storefront taxonomy filter. */
   collection: string
   description: string
   /** short one-liner for cards */

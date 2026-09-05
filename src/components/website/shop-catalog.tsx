@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/website/product-card"
 import { cn } from "@/lib/utils"
 import { useDataStore } from "@/store/data-store"
 import type { ProductCategory } from "@/types"
+import { getParentCategory, PRODUCT_CATEGORY_PARENTS } from "@/lib/product-taxonomy"
 
 type CatalogCategory = ProductCategory | "all"
 
@@ -22,24 +23,18 @@ export function ShopCatalog({
   showCategoryFilter = true,
 }: ShopCatalogProps) {
   const products = useDataStore((state) => state.products)
+  const categories = useDataStore((state) => state.categories)
   const searchParams = useSearchParams()
   const [activeCategory, setActiveCategory] = useState<CatalogCategory>(category ?? "all")
-  const [activeCollection, setActiveCollection] = useState(
-    () => searchParams.get("collection") ?? "all",
+  const [activeSubcategory, setActiveSubcategory] = useState(
+    () => searchParams.get("category") ?? "all",
   )
   const [query, setQuery] = useState("")
   const [sort, setSort] = useState("featured")
-  const groomingSelected = activeCategory === "grooming"
-
-  const collections = useMemo(
-    () =>
-      [...new Set(
-        products
-          .filter((product) => product.category === "grooming")
-          .map((product) => product.collection)
-          .filter(Boolean),
-      )].sort(),
-    [products],
+  const activeParent = activeCategory === "all" ? null : activeCategory
+  const subcategories = useMemo(
+    () => categories.filter(item => item.parent === activeParent),
+    [activeParent, categories],
   )
 
   const list = useMemo(
@@ -47,10 +42,8 @@ export function ShopCatalog({
       products
         .filter(
           (product) =>
-            (activeCategory === "all" || product.category === activeCategory) &&
-            (!groomingSelected ||
-              activeCollection === "all" ||
-              product.collection.toLowerCase() === activeCollection.toLowerCase()) &&
+            (activeCategory === "all" || getParentCategory(product.category, categories) === activeCategory) &&
+            (activeSubcategory === "all" || product.category === activeSubcategory) &&
             `${product.title} ${product.collection}`.toLowerCase().includes(query.toLowerCase()),
         )
         .sort((a, b) =>
@@ -60,7 +53,7 @@ export function ShopCatalog({
               ? b.basePrice - a.basePrice
               : Number(b.featured) - Number(a.featured),
         ),
-    [activeCategory, activeCollection, groomingSelected, products, query, sort],
+    [activeCategory, activeSubcategory, categories, products, query, sort],
   )
 
   return (
@@ -86,7 +79,7 @@ export function ShopCatalog({
                 type="button"
                 onClick={() => {
                   setActiveCategory(value)
-                  if (value !== "grooming") setActiveCollection("all")
+                  setActiveSubcategory("all")
                 }}
                 className={cn(
                   "min-h-11 border px-4 text-xs font-bold uppercase tracking-[0.12em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
@@ -95,39 +88,39 @@ export function ShopCatalog({
                     : "border-black/20 bg-white hover:border-[#101715]",
                 )}
               >
-                {value === "all" ? "Tất cả" : value === "grooming" ? "Grooming" : "Merchandise"}
+                {value === "all" ? "Tất cả" : PRODUCT_CATEGORY_PARENTS.find(item => item.value === value)?.label}
               </button>
             ))}
           </div>
         ) : null}
 
-        {groomingSelected ? (
-          <div className="mt-4 flex flex-wrap gap-2" aria-label="Lọc Grooming theo loại">
+        {activeParent && subcategories.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2" aria-label="Lọc theo danh mục con">
             <button
               type="button"
-              onClick={() => setActiveCollection("all")}
+              onClick={() => setActiveSubcategory("all")}
               className={cn(
                 "min-h-10 rounded-full border px-4 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-                activeCollection === "all"
+                activeSubcategory === "all"
                   ? "border-primary bg-primary text-white"
                   : "border-black/20 bg-white hover:border-primary",
               )}
             >
-              Tất cả loại
+              Tất cả {PRODUCT_CATEGORY_PARENTS.find(item => item.value === activeParent)?.label.toLowerCase()}
             </button>
-            {collections.map((collection) => (
+            {subcategories.map((subcategory) => (
               <button
-                key={collection}
+                key={subcategory.slug}
                 type="button"
-                onClick={() => setActiveCollection(collection)}
+                onClick={() => setActiveSubcategory(subcategory.slug)}
                 className={cn(
                   "min-h-10 rounded-full border px-4 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-                  activeCollection === collection
+                  activeSubcategory === subcategory.slug
                     ? "border-primary bg-primary text-white"
                     : "border-black/20 bg-white hover:border-primary",
                 )}
               >
-                {collection}
+                {subcategory.name}
               </button>
             ))}
           </div>
