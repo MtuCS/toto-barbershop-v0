@@ -25,11 +25,11 @@ export function MerchandiseStoryPage({
   nextStory: MerchandiseStory
 }) {
   return (
-    <MarketingPageShell>
+    <MarketingPageShell showMotif={false}>
       <StoryHero story={story} />
 
-      <article className="border-b border-white/10">
-        <section className="mx-auto grid max-w-[1400px] gap-10 px-5 pb-20 pt-20 md:grid-cols-12 md:px-8 md:pb-32 md:pt-28">
+      <article className="border-b border-white/8">
+        <section className="mx-auto grid max-w-[1400px] gap-8 px-5 pb-16 pt-16 md:grid-cols-12 md:px-8 md:pb-24 md:pt-24">
           <div className="md:col-span-3">
             <StoryLabel>Manifesto / 01</StoryLabel>
           </div>
@@ -41,7 +41,7 @@ export function MerchandiseStoryPage({
           </p>
         </section>
 
-        <div className="mx-auto max-w-[1400px] px-5 pb-24 md:px-8 md:pb-36">
+        <div className="mx-auto max-w-[1400px] px-5 pb-16 md:px-8 md:pb-24">
           {(story.blocks || []).map((block, index) => (
             <StoryBlockSection
               key={block.id}
@@ -64,8 +64,8 @@ function StoryHero({ story }: { story: MerchandiseStory }) {
       data-testid="merchandise-story-hero"
       className="border-b border-white/10 bg-[#07110f]"
     >
-      <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-[1600px] md:grid-cols-12">
-        <div className="flex min-w-0 flex-col justify-between px-5 pb-12 pt-10 md:col-span-5 md:min-h-[calc(100dvh-4rem)] md:px-8 md:pb-14 md:pt-14 lg:px-14">
+      <div className="mx-auto grid max-w-[1600px] md:grid-cols-12 md:items-center">
+        <div className="flex min-w-0 flex-col justify-between px-5 pb-10 pt-8 md:col-span-5 md:px-8 md:py-12 lg:px-14">
           <div className="flex items-center justify-between gap-5">
             <Link
               href="/merchandise"
@@ -79,7 +79,7 @@ function StoryHero({ story }: { story: MerchandiseStory }) {
             </span>
           </div>
 
-          <div className="mt-20 md:my-auto md:py-16">
+          <div className="mt-16 md:my-12">
             <StoryLabel>TOTO Stories</StoryLabel>
             <h1
               className={`${storySerif.className} mt-6 max-w-[8ch] text-balance text-[clamp(4.25rem,7vw,7.5rem)] font-semibold normal-case leading-[0.82] tracking-[-0.055em] text-[#f2f5f3]`}
@@ -102,7 +102,7 @@ function StoryHero({ story }: { story: MerchandiseStory }) {
 
         <div
           data-testid="story-hero-media"
-          className="relative aspect-[4/3] min-w-0 overflow-hidden bg-[#10231e] md:col-span-7 md:aspect-auto md:min-h-[calc(100dvh-4rem)]"
+          className="relative aspect-[4/3] min-w-0 overflow-hidden bg-[#10231e] md:col-span-7 md:h-[min(72dvh,48rem)]"
         >
           <Image
             src={story.heroImage || (story as any).image || "/images/hero.png"}
@@ -111,7 +111,7 @@ function StoryHero({ story }: { story: MerchandiseStory }) {
             loading="eager"
             fetchPriority="high"
             sizes="(max-width: 767px) 100vw, 58vw"
-            className={`object-cover ${heroPositions[story.slug] ?? "object-center"}`}
+            className={`object-contain ${heroPositions[story.slug] ?? "object-center"}`}
           />
           <div
             aria-hidden="true"
@@ -136,20 +136,14 @@ function StoryBlockSection({
 
   if (block.type === "quote" && block.body) {
     return (
-      <section className="relative my-24 overflow-hidden border-y border-[#79b8a7]/22 py-16 md:my-36 md:py-24">
-        <span
-          aria-hidden="true"
-          className={`${storySerif.className} absolute -top-8 left-0 text-[12rem] font-medium leading-none text-[#79b8a7]/10 md:text-[17rem]`}
-        >
-          “
-        </span>
-        <div className="relative grid gap-8 md:grid-cols-12">
+      <section className="my-20 py-8 md:my-28 md:py-14">
+        <div className="grid gap-6 md:grid-cols-12">
           <div className="md:col-span-3">
             <StoryLabel>Point of view / {number}</StoryLabel>
           </div>
           <blockquote
             data-testid="story-quote"
-            className={`${storySerif.className} max-w-[56rem] text-pretty text-[clamp(2.65rem,5.4vw,5.6rem)] font-medium italic normal-case leading-[0.98] tracking-[-0.035em] text-[#79b8a7] md:col-span-8`}
+            className={`${storySerif.className} max-w-[54rem] text-pretty text-[clamp(2.45rem,4.8vw,5rem)] font-medium italic normal-case leading-[1.02] tracking-[-0.035em] text-[#9bd0c1] md:col-span-8`}
           >
             {block.body}
           </blockquote>
@@ -163,12 +157,11 @@ function StoryBlockSection({
       ? block.image.replace("merch-jacket-detail.png", "merch-jacket1.png")
       : block.image
     return (
-      <section className="my-24 md:my-36">
-        <div className="mb-5 flex items-center justify-between gap-4">
+      <section className="my-20 md:my-28">
+        <div className="mx-auto mb-5 max-w-[1120px]">
           <StoryLabel>Field notes / {number}</StoryLabel>
-          <span className="h-px flex-1 bg-white/10" aria-hidden="true" />
         </div>
-        <div className="relative aspect-[4/3] overflow-hidden bg-[#10231e] md:aspect-[16/9]">
+        <div className="relative mx-auto aspect-[4/3] max-w-[1120px] overflow-hidden bg-[#10231e] md:aspect-[16/9]">
           <Image
             src={rawImage}
             alt={block.heading ?? `Hình ảnh trong câu chuyện ${story.title}`}
@@ -183,8 +176,8 @@ function StoryBlockSection({
 
   if (block.type === "gallery" && block.images?.length) {
     return (
-      <section className="my-24 md:my-36">
-        <div className="mb-7 grid gap-4 md:grid-cols-12">
+      <section className="my-20 md:my-28">
+        <div className="mx-auto mb-6 grid max-w-[1120px] gap-4 md:grid-cols-12">
           <div className="md:col-span-3">
             <StoryLabel>Material study / {number}</StoryLabel>
           </div>
@@ -196,7 +189,7 @@ function StoryBlockSection({
             </h2>
           ) : null}
         </div>
-        <div className="grid gap-4 md:grid-cols-12 md:gap-5">
+        <div className="mx-auto grid max-w-[1120px] gap-4 md:grid-cols-12 md:gap-5">
           {block.images.map((image, imageIndex) => (
             <div
               key={image}
@@ -221,7 +214,7 @@ function StoryBlockSection({
   }
 
   return (
-    <section className="my-24 grid gap-8 border-t border-white/10 pt-8 md:my-36 md:grid-cols-12 md:gap-6 md:pt-10">
+    <section className="my-16 grid gap-6 pt-2 md:my-24 md:grid-cols-12 md:gap-6">
       <div className="md:col-span-3">
         <StoryLabel>Chapter / {number}</StoryLabel>
       </div>
@@ -253,14 +246,14 @@ function StoryNavigation({
   return (
     <section
       aria-labelledby="story-navigation-title"
-      className="bg-[#103d34] px-5 py-20 md:px-8 md:py-28"
+      className="border-t border-white/8 bg-[#07110f] px-5 py-16 md:px-8 md:py-20"
     >
       <div className="mx-auto grid max-w-[1400px] gap-12 md:grid-cols-12 md:items-end">
         <div className="md:col-span-7">
           <StoryLabel>Continue reading</StoryLabel>
           <h2
             id="story-navigation-title"
-            className={`${storySerif.className} mt-5 max-w-3xl text-balance text-[clamp(3.4rem,6.7vw,7rem)] font-semibold normal-case leading-[0.84] tracking-[-0.045em]`}
+            className={`${storySerif.className} mt-5 max-w-3xl text-balance text-[clamp(3rem,5.8vw,6rem)] font-semibold normal-case leading-[0.88] tracking-[-0.045em]`}
           >
             {nextStory.title}
           </h2>
@@ -276,14 +269,14 @@ function StoryNavigation({
           </Link>
         </div>
 
-        <div className="border-t border-white/18 pt-7 md:col-span-5 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+        <div className="pt-2 md:col-span-5 md:pt-0 md:pl-8">
           <p className="max-w-sm text-sm leading-7 text-white/58">
             Mang tinh thần của “{story.title}” vào những món đồ được thiết kế
             từ văn hóa của tiệm.
           </p>
           <Link
             href="/shop/merchandise"
-            className="mt-7 inline-flex min-h-12 items-center gap-3 bg-[#f2f5f3] px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-[#07110f] transition-[background-color,transform] duration-300 hover:-translate-y-0.5 hover:bg-white active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white motion-reduce:transform-none motion-reduce:transition-none"
+            className="group mt-6 inline-flex min-h-11 items-center gap-3 border-b border-[#79b8a7] py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#f2f5f3] transition-colors duration-300 hover:text-[#9bd0c1] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white motion-reduce:transition-none"
           >
             Shop Merchandise
             <ArrowUpRight className="size-4" aria-hidden="true" />
@@ -296,9 +289,6 @@ function StoryNavigation({
 
 function StoryLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#79b8a7]">
-      <span className="h-px w-7 bg-[#2f7a68]" aria-hidden="true" />
-      {children}
-    </p>
+    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">{children}</p>
   )
 }

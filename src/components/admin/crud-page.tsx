@@ -1452,6 +1452,7 @@ function ChangeAdminPasswordCard() {
 const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "relatedProductIds", "timeline", "items", "modules", "roadmap", "benefits", "audience", "productCount", "totalOrders", "totalSpent", "orders", "addresses", "resetTokens"]
 // Những field dùng UI dynamic list thay vì textarea JSON
 const JSON_LIST_KEYS = ["process", "gallery"]
+const HIDDEN_STORY_KEYS = ["gallery"]
 
 const STORY_BLOCK_TYPES: { value: StoryBlockType; label: string; hint: string }[] = [
   { value: "text", label: "Văn bản", hint: "Một đoạn nội dung có tiêu đề tùy chọn." },
@@ -3280,8 +3281,16 @@ export function CrudPage({ section }: { section: string }) {
             </div>
           ) : (
             <div className="grid gap-4 py-4">
+              {section === "merchandise-stories" && (
+                <div className="border-l-2 border-primary/60 bg-primary/5 px-4 py-3 text-sm text-neutral-600">
+                  <p className="font-semibold text-neutral-800">Cấu trúc câu chuyện</p>
+                  <p className="mt-1 leading-6">
+                    Dùng <strong>Ảnh bìa</strong> cho hình mở đầu. Dùng <strong>Nội dung các khối</strong> để thêm văn bản, ảnh đơn, trích dẫn hoặc bộ ảnh hiển thị trên website.
+                  </p>
+                </div>
+              )}
               {Object.keys(formData).map((key) => {
-                if (EXCLUDED_KEYS.includes(key)) return null
+                if (EXCLUDED_KEYS.includes(key) || (section === "merchandise-stories" && HIDDEN_STORY_KEYS.includes(key))) return null
                 return (
                   <div key={key} className="space-y-1.5">
                     <label className="text-xs font-semibold text-neutral-600">{fieldLabels[key] ?? key}</label>
