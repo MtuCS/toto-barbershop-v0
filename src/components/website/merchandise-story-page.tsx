@@ -64,8 +64,8 @@ function StoryHero({ story }: { story: MerchandiseStory }) {
       data-testid="merchandise-story-hero"
       className="border-b border-white/10 bg-[#07110f]"
     >
-      <div className="mx-auto grid max-w-[1600px] md:grid-cols-12 md:items-center">
-        <div className="flex min-w-0 flex-col justify-between px-5 pb-10 pt-8 md:col-span-5 md:px-8 md:py-12 lg:px-14">
+      <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-[1600px] md:grid-cols-12">
+        <div className="flex min-w-0 flex-col justify-between px-5 pb-12 pt-10 md:col-span-5 md:min-h-[calc(100dvh-4rem)] md:px-8 md:pb-14 md:pt-14 lg:px-14">
           <div className="flex items-center justify-between gap-5">
             <Link
               href="/merchandise"
@@ -79,7 +79,7 @@ function StoryHero({ story }: { story: MerchandiseStory }) {
             </span>
           </div>
 
-          <div className="mt-16 md:my-12">
+          <div className="mt-20 md:my-auto md:py-16">
             <StoryLabel>TOTO Stories</StoryLabel>
             <h1
               className={`${storySerif.className} mt-6 max-w-[8ch] text-balance text-[clamp(4.25rem,7vw,7.5rem)] font-semibold normal-case leading-[0.82] tracking-[-0.055em] text-[#f2f5f3]`}
@@ -102,7 +102,7 @@ function StoryHero({ story }: { story: MerchandiseStory }) {
 
         <div
           data-testid="story-hero-media"
-          className="relative aspect-[4/3] min-w-0 overflow-hidden bg-[#10231e] md:col-span-7 md:h-[min(72dvh,48rem)]"
+          className="relative aspect-[4/3] min-w-0 overflow-hidden bg-[#10231e] md:col-span-7 md:aspect-auto md:min-h-[calc(100dvh-4rem)]"
         >
           <Image
             src={story.heroImage || (story as any).image || "/images/hero.png"}
@@ -111,7 +111,7 @@ function StoryHero({ story }: { story: MerchandiseStory }) {
             loading="eager"
             fetchPriority="high"
             sizes="(max-width: 767px) 100vw, 58vw"
-            className={`object-contain ${heroPositions[story.slug] ?? "object-center"}`}
+            className={`object-cover ${heroPositions[story.slug] ?? "object-center"}`}
           />
           <div
             aria-hidden="true"
@@ -174,7 +174,13 @@ function StoryBlockSection({
     )
   }
 
-  if (block.type === "gallery" && block.images?.length) {
+  const galleryImages = (block.images ?? []).filter((image) => image.trim().length > 0)
+
+  if (block.type === "gallery" && galleryImages.length) {
+    const [leadImage, ...supportingImages] = galleryImages
+    const sideImages = supportingImages.slice(0, 2)
+    const trailingImages = supportingImages.slice(2)
+
     return (
       <section className="my-20 md:my-28">
         <div className="mx-auto mb-6 grid max-w-[1120px] gap-4 md:grid-cols-12">
@@ -189,25 +195,50 @@ function StoryBlockSection({
             </h2>
           ) : null}
         </div>
-        <div className="mx-auto grid max-w-[1120px] gap-4 md:grid-cols-12 md:gap-5">
-          {block.images.map((image, imageIndex) => (
-            <div
-              key={image}
-              className={`relative aspect-[4/3] overflow-hidden bg-[#10231e] ${
-                imageIndex % 2 === 0
-                  ? "md:col-span-7 md:aspect-[7/6]"
-                  : "md:col-span-5 md:aspect-[5/6]"
-              }`}
-            >
+        <div className="mx-auto max-w-[1120px] space-y-4 md:space-y-5">
+          <div className="grid gap-4 md:grid-cols-12 md:gap-5">
+            <div className={`relative overflow-hidden bg-[#10231e] ${sideImages.length ? "aspect-[4/5] md:col-span-7" : "aspect-[4/3] md:col-span-9"}`}>
               <Image
-                src={image}
-                alt={`Chi tiết ${imageIndex + 1} của ${story.title}`}
+                src={leadImage}
+                alt={`Ảnh chính của ${story.title}`}
                 fill
-                sizes="(max-width: 767px) 100vw, 58vw"
-                className="object-cover transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"
+                sizes="(max-width: 767px) 100vw, 66vw"
+                className="object-cover transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] hover:scale-[1.015] motion-reduce:transform-none motion-reduce:transition-none"
               />
             </div>
-          ))}
+
+            {sideImages.length > 0 && (
+              <div className={`grid gap-4 md:col-span-5 md:gap-5 ${sideImages.length === 1 ? "md:grid-rows-1" : "md:grid-rows-2"}`}>
+                {sideImages.map((image, imageIndex) => (
+                  <div key={image} className="relative aspect-[4/3] overflow-hidden bg-[#10231e] md:h-full md:aspect-auto">
+                    <Image
+                      src={image}
+                      alt={`Chi tiết ${imageIndex + 2} của ${story.title}`}
+                      fill
+                      sizes="(max-width: 767px) 100vw, 42vw"
+                      className="object-cover transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {trailingImages.length > 0 && (
+            <div className="grid gap-4 md:grid-cols-12 md:gap-5">
+              {trailingImages.map((image, imageIndex) => (
+                <div key={image} className={`relative aspect-[4/3] overflow-hidden bg-[#10231e] ${imageIndex % 2 === 0 ? "md:col-span-5" : "md:col-span-7"}`}>
+                  <Image
+                    src={image}
+                    alt={`Chi tiết ${imageIndex + 4} của ${story.title}`}
+                    fill
+                    sizes="(max-width: 767px) 100vw, 58vw"
+                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     )
