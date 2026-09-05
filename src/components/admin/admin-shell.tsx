@@ -69,7 +69,7 @@ export function AdminShell({children}:{children:React.ReactNode}){
     if (mounted && session && unreadCount > 0) {
       const shown = sessionStorage.getItem('unreadToastShown');
       if (!shown) {
-        toast.info(`Bạn có ${unreadCount} tin nhắn liên hệ chưa đọc!`);
+        toast.info(`Bạn có ${unreadCount} tin nhắn liên hệ mới từ khách hàng.`);
         sessionStorage.setItem('unreadToastShown', 'true');
       }
     }

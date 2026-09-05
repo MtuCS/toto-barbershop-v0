@@ -68,16 +68,23 @@ export function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
               {results.map((product) => (
                 <Link
                   key={product.id}
-                  href={`/shop`}
+                  href={product.slug ? `/shop/${product.slug}` : "/shop"}
                   onClick={onClose}
                   className="flex items-center gap-4 rounded-lg p-2 hover:bg-muted/50 transition-colors"
                 >
                   <div className="relative size-12 overflow-hidden rounded border border-border">
-                    <Image src={product.image} alt={product.name} fill className="object-cover" />
+                    <Image
+                      src={product.images?.[0] || product.image || "/images/grooming-pomade.png"}
+                      alt={product.name || "Sản phẩm"}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                   <div>
                     <h4 className="font-bold text-sm text-foreground">{product.name}</h4>
-                    <p className="text-xs text-muted-foreground">{product.category} • {product.price.toLocaleString("vi-VN")} ₫</p>
+                    <p className="text-xs text-muted-foreground">
+                      {product.category} • {(product.basePrice ?? product.price ?? 0).toLocaleString("vi-VN")} ₫
+                    </p>
                   </div>
                 </Link>
               ))}

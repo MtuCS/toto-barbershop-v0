@@ -50,12 +50,13 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: '/images/T_logo.png' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico' },
+      { url: '/icon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
     ],
-    shortcut: '/images/T_logo.png',
-    apple: '/images/T_logo.png',
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
 }
 

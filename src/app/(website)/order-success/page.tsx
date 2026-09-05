@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, ShoppingBag, Package, Sparkles } from "lucide-react";
+import { CheckCircle2, ShoppingBag, Package, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -44,8 +44,8 @@ export default async function Page({
       </p>
 
       {/* Lưu ý thời gian thanh toán */}
-      <div className="mt-6 rounded-xl bg-neutral-50 p-4 border border-neutral-200/80 text-xs text-neutral-500 max-w-md text-left flex items-start gap-2.5">
-        <Sparkles className="size-4 text-emerald-600 shrink-0 mt-0.5" />
+      <div className="mt-6 rounded-xl bg-neutral-50 p-4 border border-neutral-200/80 text-xs text-neutral-600 max-w-md text-left flex items-start gap-2.5">
+        <Clock className="size-4 text-emerald-700 shrink-0 mt-0.5" />
         <div>
           <span className="font-semibold text-neutral-800">Lưu ý thanh toán:</span> Với đơn hàng chuyển khoản qua PayOS, đơn sẽ được giữ chỗ trong <strong>15 phút</strong>. Bạn có thể xem trạng thái và thanh toán lại trong mục Đơn hàng.
         </div>
@@ -69,11 +69,11 @@ export default async function Page({
           className="h-12 w-full sm:w-1/2 rounded-xl bg-primary hover:bg-[#2f7a68] text-white font-semibold shadow-md hover:shadow-lg transition-all"
         >
           <Link
-            href="/profile?tab=orders"
+            href={code ? `/order/${code}/success` : "/shop"}
             className="flex items-center justify-center gap-2"
           >
             <Package className="size-4" />
-            Xem đơn hàng của bạn
+            Xem chi tiết đơn hàng
           </Link>
         </Button>
       </div>

@@ -56,6 +56,8 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PROCESSING: 'Đã xác nhận',
   shipping: 'Đang giao',
   SHIPPED: 'Đang giao',
+  delivery_failed: 'Giao thất bại',
+  DELIVERY_FAILED: 'Giao thất bại',
   completed: 'Hoàn thành',
   COMPLETED: 'Hoàn thành',
   cancelled: 'Đã huỷ',
@@ -63,10 +65,14 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 }
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  unpaid: 'Chưa thanh toán',
-  UNPAID: 'Chưa thanh toán',
+  unpaid: 'Chờ thanh toán online',
+  UNPAID: 'Chờ thanh toán online',
   paid: 'Đã thanh toán',
   PAID: 'Đã thanh toán',
+  cod_unpaid: 'COD - Chưa thu tiền',
+  COD_UNPAID: 'COD - Chưa thu tiền',
+  cod_collected: 'COD - Đã thu tiền',
+  COD_COLLECTED: 'COD - Đã thu tiền',
   refunded: 'Đã hoàn tiền',
   REFUNDED: 'Đã hoàn tiền',
 }

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Scissors, Home, ShoppingBag, Sparkles } from "lucide-react"
+import { Scissors, Home, ShoppingBag } from "lucide-react"
 
 export default function NotFound() {
   return (
@@ -51,7 +51,7 @@ export default function NotFound() {
           href="/services"
           className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-transparent px-5 py-3 text-xs md:text-sm font-medium text-white/60 transition-colors hover:text-white"
         >
-          <Sparkles className="size-4 text-[#79b8a7]" />
+          <Scissors className="size-4 text-[#79b8a7]" />
           Bảng giá dịch vụ
         </Link>
       </div>

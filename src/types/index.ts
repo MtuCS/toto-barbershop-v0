@@ -108,14 +108,16 @@ export interface TrainingCourse {
   level: 'beginner' | 'intermediate' | 'pro'
   duration: string
   price: number
-  summary: string
-  audience: string[]
-  benefits: string[]
-  roadmap: { week: string; focus: string }[]
-  modules: TrainingModule[]
-  images: string[]
-  instructor: { name: string; role: string; bio: string; avatar: string }
-  status: 'published' | 'draft'
+  summary?: string
+  excerpt?: string
+  description?: string
+  audience?: string[]
+  benefits?: string[]
+  roadmap?: { week: string; focus: string }[]
+  modules?: TrainingModule[]
+  images?: string[]
+  instructor?: { name: string; role: string; bio: string; avatar: string }
+  status?: 'published' | 'draft' | string
 }
 
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'rejected'
@@ -200,12 +202,18 @@ export type OrderStatus =
   | 'pending' | 'PENDING'
   | 'confirmed' | 'PROCESSING'
   | 'shipping' | 'SHIPPED'
+  | 'delivery_failed' | 'DELIVERY_FAILED'
   | 'completed' | 'COMPLETED'
   | 'cancelled' | 'CANCELLED'
 
 export type PaymentMethod = 'cod' | 'bank_transfer' | 'payos'
 
-export type PaymentStatus = 'unpaid' | 'UNPAID' | 'paid' | 'PAID' | 'refunded' | 'REFUNDED'
+export type PaymentStatus = 
+  | 'unpaid' | 'UNPAID' 
+  | 'paid' | 'PAID' 
+  | 'cod_unpaid' | 'COD_UNPAID' 
+  | 'cod_collected' | 'COD_COLLECTED' 
+  | 'refunded' | 'REFUNDED'
 
 export interface OrderItem {
   variantId: ID
@@ -255,6 +263,7 @@ export interface Order {
   paymentMethod: PaymentMethod
   paymentStatus: PaymentStatus
   status: OrderStatus
+  deliveryAttempts?: number
   timeline: OrderTimelineEntry[]
   statusHistory?: OrderStatusHistory[]
   createdAt: string

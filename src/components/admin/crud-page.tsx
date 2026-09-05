@@ -191,12 +191,7 @@ function getOptionsKey(opts: Record<string, any>) {
 }
 
 function skuToken(value: string, fallback = "ITEM") {
-  const token = value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toUpperCase()
+  const token = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toUpperCase()
   return token || fallback
 }
 
@@ -549,7 +544,11 @@ function ProductForm({ initial, onSave, onCancel }: {
 }) {
   const d = useDataStore()
   const { categories: allCategories } = d
-  const allMediaList = useMemo(() => getAllMediaItems(d), [d.media, d.products, d.lookbook, d.stories])
+  const { media: dMedia, products: dProducts, lookbook: dLookbook, stories: dStories } = d
+  const allMediaList = useMemo(
+    () => getAllMediaItems({ media: dMedia, products: dProducts, lookbook: dLookbook, stories: dStories }),
+    [dMedia, dProducts, dLookbook, dStories]
+  )
   const [openMediaPicker, setOpenMediaPicker] = useState(false)
 
   // Basic fields
@@ -560,9 +559,6 @@ function ProductForm({ initial, onSave, onCancel }: {
   const [status, setStatus] = useState<"active"|"draft"|"archived">(initial.status ?? "draft")
   const [featured, setFeatured] = useState(initial.featured ?? false)
   const [categoryId, setCategoryId] = useState(initial.category ?? "")
-  const defaultVar = initial.variants?.[0]
-  const [defaultSku, setDefaultSku] = useState(defaultVar?.sku ?? "")
-  const [defaultStock, setDefaultStock] = useState(defaultVar?.stock ?? 0)
 
   // Images (multiple)
   const [images, setImages] = useState<string[]>(initial.images ?? [])
@@ -570,24 +566,67 @@ function ProductForm({ initial, onSave, onCancel }: {
   const [uploadingImage, setUploadingImage] = useState(false)
 
   const [collection, setCollection] = useState(initial.collection ?? "")
-  const [hasProductOptions, setHasProductOptions] = useState(() => {
-    const options = defaultVar?.options ?? {}
-    return (initial.variants?.length ?? 0) > 1 || Object.keys(options).length > 0
+
+  // 1. Quản lý danh sách biến thể hiện hữu (Bảo toàn ID nguyên gốc và số lượng tồn kho)
+  const [currentVariants, setCurrentVariants] = useState<ProductVariant[]>(() => {
+    if (initial.variants && initial.variants.length > 0) {
+      return initial.variants.map((v: any) => ({
+        id: v.id,
+        name: v.name || "Biến thể",
+        price: typeof v.price === "number" ? v.price : (initial.basePrice ?? 0),
+        stock: typeof v.stock === "number" ? v.stock : 0,
+        sku: v.sku || "",
+        options: v.options || { size: v.size, color: v.color },
+        size: v.size,
+        color: v.color,
+      }))
+    }
+    return [{ id: `variant-${Math.random().toString(36).slice(2, 9)}`, name: "Mặc định", price: initial.basePrice ?? 0, stock: 0, sku: "", options: {} }]
   })
+
+  const handleUpdateVariant = (index: number, field: keyof ProductVariant, value: any) => {
+    setCurrentVariants(prev => {
+      const next = [...prev]
+      next[index] = { ...next[index], [field]: value }
+      return next
+    })
+  }
+
+  const handleRemoveVariant = (index: number) => {
+    setCurrentVariants(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleAddManualVariant = () => {
+    setCurrentVariants(prev => [
+      ...prev,
+      {
+        id: `temp-${Date.now()}` as any,
+        name: `Biến thể mới ${prev.length + 1}`,
+        price: basePrice,
+        stock: 10,
+        sku: `${createSkuPrefix(title)}-${prev.length + 1}`,
+        options: {},
+      }
+    ])
+  }
+
   const [productType, setProductType] = useState(() => {
     if (PRODUCT_TYPES.some(t => t.value === initial.collection)) return initial.collection;
     if (initial.variants && initial.variants.length > 0) {
       const opts = initial.variants[0].options || { size: initial.variants[0].size, color: initial.variants[0].color }
-      if (opts.size && opts.color) return "fashion-top"
-      if (opts.size && !opts.color) {
-        if (opts.size.includes("g") || opts.size.includes("ml")) return "grooming"
-        if (opts.size === "One-size" || opts.size.includes("/")) return "cap"
+      const sizeVal = (opts.size || (opts as any).volume || "")
+      if (sizeVal && opts.color) return "fashion-top"
+      if (sizeVal && !opts.color) {
+        if (sizeVal.includes("g") || sizeVal.includes("ml")) return "grooming"
+        if (sizeVal === "One-size" || sizeVal.includes("/")) return "cap"
         return "fashion-bottom"
       }
-      if (opts.color && !opts.size) return "fashion-top" // color-only defaults to fashion-top layout
+      if (opts.color && !sizeVal) return "fashion-top"
     }
     return ""
   })
+
+  // Ánh xạ linh hoạt key options: size có ml/g tự chuyển sang volume để khớp PRODUCT_TYPES
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>(() => {
     const opts: Record<string, string[]> = {}
     initial.variants?.forEach(v => {
@@ -595,8 +634,12 @@ function ProductForm({ initial, onSave, onCancel }: {
       if (v.size && !options.size) options.size = v.size
       if (v.color && !options.color) options.color = v.color
       Object.entries(options).forEach(([k, val]) => {
-        if (!opts[k]) opts[k] = []
-        if (typeof val === 'string' && !opts[k].includes(val)) opts[k].push(val)
+        let targetKey = k
+        if ((k === "size" || !k) && typeof val === "string" && (val.includes("g") || val.includes("ml"))) {
+          targetKey = "volume"
+        }
+        if (!opts[targetKey]) opts[targetKey] = []
+        if (typeof val === 'string' && !opts[targetKey].includes(val)) opts[targetKey].push(val)
       })
     })
     return opts
@@ -612,9 +655,10 @@ function ProductForm({ initial, onSave, onCancel }: {
   const [variantSkus, setVariantSkus] = useState<Record<string, string>>(() => {
     const s: Record<string, string> = {}; initial.variants?.forEach(v => { s[v.name] = v.sku ?? "" }); return s
   })
-  const [variantOpen, setVariantOpen] = useState(true)
+  const [variantOpen, setVariantOpen] = useState(false)
 
   const typeConfig = PRODUCT_TYPES.find(t => t.value === productType)
+  const hasVariants = (typeConfig?.dimensions?.length ?? 0) > 0
   const skuPrefix = createSkuPrefix(title)
 
   const generatedVariants = useMemo(() => {
@@ -622,25 +666,43 @@ function ProductForm({ initial, onSave, onCancel }: {
     return generateVariants(selectedOptions, typeConfig.dimensions, variantPrices, variantStocks, basePrice, skuPrefix, initial.variants as ProductVariant[])
   }, [selectedOptions, variantPrices, variantStocks, basePrice, skuPrefix, typeConfig, initial.variants])
 
+  const handleApplyGenerated = () => {
+    if (generatedVariants.length === 0) return
+    setCurrentVariants(prev => {
+      const merged = [...prev]
+      generatedVariants.forEach(gv => {
+        const existingIdx = merged.findIndex(mv => mv.name === gv.name)
+        if (existingIdx >= 0) {
+          merged[existingIdx] = {
+            ...merged[existingIdx],
+            price: variantPrices[gv.name] ?? gv.price,
+            stock: variantStocks[gv.name] ?? gv.stock,
+            sku: variantSkus[gv.name] || gv.sku,
+          }
+        } else {
+          merged.push({
+            ...gv,
+            price: variantPrices[gv.name] ?? gv.price,
+            stock: variantStocks[gv.name] ?? gv.stock,
+            sku: variantSkus[gv.name] || gv.sku,
+          })
+        }
+      })
+      return merged
+    })
+    toast.success(`Đã đồng bộ ${generatedVariants.length} biến thể vào bảng tồn kho!`)
+  }
+
   const addImageFromFile = async (file: File) => {
     setUploadingImage(true)
     try {
       const token = typeof window !== "undefined" ? useAuthStore.getState().session?.token : null
-      if (!token) {
-        toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tải ảnh.")
-        return
-      }
+      if (!token) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.")
       const formData = new FormData()
       formData.append("image", file)
-      const res = await fetch("/api/upload/image", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      })
+      const res = await fetch("/api/upload/image", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data.url) {
-        throw new Error(data.error || "Không thể tải ảnh lên")
-      }
+      if (!res.ok || !data.url) throw new Error(data.error || "Không thể tải ảnh lên")
       setImages(prev => [...prev, data.url])
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể tải ảnh lên")
@@ -686,33 +748,21 @@ function ProductForm({ initial, onSave, onCancel }: {
     if (!categoryId) { toast.error("Vui lòng chọn danh mục sản phẩm."); return }
     if (!Number.isFinite(basePrice) || basePrice <= 0) { toast.error("Giá bán phải lớn hơn 0."); return }
     if (compareAtPrice > 0 && compareAtPrice <= basePrice) { toast.error("Giá gốc phải lớn hơn giá bán."); return }
-    if (hasProductOptions && !productType) { toast.error("Vui lòng chọn kiểu biến thể."); return }
-    if (hasProductOptions && generatedVariants.length === 0) { toast.error("Vui lòng chọn ít nhất một giá trị để tạo biến thể."); return }
     if (status === "active" && images.length === 0) { toast.error("Sản phẩm đang bán cần có ít nhất một hình ảnh."); return }
 
-    const finalVariants: ProductVariant[] = hasProductOptions
-      ? generatedVariants.map(v => ({ ...v, sku: variantSkus[v.name] || v.sku }))
-      : [{
-          id: defaultVar?.id || `variant-${Math.random().toString(36).slice(2, 9)}`,
-          name: "Mặc định",
-          options: {},
-          price: basePrice,
-          compareAtPrice: compareAtPrice > 0 ? compareAtPrice : undefined,
-          stock: defaultStock,
-          sku: defaultSku.trim() || `${skuPrefix}-DEFAULT`,
-        }]
+    const finalVariants: ProductVariant[] = currentVariants.length > 0
+      ? currentVariants.map(v => ({
+          ...v,
+          name: v.name?.trim() || "Biến thể",
+          price: typeof v.price === "number" ? v.price : basePrice,
+          stock: Math.max(0, Number(v.stock) || 0),
+          sku: v.sku?.trim() || `${skuPrefix}-${skuToken(v.name || "DEFAULT")}`,
+        }))
+      : [{ id: `variant-${Math.random().toString(36).slice(2, 9)}`, name: "Mặc định", price: basePrice, stock: 0, sku: `${skuPrefix}-DEFAULT`, options: {} }]
 
-    const invalidVariant = finalVariants.find(variant =>
-      !variant.sku?.trim() || !Number.isFinite(variant.price) || variant.price <= 0 || !Number.isFinite(variant.stock) || variant.stock < 0
-    )
-    if (invalidVariant) { toast.error(`Kiểm tra lại giá, tồn kho và SKU của biến thể ${invalidVariant.name}.`); return }
-    const duplicateSku = new Set<string>()
-    if (finalVariants.some(variant => {
-      const sku = variant.sku.trim().toUpperCase()
-      if (duplicateSku.has(sku)) return true
-      duplicateSku.add(sku)
-      return false
-    })) { toast.error("SKU của các biến thể không được trùng nhau."); return }
+    if (finalVariants.some(v => !Number.isInteger(v.price) || v.price <= 0 || !Number.isInteger(v.stock) || v.stock < 0)) { toast.error("Kiểm tra lại giá và tồn kho của biến thể."); return }
+    const usedSkus = new Set<string>()
+    if (finalVariants.some(v => { const value = v.sku.trim().toUpperCase(); if (usedSkus.has(value)) return true; usedSkus.add(value); return false })) { toast.error("SKU của các biến thể không được trùng nhau."); return }
 
     onSave({
       ...(initial as Product),
@@ -721,7 +771,6 @@ function ProductForm({ initial, onSave, onCancel }: {
       slug: initial.slug || title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").toLowerCase(),
       description,
       basePrice,
-      compareAtPrice,
       images,
       status,
       featured,
@@ -740,7 +789,7 @@ function ProductForm({ initial, onSave, onCancel }: {
   const merchCats = allCategories.filter(c => c.parent === "merchandise")
 
   return (
-    <div className="flex flex-col gap-6 py-2">
+    <div className="flex flex-col gap-6 py-2 w-full min-w-0 max-w-full overflow-x-hidden">
 
       {/* ── 1. Thông tin cơ bản ── */}
       <section className="space-y-4">
@@ -771,8 +820,8 @@ function ProductForm({ initial, onSave, onCancel }: {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-neutral-600">Trạng thái</label>
             <select value={status} onChange={e => setStatus(e.target.value as any)} className="w-full h-10 px-3 rounded-md border text-sm outline-none bg-white focus:border-primary">
-              <option value="draft">Nháp (Draft)</option>
               <option value="active">Đang bán (Active)</option>
+              <option value="draft">Nháp (Draft)</option>
               <option value="archived">Lưu trữ (Archived)</option>
             </select>
           </div>
@@ -830,8 +879,8 @@ function ProductForm({ initial, onSave, onCancel }: {
         )}
 
         {/* Nút chọn ảnh từ máy và Chọn từ Thư viện Media */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+          <div className="w-full min-w-0">
             <input type="file" accept="image/*" multiple className="hidden" id="product-multi-upload"
               onChange={async e => {
                 const files = Array.from(e.target.files ?? [])
@@ -839,7 +888,7 @@ function ProductForm({ initial, onSave, onCancel }: {
                 e.target.value = ""
               }}
             />
-            <label htmlFor="product-multi-upload" className="flex items-center justify-center gap-2 w-full h-14 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors text-xs font-semibold text-neutral-600">
+            <label htmlFor="product-multi-upload" className="flex items-center justify-center gap-2 w-full h-14 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors text-xs font-semibold text-neutral-600 px-3 text-center">
               {uploadingImage ? <span className="animate-pulse">⏳ Đang tải ảnh lên...</span> : <>📁 Tải ảnh từ máy tính (nhiều tệp)</>}
             </label>
           </div>
@@ -847,10 +896,10 @@ function ProductForm({ initial, onSave, onCancel }: {
           <button
             type="button"
             onClick={() => setOpenMediaPicker(true)}
-            className="flex items-center justify-center gap-2 w-full h-14 border-2 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-xs font-bold text-emerald-800 transition-colors cursor-pointer shadow-sm"
+            className="flex items-center justify-center gap-2 w-full h-14 border-2 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-xs font-bold text-emerald-800 transition-colors cursor-pointer shadow-sm px-3 text-center min-w-0"
           >
-            <Images className="size-4 text-emerald-600" />
-            🖼️ Chọn từ Thư viện Media ({allMediaList.length} tệp có sẵn)
+            <Images className="size-4 text-emerald-600 shrink-0" />
+            <span className="truncate">🖼️ Chọn từ Thư viện Media ({allMediaList.length} tệp)</span>
           </button>
         </div>
 
@@ -861,74 +910,207 @@ function ProductForm({ initial, onSave, onCancel }: {
         {images.length > 0 && <p className="text-xs text-neutral-400">💡 Hover ảnh → nhấn ⭐ để đặt làm ảnh chính</p>}
       </section>
 
-      {/* ── 3. Kho hàng & Biến thể ── */}
+      {/* ── 3. Loại sản phẩm & Biến thể ── */}
+      {/* ── 3. Loại sản phẩm & Quản lý Biến thể ── */}
       <section className="space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b pb-2">Kho hàng & Biến thể</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b pb-2">Kho hàng &amp; Biến thể</h3>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-neutral-600">Bộ sưu tập <span className="font-normal text-neutral-400">(tùy chọn)</span></label>
             <Input value={collection} onChange={e => setCollection(e.target.value)} placeholder="VD: Core Collection, Summer 2026..." />
           </div>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm transition-colors hover:border-primary">
-            <input
-              type="checkbox"
-              checked={hasProductOptions}
-              onChange={e => {
-                setHasProductOptions(e.target.checked)
-                if (!e.target.checked) {
-                  setProductType("")
-                  setSelectedOptions({})
-                }
-              }}
-              className="mt-0.5 size-4"
-            />
-            <span><span className="block font-semibold text-neutral-800">Sản phẩm có nhiều phiên bản</span><span className="block text-xs text-neutral-500">Ví dụ: size, màu sắc hoặc dung tích khác nhau.</span></span>
-          </label>
-        </div>
-
-        {!hasProductOptions && (
-          <div className="grid gap-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 sm:grid-cols-2">
-            <div className="sm:col-span-2 text-xs text-blue-700">Sản phẩm này sẽ có một biến thể <strong>Mặc định</strong> để giỏ hàng và tồn kho được quản lý nhất quán.</div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-neutral-600">SKU <span className="font-normal text-neutral-400">(tự sinh, có thể sửa)</span></label>
-              <Input value={defaultSku} onChange={e => setDefaultSku(e.target.value)} placeholder={`${skuPrefix}-DEFAULT`} />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-neutral-600">Số lượng tồn kho *</label>
-              <Input type="number" value={defaultStock} onChange={e => setDefaultStock(Number(e.target.value))} min={0} />
-            </div>
-          </div>
-        )}
-
-        {hasProductOptions && (
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">Kiểu biến thể *</label>
+            <label className="text-xs font-semibold text-neutral-600">Kiểu biến thể (Kích thước / Màu sắc)</label>
             <select
               value={productType}
               onChange={e => { setProductType(e.target.value); setSelectedOptions({}) }}
-              className="h-10 w-full rounded-md border bg-white px-3 text-sm outline-none focus:border-primary"
+              className="w-full border px-3 py-2 rounded-md text-sm outline-none bg-white focus:border-primary"
             >
-              <option value="">— Chọn kiểu biến thể —</option>
+              <option value="">— Không có biến thể / Tùy chỉnh —</option>
               {PRODUCT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
+        </div>
+
+        {/* ── 3.1. BẢNG BIẾN THỂ & TỒN KHO HIỆN CÓ ── */}
+        {currentVariants.length > 0 ? (
+          <div className="border border-neutral-200 rounded-xl overflow-hidden bg-white shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-neutral-50 px-4 py-3 border-b gap-2">
+              <div>
+                <h4 className="text-sm font-bold text-neutral-800 flex items-center gap-2">
+                  <span>📦 Biến thể &amp; Tồn kho hiện có</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
+                    {currentVariants.length} loại
+                  </span>
+                </h4>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Cập nhật trực tiếp số lượng tồn kho, giá bán và mã SKU cho từng biến thể riêng biệt.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddManualVariant}
+                className="text-xs h-8 gap-1.5 shrink-0 bg-white"
+              >
+                <Plus className="size-3.5" /> Thêm biến thể
+              </Button>
+            </div>
+
+            <div className="overflow-x-auto max-h-[340px] w-full min-w-0 border rounded-lg">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-neutral-50/90 sticky top-0 border-b text-neutral-600 font-semibold z-10">
+                  <tr>
+                    <th className="px-3 py-2.5">Tên biến thể</th>
+                    <th className="px-3 py-2.5 w-32 whitespace-nowrap">Trạng thái kho</th>
+                    <th className="px-3 py-2.5 w-28">Tồn kho (SP)</th>
+                    <th className="px-3 py-2.5 w-32">Giá bán (VNĐ)</th>
+                    <th className="px-3 py-2.5 w-32">Mã SKU</th>
+                    <th className="px-3 py-2.5 w-12 text-center">Xóa</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100">
+                  {currentVariants.map((v, idx) => {
+                    const stockNum = Number(v.stock) || 0
+                    const isOutOfStock = stockNum === 0
+                    const isLowStock = stockNum > 0 && stockNum < 5
+
+                    return (
+                      <tr key={v.id || idx} className={isOutOfStock ? "bg-red-50/40" : isLowStock ? "bg-amber-50/30" : "hover:bg-neutral-50/50"}>
+                        <td className="px-3 py-2">
+                          <input
+                            type="text"
+                            value={v.name}
+                            onChange={e => handleUpdateVariant(idx, "name", e.target.value)}
+                            placeholder="Tên biến thể"
+                            className="w-full font-medium border border-transparent hover:border-neutral-300 focus:border-primary rounded px-2 py-1 bg-transparent outline-none text-neutral-800 text-xs"
+                          />
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {isOutOfStock ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100/90 px-2 py-0.5 rounded-full border border-red-200">
+                              🔴 Hết hàng (0)
+                            </span>
+                          ) : isLowStock ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-200">
+                              🟡 Sắp hết ({stockNum})
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-200">
+                              🟢 Còn hàng ({stockNum})
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              min={0}
+                              value={v.stock}
+                              onChange={e => handleUpdateVariant(idx, "stock", Math.max(0, parseInt(e.target.value) || 0))}
+                              className="w-20 border rounded px-2 py-1 font-bold text-neutral-900 outline-none focus:border-primary text-xs bg-white"
+                            />
+                            {isOutOfStock && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateVariant(idx, "stock", 10)}
+                                title="Nhập nhanh +10 tồn kho"
+                                className="text-[10px] text-primary hover:underline px-1 py-0.5 bg-primary/10 rounded font-bold shrink-0"
+                              >
+                                +10
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <input
+                            type="number"
+                            min={0}
+                            value={v.price ?? basePrice}
+                            onChange={e => handleUpdateVariant(idx, "price", Math.max(0, parseInt(e.target.value) || 0))}
+                            className="w-full max-w-[120px] border rounded px-2 py-1 outline-none focus:border-primary text-xs bg-white"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <input
+                            type="text"
+                            value={v.sku || ""}
+                            onChange={e => handleUpdateVariant(idx, "sku", e.target.value)}
+                            placeholder="Mã SKU"
+                            className="w-full max-w-[120px] border rounded px-2 py-1 font-mono text-[11px] outline-none focus:border-primary uppercase bg-white"
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveVariant(idx)}
+                            className="text-neutral-400 hover:text-red-600 p-1 transition-colors"
+                            title="Xóa biến thể này"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-neutral-50 border-t text-xs text-neutral-500 gap-2">
+              <span>💡 Tổng tồn kho cộng dồn: <strong className="text-neutral-800 font-bold">{currentVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)} SP</strong></span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleAddManualVariant}
+                className="text-xs h-7 text-primary hover:bg-primary/5 self-start sm:self-auto"
+              >
+                + Thêm biến thể dòng mới
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/40 p-4">
+            <p className="text-xs text-neutral-600">Mỗi sản phẩm cần ít nhất một biến thể để quản lý tồn kho và SKU.</p>
+            <Button type="button" size="sm" onClick={handleAddManualVariant}>+ Thêm biến thể</Button>
+          </div>
         )}
 
-        {/* Variant builder */}
-        {hasProductOptions && typeConfig && (
-          <div className="border rounded-xl overflow-hidden">
-            <button type="button" onClick={() => setVariantOpen(v => !v)}
-              className="flex w-full items-center justify-between bg-neutral-50 px-4 py-3 text-sm font-semibold hover:bg-neutral-100 transition-colors">
-              <span>⚙️ Cấu hình biến thể ({generatedVariants.length > 0 ? `${generatedVariants.length} biến thể` : "chưa cấu hình"})</span>
-              {variantOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+        {/* ── 3.2. BỘ SINH BIẾN THỂ TỰ ĐỘNG THEO THUỘC TÍNH (ACCORDION) ── */}
+        {typeConfig && hasVariants && (
+          <div className="border rounded-xl overflow-hidden bg-white">
+            <button
+              type="button"
+              onClick={() => setVariantOpen(v => !v)}
+              className="flex w-full items-center justify-between bg-neutral-50 px-4 py-3 text-sm font-semibold hover:bg-neutral-100 transition-colors border-b"
+            >
+              <div className="flex items-center gap-2 text-left">
+                <span>⚙️ Sinh biến thể tự động theo thuộc tính</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-neutral-200 text-neutral-600 font-normal">
+                  {typeConfig.label}
+                </span>
+              </div>
+              {variantOpen ? <ChevronUp className="size-4 text-neutral-500" /> : <ChevronDown className="size-4 text-neutral-500" />}
             </button>
 
             {variantOpen && (
               <div className="p-4 space-y-5">
-                <div className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-                  💡 Tồn kho sẽ được khai báo trong bảng biến thể bên dưới, theo từng biến thể riêng.
+                <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center justify-between flex-wrap gap-2">
+                  <span>💡 Chọn các thuộc tính dưới đây để tổ hợp hàng loạt biến thể mới.</span>
+                  {generatedVariants.length > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleApplyGenerated}
+                      className="text-xs h-7 bg-primary text-white hover:bg-primary/90"
+                    >
+                      📥 Áp dụng {generatedVariants.length} biến thể vào bảng trên
+                    </Button>
+                  )}
                 </div>
 
                 {typeConfig.dimensions.map(dim => (
@@ -938,41 +1120,64 @@ function ProductForm({ initial, onSave, onCancel }: {
                       {dim.options.map(opt => {
                         const active = selectedOptions[dim.key]?.includes(opt)
                         return (
-                          <button key={opt} type="button" onClick={() => toggleOption(dim.key, opt)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${active ? "bg-primary text-white border-primary" : "bg-white text-neutral-600 hover:border-primary"}`}>
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => toggleOption(dim.key, opt)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${active ? "bg-primary text-white border-primary" : "bg-white text-neutral-600 hover:border-primary"}`}
+                          >
                             {opt}
                           </button>
                         )
                       })}
                       {(selectedOptions[dim.key] ?? []).filter(v => !dim.options.includes(v)).map(opt => (
-                        <button key={opt} type="button" onClick={() => toggleOption(dim.key, opt)}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold border bg-primary text-white border-primary">
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => toggleOption(dim.key, opt)}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold border bg-primary text-white border-primary"
+                        >
                           {opt} ✕
                         </button>
                       ))}
                     </div>
                     <div className="flex gap-2 mt-1">
-                      <Input value={customOptionInputs[dim.key] ?? ""} onChange={e => setCustomOptionInputs(prev => ({ ...prev, [dim.key]: e.target.value }))}
-                        placeholder={`Thêm ${dim.label.toLowerCase()} tùy chỉnh...`} className="h-8 text-xs"
-                        onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addCustomOption(dim.key))} />
+                      <Input
+                        value={customOptionInputs[dim.key] ?? ""}
+                        onChange={e => setCustomOptionInputs(prev => ({ ...prev, [dim.key]: e.target.value }))}
+                        placeholder={`Thêm ${dim.label.toLowerCase()} tùy chỉnh...`}
+                        className="h-8 text-xs"
+                        onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addCustomOption(dim.key))}
+                      />
                       <Button type="button" size="sm" variant="outline" onClick={() => addCustomOption(dim.key)} className="h-8 text-xs px-3">Thêm</Button>
                     </div>
                   </div>
                 ))}
 
                 {generatedVariants.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3">
-                      Bảng biến thể ({generatedVariants.length} biến thể)
-                    </p>
-                    <div className="overflow-x-auto border rounded-lg">
+                  <div className="mt-4 pt-4 border-t space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold uppercase tracking-wider text-neutral-600">
+                        Bản xem trước tổ hợp ({generatedVariants.length} biến thể sinh ra)
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleApplyGenerated}
+                        className="text-xs h-7 bg-emerald-600 text-white hover:bg-emerald-700"
+                      >
+                        Đồng bộ vào bảng tồn kho ➔
+                      </Button>
+                    </div>
+
+                    <div className="overflow-x-auto border rounded-lg max-h-[220px] w-full min-w-0">
                       <table className="w-full text-xs">
-                        <thead className="bg-neutral-50">
+                        <thead className="bg-neutral-50 sticky top-0 border-b">
                           <tr>
-                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">Biến thể</th>
-                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">Giá (VNĐ)</th>
-                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">Tồn kho</th>
-                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">SKU <span className="font-normal text-neutral-400">(có thể sửa)</span></th>
+                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">Biến thể sinh ra</th>
+                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">Giá mặc định</th>
+                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">Tồn kho ban đầu</th>
+                            <th className="px-3 py-2 text-left font-semibold text-neutral-600">Mã SKU dự kiến</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -980,19 +1185,28 @@ function ProductForm({ initial, onSave, onCancel }: {
                             <tr key={v.name} className={i % 2 === 0 ? "bg-white" : "bg-neutral-50/50"}>
                               <td className="px-3 py-2 font-medium whitespace-nowrap">{v.name}</td>
                               <td className="px-3 py-2">
-                                <input type="number" value={variantPrices[v.name] ?? basePrice}
+                                <input
+                                  type="number"
+                                  value={variantPrices[v.name] ?? basePrice}
                                   onChange={e => setVariantPrices(prev => ({ ...prev, [v.name]: Number(e.target.value) }))}
-                                  className="w-28 border rounded px-2 py-1 outline-none focus:border-primary" />
+                                  className="w-28 border rounded px-2 py-1 outline-none focus:border-primary"
+                                />
                               </td>
                               <td className="px-3 py-2">
-                                <input type="number" value={variantStocks[v.name] ?? 0}
+                                <input
+                                  type="number"
+                                  value={variantStocks[v.name] ?? 0}
                                   onChange={e => setVariantStocks(prev => ({ ...prev, [v.name]: Number(e.target.value) }))}
-                                  className="w-20 border rounded px-2 py-1 outline-none focus:border-primary" />
+                                  className="w-20 border rounded px-2 py-1 outline-none focus:border-primary"
+                                />
                               </td>
                               <td className="px-3 py-2">
-                                <input type="text" value={variantSkus[v.name] ?? v.sku}
+                                <input
+                                  type="text"
+                                  value={variantSkus[v.name] ?? v.sku}
                                   onChange={e => setVariantSkus(prev => ({ ...prev, [v.name]: e.target.value }))}
-                                  className="w-32 border rounded px-2 py-1 outline-none focus:border-primary font-mono text-xs" />
+                                  className="w-32 border rounded px-2 py-1 outline-none focus:border-primary font-mono text-xs"
+                                />
                               </td>
                             </tr>
                           ))}
@@ -1522,7 +1736,11 @@ export function CrudPage({ section }: { section: string }) {
   const [showPassword, setShowPassword] = useState(false)
 
   // Media & Media Picker States
-  const allMediaList = useMemo(() => getAllMediaItems(d), [d.media, d.products, d.lookbook, d.stories])
+  const { media: cMedia, products: cProducts, lookbook: cLookbook, stories: cStories } = d
+  const allMediaList = useMemo(
+    () => getAllMediaItems({ media: cMedia, products: cProducts, lookbook: cLookbook, stories: cStories }),
+    [cMedia, cProducts, cLookbook, cStories]
+  )
   const [previewMedia, setPreviewMedia] = useState<any | null>(null)
   const [mediaTypeFilter, setMediaTypeFilter] = useState("ALL")
   const [mediaSourceFilter, setMediaSourceFilter] = useState("ALL")
@@ -1659,11 +1877,16 @@ export function CrudPage({ section }: { section: string }) {
       if (filterCategory !== "ALL" && r.category !== filterCategory) match = false
       if (filterStatus !== "ALL" && r.status !== filterStatus) match = false
       if (productStockFilter !== "ALL") {
-        const totalStock = (r.variants && r.variants.length > 0)
-          ? r.variants.reduce((acc: number, v: any) => acc + (Number(v.stock) || 0), 0)
+        const variants = (r.variants && r.variants.length > 0) ? r.variants : [];
+        const totalStock = variants.length > 0
+          ? variants.reduce((acc: number, v: any) => acc + (Number(v.stock) || 0), 0)
           : (Number(r.stock) || 0);
-        if (productStockFilter === "IN_STOCK" && totalStock <= 0) match = false;
-        if (productStockFilter === "LOW_STOCK" && (totalStock <= 0 || totalStock > 10)) match = false;
+        const hasZeroVariant = variants.some((v: any) => (Number(v.stock) || 0) === 0);
+        const hasLowVariant = variants.some((v: any) => (Number(v.stock) || 0) < 5);
+
+        if (productStockFilter === "IN_STOCK" && (totalStock <= 0 || hasZeroVariant)) match = false;
+        if (productStockFilter === "HAS_OUT_OF_STOCK_VARIANT" && !hasZeroVariant && totalStock > 0) match = false;
+        if (productStockFilter === "LOW_STOCK" && (totalStock <= 0 || (!hasLowVariant && totalStock > 10))) match = false;
         if (productStockFilter === "OUT_OF_STOCK" && totalStock > 0) match = false;
       }
     }
@@ -1930,9 +2153,10 @@ export function CrudPage({ section }: { section: string }) {
               </select>
               <select value={productStockFilter} onChange={e => { setProductStockFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
                 <option value="ALL">Tất cả tồn kho</option>
-                <option value="IN_STOCK">Còn hàng</option>
-                <option value="LOW_STOCK">Sắp hết hàng (≤ 10)</option>
-                <option value="OUT_OF_STOCK">Hết hàng (0)</option>
+                <option value="IN_STOCK">Còn hàng (Đủ loại)</option>
+                <option value="HAS_OUT_OF_STOCK_VARIANT">Có loại hết hàng (0 SP)</option>
+                <option value="LOW_STOCK">Sắp hết hàng (≤ 10 hoặc biến thể &lt; 5)</option>
+                <option value="OUT_OF_STOCK">Hết hàng toàn bộ (0)</option>
               </select>
               <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
                 <option value="ALL">Tất cả trạng thái</option>
@@ -2609,13 +2833,38 @@ export function CrudPage({ section }: { section: string }) {
                       </td>
                       <td>
                         {(() => {
-                          const totalStock = Array.isArray(r.variants) && r.variants.length > 0
-                            ? r.variants.reduce((acc: number, v: any) => acc + (v.stock || 0), 0)
-                            : (r.stock ?? 0);
+                          const variants = Array.isArray(r.variants) ? r.variants : [];
+                          const totalStock = variants.length > 0
+                            ? variants.reduce((acc: number, v: any) => acc + (Number(v.stock) || 0), 0)
+                            : (Number(r.stock) || 0);
+                          
+                          const zeroVariants = variants.filter((v: any) => (Number(v.stock) || 0) === 0);
+                          const lowVariants = variants.filter((v: any) => (Number(v.stock) || 0) > 0 && (Number(v.stock) || 0) < 5);
+
                           return (
-                            <span className={`px-2 py-0.5 text-xs font-semibold rounded ${totalStock > 10 ? 'bg-emerald-50 text-emerald-700' : totalStock > 0 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
-                              {totalStock > 0 ? `Còn ${totalStock} SP` : 'Hết hàng'}
-                            </span>
+                            <div className="flex flex-col items-start gap-1 py-1">
+                              <span className={`px-2 py-0.5 text-xs font-semibold rounded ${totalStock > 10 ? 'bg-emerald-50 text-emerald-700' : totalStock > 0 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
+                                {totalStock > 0 ? `Còn ${totalStock} SP` : 'Hết hàng'}
+                              </span>
+                              
+                              {zeroVariants.length > 0 && (
+                                <span 
+                                  className="inline-flex items-center gap-1 text-[10px] text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded font-medium cursor-default"
+                                  title={`Hết hàng (0 SP): ${zeroVariants.map((v: any) => v.name).join(', ')}`}
+                                >
+                                  ⚠️ {zeroVariants.length} loại hết hàng
+                                </span>
+                              )}
+
+                              {zeroVariants.length === 0 && lowVariants.length > 0 && (
+                                <span 
+                                  className="inline-flex items-center gap-1 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium cursor-default"
+                                  title={`Sắp hết (<5 SP): ${lowVariants.map((v: any) => `${v.name} (${v.stock})`).join(', ')}`}
+                                >
+                                  ⚡ {lowVariants.length} loại sắp hết
+                                </span>
+                              )}
+                            </div>
                           );
                         })()}
                       </td>
@@ -2767,7 +3016,7 @@ export function CrudPage({ section }: { section: string }) {
 
       {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className={section === "products" ? "sm:max-w-[720px] max-h-[90vh] overflow-y-auto" : "sm:max-w-[500px] max-h-[90vh] overflow-y-auto"}>
+        <DialogContent className={section === "products" ? "sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : "sm:max-w-[500px] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6"}>
           <DialogHeader>
             <DialogTitle>{editingItem ? "Chỉnh sửa" : "Thêm mới"} {labels[section]?.toLowerCase()}</DialogTitle>
           </DialogHeader>
@@ -2775,10 +3024,7 @@ export function CrudPage({ section }: { section: string }) {
           {section === "products" ? (
             <ProductForm
               initial={editingItem ?? {}}
-              onSave={async (product) => {
-                const saved = await d.upsertProduct(product)
-                if (saved) setModalOpen(false)
-              }}
+              onSave={async (product) => { if (await d.upsertProduct(product)) setModalOpen(false) }}
               onCancel={() => setModalOpen(false)}
             />
           ) : section === "orders" ? (
