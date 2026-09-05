@@ -43,7 +43,9 @@ export function ShopCatalog({
         .filter(
           (product) =>
             (activeCategory === "all" || getParentCategory(product.category, categories) === activeCategory) &&
-            (activeSubcategory === "all" || product.category === activeSubcategory) &&
+            (activeSubcategory === "all" ||
+              product.category === activeSubcategory ||
+              (getParentCategory(product.category, categories) === activeParent && product.collection?.toLowerCase() === activeSubcategory.toLowerCase())) &&
             `${product.title} ${product.collection}`.toLowerCase().includes(query.toLowerCase()),
         )
         .sort((a, b) =>
