@@ -5,7 +5,6 @@ import { PageHero } from "@/components/website/page-hero"
 import { ShopCarousel } from "@/components/website/lookbook/shop-carousel"
 import { Breadcrumbs } from "@/components/website/breadcrumbs"
 import { getLookbooks } from "@/lib/api"
-import { lookbookItems as defaultLookbookItems } from "@/data/lookbook"
 
 export const metadata: Metadata = {
   title: "Bộ Sưu Tập Kiểu Tóc & Lookbook Văn Hóa Barber",
@@ -14,8 +13,7 @@ export const metadata: Metadata = {
 }
 
 export default async function Page() {
-  const rawItems = await getLookbooks()
-  const allItems = rawItems && rawItems.length >= 16 ? rawItems : defaultLookbookItems
+  const allItems = await getLookbooks()
   const shopItems = allItems.filter((item) => item.category === "Shop")
   const hairItems = allItems.filter((item) => item.category !== "Shop")
 
