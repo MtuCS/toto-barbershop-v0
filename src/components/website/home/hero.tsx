@@ -159,7 +159,7 @@ export function Hero() {
               initialDelay={250}
               loop={false}
               showCursor={false}
-              className="!block min-h-[0.92em] text-[clamp(3.5rem,18vw,4.75rem)] sm:text-[clamp(4.75rem,16vw,6.5rem)] lg:text-[13vw] xl:text-[5.5rem]"
+              className="font-akira !block min-h-[0.92em] tracking-normal text-[clamp(3rem,15vw,4.5rem)] sm:text-[clamp(4rem,14vw,6rem)] lg:text-[11vw] xl:text-[5.25rem]"
             />
             <TextType
               aria-hidden="true"
@@ -172,7 +172,7 @@ export function Hero() {
               cursorCharacter="|"
               cursorBlinkDuration={0.65}
               cursorClassName="font-sans font-light text-[#2f7a68]"
-              className="text-type--nowrap !block min-h-[0.92em] pl-[0.22em] text-[clamp(2.2rem,11.5vw,3.2rem)] text-[#f2f5f3] sm:pl-[0.55em] sm:text-[clamp(3.25rem,11.5vw,5rem)] lg:pl-[0.88em] lg:text-[13vw] xl:text-[5.5rem]"
+              className="font-akira text-type--nowrap !block min-h-[0.92em] pl-[0.22em] text-[clamp(2.2rem,11.5vw,3.2rem)] text-[#f2f5f3] sm:pl-[0.55em] sm:text-[clamp(3.25rem,11.5vw,5rem)] lg:pl-[0.88em] lg:text-[13vw] xl:text-[5.5rem]"
             />
           </h1>
 

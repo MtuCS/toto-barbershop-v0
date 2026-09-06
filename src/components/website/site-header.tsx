@@ -21,10 +21,10 @@ function Logo() {
       className="group inline-flex shrink-0 items-baseline py-2 text-foreground"
       aria-label={`${SITE_NAME}, trang chủ`}
     >
-      <span className="font-agatho text-[1.7rem] font-black leading-none tracking-[-0.075em] transition-transform duration-300 group-hover:-translate-y-px max-[374px]:text-[1.45rem]">
+      <span className="font-akira text-[1.4rem] font-bold leading-none tracking-normal transition-transform duration-300 group-hover:-translate-y-px max-[374px]:text-[1.2rem]">
         ToTo
       </span>
-      <span className="relative ml-3 pb-0.5 text-[0.98rem] font-black leading-none tracking-[0.2em] text-primary max-[374px]:ml-2 max-[374px]:text-[0.78rem]">
+      <span className="font-akira relative ml-3 pb-0.5 text-[0.98rem] font-black leading-none tracking-[0.2em] text-primary max-[374px]:ml-2 max-[374px]:text-[0.78rem]">
         BARBERSHOP
         <span
           className="absolute -bottom-1 left-0 h-0.5 w-full origin-left bg-primary transition-transform duration-300 group-hover:scale-x-50"

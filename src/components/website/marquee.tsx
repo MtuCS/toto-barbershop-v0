@@ -25,7 +25,7 @@ export function Marquee({ repeat = 12 }: MarqueeProps) {
             </span>
             <div className="relative h-11 w-11 shrink-0 md:h-14 md:w-14">
               <Image
-                src="/images/logo_chính_không nền (1).png"
+                src="/images/Artboard 1.png"
                 alt="ToTo Barbershop Logo"
                 fill
                 sizes="(max-width: 768px) 44px, 56px"
