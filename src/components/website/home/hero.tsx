@@ -53,6 +53,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import TextType from "@/components/ui/text-type";
+import Image from "next/image";
 
 export function Hero() {
   const sceneRef = useRef<HTMLElement>(null);
@@ -112,7 +113,7 @@ export function Hero() {
           </div>
 
           {/* Portrait */}
-          <div className="home-hero-media relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
+          {/* <div className="home-hero-media relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
             <video
               src="/images/0806.mp4"
               autoPlay
@@ -124,7 +125,22 @@ export function Hero() {
               aria-label="Visual ToTo Barbershop"
               className="absolute inset-0 h-full w-full object-cover"
             />
+          </div> */}
+
+
+          <div className="home-hero-media relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
+            <Image
+              src="/images/Visual.jpg"
+              alt="Visual ToTo Barbershop"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 1200px"
+              className="object-cover"
+            />
           </div>
+
+
+
         </div>
 
         {/* Giant headline */}

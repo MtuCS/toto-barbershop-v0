@@ -2933,10 +2933,10 @@ export function CrudPage({ section }: { section: string }) {
                         <div className="flex items-center gap-3">
                           {r.image && (
                             <div className="relative size-10 shrink-0 bg-neutral-100 overflow-hidden rounded-md border">
-                              <MediaThumbnail src={r.image} alt={r.title} />
+                              <MediaThumbnail src={r.image} alt={r.name} />
                             </div>
                           )}
-                          <div className="font-bold text-neutral-900">{r.title || "Tên dịch vụ"}</div>
+                          <div className="font-bold text-neutral-900">{r.name || "Tên dịch vụ"}</div>
                         </div>
                       </td>
                       <td>

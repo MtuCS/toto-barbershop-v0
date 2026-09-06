@@ -23,13 +23,13 @@ export function Marquee({ repeat = 12 }: MarqueeProps) {
             <span className="font-agatho text-xl font-bold uppercase tracking-[0.2em] text-primary-foreground whitespace-nowrap md:text-2xl">
               TOTO
             </span>
-            <div className="relative h-8 w-8 shrink-0 md:h-10 md:w-10">
+            <div className="relative h-11 w-11 shrink-0 md:h-14 md:w-14">
               <Image
-                src="/images/T_logo.png"
+                src="/images/logo_chính_không nền (1).png"
                 alt="ToTo Barbershop Logo"
                 fill
-                sizes="(max-width: 768px) 32px, 40px"
-                className="object-contain brightness-0 invert scale-125"
+                sizes="(max-width: 768px) 44px, 56px"
+                className="object-contain scale-[1.3]"
                 priority={i < 4}
               />
             </div>

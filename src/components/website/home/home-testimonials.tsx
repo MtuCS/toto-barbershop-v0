@@ -17,9 +17,9 @@ export function HomeTestimonials() {
       <div className="home-scene-inner relative mx-auto flex w-full max-w-[1400px] flex-col justify-center">
         <div className="home-testimonials-heading flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6">
           <div className="max-w-2xl">
-            <p className="home-section-eyebrow text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
+            {/* <p className="home-section-eyebrow text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
               Đánh giá thực tế từ khách hàng
-            </p>
+            </p> */}
             <h2
               id="home-testimonials-title"
               className="home-section-title mt-2 text-2xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-3xl md:text-4xl lg:text-5xl leading-tight"

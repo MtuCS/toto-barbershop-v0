@@ -49,6 +49,8 @@ export function VisualVideo() {
             className="block h-auto w-full lg:absolute lg:inset-0 lg:h-full lg:object-contain"
           />
         </div>
+
+
       </div>
     </section>
   )
