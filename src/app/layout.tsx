@@ -34,11 +34,11 @@ const akira = localFont({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Toto Barbershop — Barber. Culture. Craft.',
-    template: '%s | Toto Barbershop',
+    default: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại TP.HCM',
+    template: '%s | TOTO Barbershop',
   },
   description:
-    'Toto Barbershop — barber culture, grooming, training và merchandise. Cắt tóc chuẩn barber, sản phẩm chăm sóc và đồ streetwear mang tinh thần của tiệm.',
+    'Không chỉ là cắt tóc, TOTO gửi gắm sự tỉ mỉ, tử tế và gu sống vào từng đường kéo. Đến TOTO để chỉn chu, thư giãn và tìm lại phong độ vốn có của bạn.',
   keywords: [
     'barbershop',
     'barber',
