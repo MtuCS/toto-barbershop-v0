@@ -19,7 +19,6 @@ import { MarketingPageShell } from "@/components/website/marketing-page-shell";
 import { Breadcrumbs } from "@/components/website/breadcrumbs";
 import { LookbookSection } from "@/components/website/lookbook/lookbook-section";
 import { getServices, getFaqs, getLookbooks } from "@/lib/api";
-import { lookbookItems as defaultLookbookItems } from "@/data/lookbook";
 import { formatCurrency } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -57,10 +56,11 @@ const processSteps = [
 ] as const;
 
 export default async function Page() {
-  const services = await getServices();
-  const allFaqs = await getFaqs();
-  const rawLookbooks = await getLookbooks();
-  const lookbookItems = rawLookbooks.length >= 16 ? rawLookbooks : defaultLookbookItems;
+  const [services, allFaqs, lookbookItems] = await Promise.all([
+    getServices(),
+    getFaqs(),
+    getLookbooks(),
+  ]);
   const serviceFaqs = allFaqs.filter(f => f.category === 'service');
 
   return (
