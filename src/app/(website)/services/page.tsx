@@ -17,7 +17,9 @@ import {
 } from "@/components/ui/accordion";
 import { MarketingPageShell } from "@/components/website/marketing-page-shell";
 import { Breadcrumbs } from "@/components/website/breadcrumbs";
-import { getServices, getFaqs } from "@/lib/api";
+import { LookbookSection } from "@/components/website/lookbook/lookbook-section";
+import { getServices, getFaqs, getLookbooks } from "@/lib/api";
+import { lookbookItems as defaultLookbookItems } from "@/data/lookbook";
 import { formatCurrency } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -54,20 +56,11 @@ const processSteps = [
   },
 ] as const;
 
-const lookbook = [
-  ["Side part mềm", "/images/lookbook-1.png"],
-  ["Textured crop", "/images/lookbook-2.png"],
-  ["Skin fade", "/images/lookbook-3.png"],
-  ["Màu khói", "/images/lookbook-4.png"],
-  ["Classic volume", "/images/lookbook-6.png"],
-  ["Modern fringe", "/images/lookbook-7.png"],
-  ["Layer tự nhiên", "/images/lookbook-8.png"],
-  ["Clean cut", "/images/barber-3.png"],
-] as const;
-
 export default async function Page() {
   const services = await getServices();
   const allFaqs = await getFaqs();
+  const rawLookbooks = await getLookbooks();
+  const lookbookItems = rawLookbooks.length >= 16 ? rawLookbooks : defaultLookbookItems;
   const serviceFaqs = allFaqs.filter(f => f.category === 'service');
 
   return (
@@ -290,39 +283,6 @@ export default async function Page() {
         </div>
       </section> */}
 
-      <section className="bg-[#07110f] px-5 py-16 md:px-8 md:py-24">
-        <div className="mx-auto max-w-[1400px]">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <h2 className="font-display text-5xl font-bold uppercase leading-none text-[#f2f5f3] md:text-7xl">
-              Hot looks
-            </h2>
-            <p className="max-w-xs text-sm leading-6 text-white/60">
-              Không có một kiểu tóc đẹp cho tất cả mọi người. Hãy xem đây là
-              điểm khởi đầu cho cuộc trao đổi với barber.
-            </p>
-          </div>
-          <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-6">
-            {lookbook.map(([title, image]) => (
-              <figure key={image} className="group">
-                <div className="relative aspect-[4/5] overflow-hidden bg-[#0d211d]">
-                  <Image
-                    src={image}
-                    alt={`Kiểu tóc ${title}`}
-                    fill
-                    sizes="(max-width: 767px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-[1.035]"
-                  />
-                </div>
-                <figcaption className="mt-3 font-display text-lg font-bold uppercase leading-none text-[#f2f5f3]">
-                  {title}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
       <section className="border-t border-white/10 bg-[#0b1b18] px-5 py-16 md:px-8 md:py-24">
         <div className="mx-auto grid max-w-[1400px] gap-10 md:grid-cols-12">
           <div className="md:col-span-4">
@@ -355,6 +315,8 @@ export default async function Page() {
           </Accordion>
         </div>
       </section>
+
+      <LookbookSection items={lookbookItems} />
     </MarketingPageShell>
   );
 }

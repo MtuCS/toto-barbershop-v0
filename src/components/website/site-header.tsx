@@ -190,8 +190,8 @@ export function SiteHeader() {
                       <Link
                         href={link.href}
                         className={cn(
-                          "border-b px-2 py-4 font-display text-xl uppercase",
-                          (isActive(link.href) || link.highlight) && "text-primary",
+                          "block border-b px-2 py-4 font-display text-xl uppercase",
+                          isActive(link.href) && "text-primary",
                         )}
                       />
                     }
