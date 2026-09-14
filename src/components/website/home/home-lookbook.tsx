@@ -1,9 +1,10 @@
-import { lookbookItems } from "@/data/lookbook"
 import { MarketingPageShell } from "@/components/website/marketing-page-shell"
 import { ShopCarousel } from "@/components/website/lookbook/shop-carousel"
+import { getLookbooks } from "@/lib/api"
 
-export function HomeLookbook() {
-  const shopItems = lookbookItems.filter((item) => item.published && item.category === "Shop")
+export async function HomeLookbook() {
+  const lookbookItems = await getLookbooks()
+  const shopItems = lookbookItems.filter((item) => item.category === "Shop")
 
   return (
     <section data-home-scene="our-shop" aria-labelledby="home-our-shop-title">

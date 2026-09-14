@@ -746,7 +746,7 @@ export const useDataStore = create<DataState>()(
       
       upsertLookbook: async (item) => {
         const token = useAuthStore.getState().session?.token;
-        const isUpdate = !!item.id && !String(item.id).startsWith('lb-');
+        const isUpdate = Boolean(item.id);
         const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks/${item.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks`;
         const res = await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(item) });
         if (res.ok) {
