@@ -85,8 +85,8 @@ export default async function Page() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 md:col-span-7 md:pl-4 items-stretch">
-            {/* Ảnh lớn bên trái chiếm trọn chiều cao */}
-            <div className="relative md:col-span-7 aspect-[3/4] md:aspect-auto md:h-full min-h-[380px] md:min-h-[500px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
+            {/* Ảnh lớn bên trái: tỉ lệ 4/3 gọn gàng trên mobile, stretch đều toàn chiều cao trên desktop */}
+            <div className="relative md:col-span-7 aspect-[4/3] sm:aspect-[16/10] md:aspect-auto md:h-full md:min-h-[460px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
               <Image
                 src="/images/service-cut.jpg"
                 alt="Barber ToTo đang hoàn thiện kiểu tóc"
@@ -96,9 +96,9 @@ export default async function Page() {
                 className="object-cover"
               />
             </div>
-            {/* 2 ảnh bên phải xếp chồng cân đối */}
+            {/* 2 ảnh bên phải: 2 ô vuông đều đặn trên mobile, xếp chồng 2 nửa bằng nhau trên desktop */}
             <div className="grid grid-cols-2 md:grid-cols-1 md:grid-rows-2 gap-3 md:gap-4 md:col-span-5 md:h-full">
-              <div className="relative aspect-[4/3] md:aspect-auto md:h-full min-h-[180px] md:min-h-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
+              <div className="relative aspect-square md:aspect-auto md:h-full overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
                 <Image
                   src="/images/barber-2.png"
                   alt="Không gian phục vụ tại ToTo Barbershop"
@@ -108,7 +108,7 @@ export default async function Page() {
                   className="object-cover"
                 />
               </div>
-              <div className="relative aspect-[4/3] md:aspect-auto md:h-full min-h-[180px] md:min-h-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
+              <div className="relative aspect-square md:aspect-auto md:h-full overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
                 <Image
                   src="/images/service-shave.jpg"
                   alt="Dịch vụ cạo râu khăn nóng tại ToTo"
