@@ -16,7 +16,7 @@ export function ShopFaq() {
       <div className="mx-auto max-w-[1400px] px-5 md:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">Q & A</p>
-          <h2 id="shop-faq-title" className="mt-4 font-display text-4xl font-bold uppercase leading-none md:text-6xl">
+          <h2 id="shop-faq-title" className="mt-4 font-display text-4xl font-bold uppercase leading-tight md:text-6xl">
             Câu hỏi thường gặp về pomade & sáp tóc
           </h2>
           <p className="mt-5 text-sm leading-6 text-neutral-600 md:text-base">

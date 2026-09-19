@@ -66,7 +66,7 @@ export function ShopCatalog({
             <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary">
               TOTO Supply
             </p>
-            <h2 className="mt-2 font-display text-4xl font-bold uppercase leading-none md:text-6xl">
+            <h2 className="mt-2 font-display text-4xl font-bold uppercase leading-tight md:text-6xl">
               {title}
             </h2>
           </div>

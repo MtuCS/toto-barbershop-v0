@@ -150,7 +150,7 @@ export default async function Page() {
                   </span>
                 </div>
 
-                <h3 className="mt-8 font-display text-3xl font-bold uppercase leading-none text-[#f2f5f3]">
+                <h3 className="mt-8 font-display text-3xl font-bold uppercase leading-tight text-[#f2f5f3]">
                   {title}
                 </h3>
 
@@ -175,7 +175,7 @@ export default async function Page() {
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#79b8a7]">
                 Bảng giá
               </p>
-              <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-none text-[#f2f5f3] md:text-7xl">
+              <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-tight text-[#f2f5f3] md:text-7xl">
                 Chọn dịch vụ của bạn
               </h2>
             </div>
@@ -198,7 +198,7 @@ export default async function Page() {
                     {service.duration} phút
                   </span>
                 </div>
-                <h3 className="mt-5 max-w-sm font-display text-4xl font-bold uppercase leading-[0.92] text-[#f2f5f3]">
+                <h3 className="mt-5 max-w-sm font-display text-4xl font-bold uppercase leading-tight text-[#f2f5f3]">
                   {service.name}
                 </h3>
                 <p className="mt-5 text-sm leading-6 text-white/60">
@@ -289,7 +289,7 @@ export default async function Page() {
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#79b8a7]">
               Câu hỏi thường gặp
             </p>
-            <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-[0.9] text-[#f2f5f3]">
+            <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-tight text-[#f2f5f3]">
               Trước khi ngồi ghế
             </h2>
             <Scissors
