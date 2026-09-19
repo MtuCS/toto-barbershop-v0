@@ -45,6 +45,8 @@ interface SocialContact {
   href: string
   icon: React.ReactNode
   color: string
+  rippleBorder: string
+  rippleBg: string
 }
 
 const SOCIAL_CONTACTS: SocialContact[] = [
@@ -53,8 +55,10 @@ const SOCIAL_CONTACTS: SocialContact[] = [
     label: "Hotline",
     sublabel: "0981 378 179",
     href: "tel:0981378179",
-    icon: <Phone className="size-5 text-white" />,
+    icon: <Phone className="size-5 text-white animate-phone-ring" />,
     color: "hover:bg-[#1f6b5c] hover:border-[#79b8a7]",
+    rippleBorder: "border-[#79b8a7]/60",
+    rippleBg: "bg-[#79b8a7]/20",
   },
   {
     id: "zalo",
@@ -63,6 +67,8 @@ const SOCIAL_CONTACTS: SocialContact[] = [
     href: "https://zalo.me/0981378179",
     icon: <ZaloIcon className="size-5" />,
     color: "hover:bg-[#0068FF] hover:border-[#0068FF]/50",
+    rippleBorder: "border-[#0068FF]/60",
+    rippleBg: "bg-[#0068FF]/20",
   },
   {
     id: "messenger",
@@ -71,13 +77,15 @@ const SOCIAL_CONTACTS: SocialContact[] = [
     href: "https://m.me/totobarbershopHCM",
     icon: <MessengerIcon className="size-5 text-white" />,
     color: "hover:bg-[#0084FF] hover:border-[#0084FF]/50",
+    rippleBorder: "border-[#0084FF]/60",
+    rippleBg: "bg-[#0084FF]/20",
   },
 ]
 
 export function FloatingContactButtons() {
   return (
     <aside
-      className="fixed bottom-6 right-4 z-40 flex flex-col items-center gap-3 md:bottom-8 md:right-6"
+      className="fixed bottom-6 right-4 z-40 flex flex-col items-center gap-3.5 md:bottom-8 md:right-6"
       aria-label="Kênh liên hệ nhanh ToTo Barbershop"
     >
       {SOCIAL_CONTACTS.map((item) => (
@@ -89,6 +97,18 @@ export function FloatingContactButtons() {
           aria-label={`${item.label} - ${item.sublabel}`}
           className="group relative flex items-center justify-center transition-transform duration-200 active:scale-95"
         >
+          {/* Ripple Wave 1 (Vòng gợn sóng thứ nhất) */}
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 rounded-full border ${item.rippleBorder} ${item.rippleBg} animate-radar-pulse`}
+          />
+
+          {/* Ripple Wave 2 (Vòng gợn sóng thứ hai - lệch pha) */}
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 rounded-full border ${item.rippleBorder} ${item.rippleBg} animate-radar-pulse-delayed`}
+          />
+
           {/* Tooltip on the left side of each button on hover */}
           <span className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/15 bg-[#07110f]/95 px-2.5 py-1 text-center opacity-0 shadow-2xl backdrop-blur-md transition-all duration-200 group-hover:opacity-100 group-hover:-translate-x-0.5">
             <span className="block font-sans text-[11px] font-bold text-white">
