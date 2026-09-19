@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, ShoppingBag, User, LogIn, LogOut, Dices } from "lucide-react"
+import { Menu, ShoppingBag, User, LogIn, LogOut, Dices, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MAIN_NAV, SITE_NAME } from "@/lib/constants"
 import { GooeyNav } from "@/components/website/gooey-nav"
@@ -10,7 +11,7 @@ import { useCartStore } from "@/store/cart-store"
 import { useCustomerUserStore } from "@/store/customer-user-store"
 import { useMounted } from "@/hooks/use-mounted"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu"
 import { CustomerAuthModal } from "@/components/website/customer-auth-modal"
 
@@ -37,10 +38,19 @@ function Logo() {
 
 const HEADER_NAV = MAIN_NAV.filter((link) => link.showInHeader !== false)
 
+const MOBILE_NAV_LIST = [
+  { label: "Service", href: "/services" },
+  { label: "Shop", href: "/shop" },
+  { label: "TOTO Merchandise", href: "/merchandise" },
+  { label: "Training", href: "/training" },
+  { label: "Contact", href: "/contact" },
+]
+
 export function SiteHeader() {
   const pathname = usePathname()
   const router = useRouter()
   const mounted = useMounted()
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   // Stores
   const { user, isAuthModalOpen: authOpen, setAuthModalOpen: setAuthOpen, logout } = useCustomerUserStore()
@@ -61,12 +71,9 @@ export function SiteHeader() {
           <GooeyNav items={HEADER_NAV} />
         </div>
 
-        {/* Right Section: Inline Search Input + Icons */}
+        {/* Right Section: Desktop Icons (hidden on mobile) + Mobile Menu (hidden on desktop) */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-
-
-
-          {/* User Auth Icon Button (Đăng nhập / Đăng ký) */}
+          {/* User Auth Icon Button (Desktop Only) */}
           {mounted && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -74,7 +81,7 @@ export function SiteHeader() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
+                    className="relative hidden md:inline-flex cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
                     aria-label={`Tài khoản (${user.name})`}
                   />
                 }
@@ -103,7 +110,7 @@ export function SiteHeader() {
             <Button
               variant="ghost"
               size="icon"
-              className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
+              className="relative hidden md:inline-flex cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
               aria-label="Đăng nhập / Đăng ký"
               onClick={() => setAuthOpen(true)}
               title="Đăng nhập / Đăng ký"
@@ -112,8 +119,8 @@ export function SiteHeader() {
             </Button>
           )}
 
-          {/* Lucky Wheel Icon */}
-          <Link href="/lucky-wheel" passHref>
+          {/* Lucky Wheel Icon (Desktop Only) */}
+          <Link href="/lucky-wheel" passHref className="hidden md:inline-flex">
             <Button
               variant="ghost"
               size="icon"
@@ -125,11 +132,11 @@ export function SiteHeader() {
             </Button>
           </Link>
 
-          {/* Cart Icon Button */}
+          {/* Cart Icon Button (Desktop Only) */}
           <Button
             variant="ghost"
             size="icon"
-            className="relative cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
+            className="relative hidden md:inline-flex cursor-pointer rounded-full transition-all duration-200 hover:bg-neutral-100 hover:text-primary hover:scale-110 active:scale-95"
             aria-label="Giỏ hàng"
             onClick={openCart}
           >
@@ -141,65 +148,137 @@ export function SiteHeader() {
             )}
           </Button>
 
-          {/* Mobile Menu Trigger */}
-          <Sheet>
+          {/* Mobile Menu Trigger (Dấu 3 gạch - Mobile Only) */}
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
-                "rounded-none hover:bg-primary/8 hover:text-primary md:hidden"
+                "relative flex md:hidden size-10 items-center justify-center rounded-full border border-black/10 dark:border-white/20 hover:bg-primary/10 hover:text-primary active:scale-95"
               )}
               aria-label="Mở menu"
             >
               <Menu className="size-5" />
+              {mounted && totalItems > 0 && (
+                <span className="absolute right-1 top-1 size-2 rounded-full bg-primary ring-2 ring-background" />
+              )}
             </SheetTrigger>
-            <SheetContent side="right" className="w-full max-w-sm">
-              <SheetHeader>
-                <SheetTitle className="font-display uppercase">Menu</SheetTitle>
+            <SheetContent side="right" className="flex flex-col overflow-y-auto max-h-[100dvh] w-full max-w-sm p-6">
+              <SheetHeader className="text-left pb-3 border-b border-border/60">
+                <SheetTitle className="font-display text-2xl font-bold uppercase tracking-wide">
+                  ToTo <span className="text-primary text-base">Barbershop</span>
+                </SheetTitle>
               </SheetHeader>
 
-
-
-              {/* Mobile Auth Button */}
-              <div className="px-2 pb-4 border-b border-border">
-                <Button
-                  onClick={() => {
-                    if (user) router.push("/profile")
-                    else setAuthOpen(true)
-                  }}
-                  variant="outline"
-                  className="w-full justify-start gap-2 text-xs uppercase font-bold"
-                >
-                  {mounted && user ? (
-                    <>
-                      <User className="size-4 text-emerald-500" /> Xin chào, {user.name}
-                    </>
-                  ) : (
-                    <>
-                      <LogIn className="size-4" /> Đăng nhập / Đăng ký
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              <nav className="flex flex-col px-2 pb-6" aria-label="Điều hướng di động">
-                {HEADER_NAV.map((link) => (
-                  <SheetClose
-                    key={link.href}
-                    {...({ nativeButton: false } as any)}
-                    render={
-                      <Link
-                        href={link.href}
-                        className={cn(
-                          "block border-b px-2 py-4 font-display text-xl uppercase",
-                          isActive(link.href) && "text-primary",
-                        )}
-                      />
-                    }
-                  >
-                    {link.label}
-                  </SheetClose>
-                ))}
+              {/* 1. Navigation Links (Có khoảng đệm thanh lịch bên dưới ToTo Barbershop) */}
+              <nav className="flex flex-col space-y-1.5 pt-5 pb-2" aria-label="Điều hướng di động">
+                {MOBILE_NAV_LIST.map((link) => {
+                  const active = isActive(link.href)
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setSheetOpen(false)}
+                      className={cn(
+                        "flex items-center justify-between rounded-lg px-3 py-3 font-display text-base uppercase tracking-wide transition-colors",
+                        active
+                          ? "bg-primary/10 text-primary font-bold"
+                          : "text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-primary"
+                      )}
+                    >
+                      <span>{link.label}</span>
+                      <ChevronRight className={cn("size-4 text-muted-foreground", active && "text-primary")} />
+                    </Link>
+                  )
+                })}
               </nav>
+
+              {/* 2. Cụm Tiện ích & Đăng nhập (Được kéo lên gần danh sách hơn, tạo khối gắn kết) */}
+              <div className="mt-6 space-y-3 pt-5 border-t border-border/60">
+                {/* Quick Utilities (Phương án 1: Ghost Wireframe tối giản) */}
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Giỏ hàng */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSheetOpen(false)
+                      openCart()
+                    }}
+                    className="flex h-10 items-center justify-center gap-2 rounded-lg border border-border/80 bg-transparent px-3 text-xs font-medium text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800/60 active:scale-95"
+                  >
+                    <ShoppingBag className="size-3.5 text-primary" />
+                    <span>Giỏ hàng</span>
+                    {mounted && totalItems > 0 ? (
+                      <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                        {totalItems}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">(0)</span>
+                    )}
+                  </button>
+
+                  {/* Vòng quay may mắn */}
+                  <Link
+                    href="/lucky-wheel"
+                    onClick={() => setSheetOpen(false)}
+                    className="flex h-10 items-center justify-center gap-2 rounded-lg border border-border/80 bg-transparent px-3 text-xs font-medium text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800/60 active:scale-95"
+                  >
+                    <Dices className="size-3.5 text-primary" />
+                    <span>Vòng quay</span>
+                  </Link>
+                </div>
+
+                {/* Auth / Login (Tinh gọn, thanh mảnh) */}
+                {mounted && user ? (
+                  <div className="rounded-lg border border-primary/30 p-2.5 bg-transparent">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-[11px]">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-bold text-foreground">{user.name}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-2 mt-1.5 border-t border-primary/20 text-[11px]">
+                      <Link
+                        href="/profile"
+                        onClick={() => setSheetOpen(false)}
+                        className="flex items-center justify-center gap-1 rounded border border-primary/20 py-1 font-medium hover:bg-primary/10 text-foreground"
+                      >
+                        <User className="size-3 text-primary" /> Hồ sơ
+                      </Link>
+                      <Link
+                        href="/profile?tab=orders"
+                        onClick={() => setSheetOpen(false)}
+                        className="flex items-center justify-center gap-1 rounded border border-primary/20 py-1 font-medium hover:bg-primary/10 text-foreground"
+                      >
+                        <ShoppingBag className="size-3 text-primary" /> Đơn hàng
+                      </Link>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logout()
+                        setSheetOpen(false)
+                        router.push("/")
+                      }}
+                      className="flex w-full items-center justify-center gap-1 text-[10px] text-red-500 hover:text-red-600 pt-1.5"
+                    >
+                      <LogOut className="size-3" /> Đăng xuất
+                    </button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      setSheetOpen(false)
+                      setAuthOpen(true)
+                    }}
+                    variant="outline"
+                    className="w-full h-9 gap-1.5 text-[11px] font-semibold uppercase tracking-wider border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground bg-transparent rounded-lg transition-colors"
+                  >
+                    <LogIn className="size-3.5" /> Đăng nhập
+                  </Button>
+                )}
+              </div>
             </SheetContent>
           </Sheet>
         </div>
