@@ -163,7 +163,7 @@ export function SiteHeader() {
             <SheetTrigger
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
-                "relative flex md:hidden size-10 items-center justify-center rounded-full border border-black/10 dark:border-white/20 hover:bg-primary/10 hover:text-primary active:scale-95"
+                "relative flex md:hidden items-center justify-center p-2 hover:text-primary active:scale-95"
               )}
               aria-label="Mở menu"
             >
