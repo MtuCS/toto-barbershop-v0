@@ -2,11 +2,9 @@ import type { ReactNode } from "react"
 import { SiteHeader } from "@/components/website/site-header"
 import { SiteFooter } from "@/components/website/site-footer"
 import { CartDrawer } from "@/components/cart/cart-drawer"
-import { ScrollToTop } from "@/components/website/scroll-to-top"
 import { FloatingContactButtons } from "@/components/website/floating-contact-buttons"
 import { DataFetcher } from "@/components/website/data-fetcher"
 import { SiteAtmosphere } from "@/components/website/site-atmosphere"
-import { StickyMobileCta } from "@/components/website/sticky-mobile-cta"
 import { LocalBusinessSchema } from "@/components/website/local-business-schema"
 
 export default function WebsiteLayout({ children }: { children: ReactNode }) {
@@ -24,8 +22,6 @@ export default function WebsiteLayout({ children }: { children: ReactNode }) {
       </div>
       <CartDrawer />
       <FloatingContactButtons />
-      <ScrollToTop />
-      <StickyMobileCta />
       <DataFetcher />
     </div>
   )

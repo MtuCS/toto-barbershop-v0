@@ -18,7 +18,7 @@ export function VisualVideo() {
       <div className="relative w-full">
         {/* Clickable T_logo_1 watermark overlay to restart video from 0:00 */}
         <div className="absolute top-1 sm:top-1.5 md:top-2 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
-          <button
+          {/* <button
             type="button"
             onClick={handleRestart}
             aria-label="Phát lại video từ đầu"
@@ -33,7 +33,7 @@ export function VisualVideo() {
               className="object-contain brightness-0 invert drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]"
               priority
             />
-          </button>
+          </button> */}
         </div>
 
         <div className="relative w-full overflow-hidden lg:h-full lg:bg-black">

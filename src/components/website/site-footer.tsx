@@ -108,7 +108,7 @@ export function SiteFooter() {
                     </span>
                     <a
                       href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
-                      className="font-semibold text-[#79b8a7] text-base md:text-lg transition-colors hover:underline"
+                      className="font-semibold text-white text-base md:text-lg transition-colors hover:underline"
                     >
                       {phone}
                     </a>
@@ -125,15 +125,15 @@ export function SiteFooter() {
                     </span>
                     <div className="flex items-center gap-3">
                       <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
-                        <FacebookIcon className="size-4 text-[#79b8a7]" />
+                        <FacebookIcon className="size-4 text-white" />
                         FB
                       </a>
                       <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
-                        <InstagramIcon className="size-4 text-[#79b8a7]" />
+                        <InstagramIcon className="size-4 text-white" />
                         IG
                       </a>
                       <a href={tiktokUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
-                        <TikTokIcon className="size-4 text-[#79b8a7]" />
+                        <TikTokIcon className="size-4 text-white" />
                         TT
                       </a>
                     </div>
