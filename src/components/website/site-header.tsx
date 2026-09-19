@@ -16,10 +16,20 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { CustomerAuthModal } from "@/components/website/customer-auth-modal"
 
 function Logo() {
+  const pathname = usePathname()
+
+  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (pathname === "/") {
+      e.preventDefault()
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
+
   return (
     <Link
       href="/"
-      className="group inline-flex shrink-0 items-baseline py-2 text-foreground"
+      onClick={handleLogoClick}
+      className="group inline-flex shrink-0 items-baseline py-2 text-foreground cursor-pointer"
       aria-label={`${SITE_NAME}, trang chủ`}
     >
       <span className="font-akira text-[1.4rem] font-bold leading-none tracking-normal transition-transform duration-300 group-hover:-translate-y-px max-[374px]:text-[1.2rem]">
