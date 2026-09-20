@@ -172,7 +172,7 @@ export function Hero() {
               cursorCharacter="|"
               cursorBlinkDuration={0.65}
               cursorClassName="font-sans font-light text-[#2f7a68]"
-              className="font-akira text-type--nowrap !block min-h-[0.92em] pl-[0.2em] sm:pl-[0.35em] lg:pl-[0.65em] text-[clamp(1.75rem,8.2vw,3rem)] sm:text-[clamp(2.75rem,10.5vw,4.5rem)] lg:text-[11.5vw] xl:text-[5.5rem] text-[#f2f5f3]"
+              className="font-akira text-type--nowrap !block min-h-[0.92em] pl-[0.7em] sm:pl-[0.35em] lg:pl-[0.65em] text-[clamp(1.6rem,7.5vw,2.75rem)] sm:text-[clamp(2.75rem,10.5vw,4.5rem)] lg:text-[11.5vw] xl:text-[5.5rem] text-[#f2f5f3]"
             />
           </h1>
 
