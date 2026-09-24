@@ -35,7 +35,7 @@ const akira = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL('https://totobarbershop.vn'),
   title: {
-    default: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại TP.HCM',
+    default: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại HCM',
     template: '%s | TOTO Barbershop',
   },
   description:
@@ -52,17 +52,16 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: '/images/Artboard 1.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/icon.png', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
     ],
-    shortcut: '/images/Artboard 1.png',
+    shortcut: '/favicon.ico',
     apple: [
-      { url: '/images/Artboard 1.png', sizes: '180x180', type: 'image/png' },
+      { url: '/icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
   openGraph: {
-    title: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại TP.HCM',
+    title: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại HCM',
     description:
       'Không chỉ là cắt tóc, TOTO gửi gắm sự tỉ mỉ, tử tế và gu sống vào từng đường kéo. Đến TOTO để chỉn chu, thư giãn và tìm lại phong độ vốn có của bạn.',
     url: 'https://totobarbershop.vn',
@@ -80,7 +79,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại TP.HCM',
+    title: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại HCM',
     description:
       'Không chỉ là cắt tóc, TOTO gửi gắm sự tỉ mỉ, tử tế và gu sống vào từng đường kéo. Đến TOTO để chỉn chu, thư giãn và tìm lại phong độ vốn có của bạn.',
     images: ['/images/Artboard 1.png'],
