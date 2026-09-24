@@ -145,6 +145,7 @@
   }
 
   .root > :global(.home-values-scene) :global(.home-section-title),
+  .root > :global([data-home-scene="our-shop"]) :global(.home-section-title),
   .root > :global(.home-testimonials-scene) :global(.home-section-title) {
     margin-top: 0.5rem;
   }
