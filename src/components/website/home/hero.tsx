@@ -53,6 +53,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import TextType from "@/components/ui/text-type";
+import Image from "next/image";
 
 export function Hero() {
   const sceneRef = useRef<HTMLElement>(null);
@@ -112,7 +113,7 @@ export function Hero() {
           </div>
 
           {/* Portrait */}
-          <div className="home-hero-media relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
+          {/* <div className="home-hero-media relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
             <video
               src="/images/0806.mp4"
               autoPlay
@@ -124,11 +125,26 @@ export function Hero() {
               aria-label="Visual ToTo Barbershop"
               className="absolute inset-0 h-full w-full object-cover"
             />
+          </div> */}
+
+
+          <div className="home-hero-media relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:aspect-[16/9] lg:aspect-[16/8]">
+            <Image
+              src="/images/Visual.jpg"
+              alt="Visual ToTo Barbershop"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 1200px"
+              className="object-cover"
+            />
           </div>
+
+
+
         </div>
 
         {/* Giant headline */}
-        <div className="home-hero-headline relative mt-6 pb-8 md:mt-8 md:pb-10 lg:mt-10 lg:pb-14">
+        <div className="home-hero-headline relative mt-4 pb-1 sm:mt-6 sm:pb-4 md:mt-8 md:pb-10 lg:mt-10 lg:pb-14">
           <h1
             key={replayKey}
             data-home-hero-replay-key={replayKey}
@@ -143,7 +159,7 @@ export function Hero() {
               initialDelay={250}
               loop={false}
               showCursor={false}
-              className="!block min-h-[0.92em] text-[clamp(3.5rem,18vw,4.75rem)] sm:text-[clamp(4.75rem,16vw,6.5rem)] lg:text-[13vw] xl:text-[5.5rem]"
+              className="font-akira !block min-h-[0.92em] tracking-[0.06em] sm:tracking-normal text-[clamp(2rem,9.5vw,4.5rem)] sm:text-[clamp(3.75rem,14vw,6rem)] lg:text-[11vw] xl:text-[5.25rem]"
             />
             <TextType
               aria-hidden="true"
@@ -156,7 +172,7 @@ export function Hero() {
               cursorCharacter="|"
               cursorBlinkDuration={0.65}
               cursorClassName="font-sans font-light text-[#2f7a68]"
-              className="text-type--nowrap !block min-h-[0.92em] pl-[0.22em] text-[clamp(2.2rem,11.5vw,3.2rem)] text-[#f2f5f3] sm:pl-[0.55em] sm:text-[clamp(3.25rem,11.5vw,5rem)] lg:pl-[0.88em] lg:text-[13vw] xl:text-[5.5rem]"
+              className="font-akira text-type--nowrap !block min-h-[0.92em] pl-[0.7em] sm:pl-[0.35em] lg:pl-[0.65em] text-[clamp(1.6rem,8.2vw,2.75rem)] sm:text-[clamp(2.75rem,10.5vw,4.5rem)] lg:text-[11.5vw] xl:text-[5.5rem] text-[#f2f5f3]"
             />
           </h1>
 

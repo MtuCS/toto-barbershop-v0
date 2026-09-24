@@ -18,19 +18,10 @@ export interface NavLink {
 }
 
 export const MAIN_NAV: NavLink[] = [
-  {
-    label: 'Dịch vụ',
-    href: '/services',
-    children: [
-      { label: 'Cắt tóc', href: '/services', description: 'Fade, undercut, classic' },
-      { label: 'Cạo râu & tạo kiểu', href: '/services', description: 'Hot towel, shaping' },
-      { label: 'Combo chăm sóc', href: '/services', description: 'Gói dịch vụ trọn gói' },
-    ],
-  },
-  { label: 'Shop', href: '/shop' },
-  { label: 'ToTo Merchandise', href: '/merchandise', highlight: true },
-  { label: 'Lookbook', href: '/lookbook' },
+  { label: 'Trang chủ', href: '/' },
+  { label: 'Dịch vụ', href: '/services' },
   { label: 'Đào tạo', href: '/training' },
+  { label: 'TOTO Merch & Co.', href: '/merchandise' },
   // { label: 'Về Toto', href: '/about' },
   { label: 'Liên hệ', href: '/contact', showInHeader: false },
 ]

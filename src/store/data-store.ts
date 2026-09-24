@@ -87,7 +87,7 @@ interface DataState {
   unblockPhone: (phone: string) => Promise<boolean>
   fetchBlockedPhones: () => Promise<any[]>
   
-  upsertProduct: (product: Partial<Product>) => Promise<void>
+  upsertProduct: (product: Partial<Product>) => Promise<boolean>
   deleteProduct: (id: string | number) => Promise<void>
 
   // Categories
@@ -164,8 +164,7 @@ export const useDataStore = create<DataState>()(
       ...seed,
 
       fetchProducts: async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) return;
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
         const controller = new AbortController();
         const timeout = window.setTimeout(() => controller.abort(), 1500);
         try {
@@ -182,7 +181,7 @@ export const useDataStore = create<DataState>()(
       },
       fetchCategories: async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/categories`);
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/categories`);
           if (res.ok) {
             const data = await res.json();
             set({ categories: data });
@@ -541,9 +540,8 @@ export const useDataStore = create<DataState>()(
         try {
           const token = typeof window !== 'undefined' ? useAuthStore.getState().session?.token : null;
           const isUpdate = !!product.id;
-          const url = isUpdate 
-            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/products/${product.id}`
-            : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/products`;
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
+          const url = isUpdate ? `${apiUrl}/products/${product.id}` : `${apiUrl}/products`;
           const method = isUpdate ? 'PUT' : 'POST';
           
           const res = await fetch(url, {
@@ -558,13 +556,16 @@ export const useDataStore = create<DataState>()(
           if (res.ok) {
             get().fetchProducts();
             toast.success(isUpdate ? "Đã cập nhật sản phẩm & số lượng biến thể thành công!" : "Đã tạo sản phẩm mới thành công!");
+            return true;
           } else {
             const err = await res.json().catch(() => ({}));
             toast.error(err.error || 'Lỗi khi lưu sản phẩm');
+            return false;
           }
         } catch (error) {
           console.error("Failed to save product:", error);
           toast.error('Lỗi kết nối máy chủ khi lưu sản phẩm');
+          return false;
         }
       },
       
@@ -745,7 +746,7 @@ export const useDataStore = create<DataState>()(
       
       upsertLookbook: async (item) => {
         const token = useAuthStore.getState().session?.token;
-        const isUpdate = !!item.id && !String(item.id).startsWith('lb-');
+        const isUpdate = Boolean(item.id);
         const url = isUpdate ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks/${item.id}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks`;
         const res = await fetch(url, { method: isUpdate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(item) });
         if (res.ok) {

@@ -3,6 +3,7 @@ import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
+import { getCategoryLabel, getParentCategory, PRODUCT_CATEGORY_PARENTS } from "@/lib/product-taxonomy"
 import { Button } from "@/components/ui/button"
 import { useState, useMemo, useEffect } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import type { Product, ProductVariant } from "@/types"
+import type { Product, ProductVariant, StoryBlock, StoryBlockType } from "@/types"
 
 // ============================================================================
 // Config: Section labels
@@ -99,7 +100,7 @@ const PRODUCT_TYPES: { value: string; label: string; dimensions: VariantDimensio
     value: "grooming",
     label: "Sản phẩm chăm sóc tóc (Pomade, Clay, ...)",
     dimensions: [
-      { key: "volume", label: "Dung tích / Trọng lượng", options: ["50g", "100g", "150g", "250ml", "500ml"] },
+      { key: "volume", label: "Quy cách bán", options: ["50g", "100g", "150g", "250ml", "500ml"] },
     ],
   },
   {
@@ -190,12 +191,22 @@ function getOptionsKey(opts: Record<string, any>) {
   return Object.entries(clean).sort((a, b) => a[0].localeCompare(b[0])).map(x => `${x[0]}=${x[1]}`).join('|')
 }
 
+function skuToken(value: string, fallback = "ITEM") {
+  const token = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toUpperCase()
+  return token || fallback
+}
+
+function createSkuPrefix(title: string) {
+  return `TOTO-${skuToken(title).slice(0, 24)}`
+}
+
 function generateVariants(
   selectedOptions: Record<string, string[]>,
   dimensions: VariantDimension[],
   variantPrices: Record<string, number>,
   variantStocks: Record<string, number>,
   basePrice: number,
+  skuPrefix: string,
   initialVariants: ProductVariant[] = []
 ): ProductVariant[] {
   const activeDimensions = dimensions.filter(d => (selectedOptions[d.key]?.length ?? 0) > 0)
@@ -220,7 +231,7 @@ function generateVariants(
       options: optionMap,
       price: variantPrices[variantName] ?? existing?.price ?? basePrice,
       stock: variantStocks[variantName] ?? existing?.stock ?? 0,
-      sku: existing?.sku || `SKU-${combo.join("-").toUpperCase().replace(/\s/g, "")}`,
+      sku: existing?.sku || `${skuPrefix}-${combo.map(value => skuToken(value)).join("-")}`,
     }
   })
 }
@@ -546,13 +557,9 @@ function ProductForm({ initial, onSave, onCancel }: {
   const [description, setDescription] = useState(initial.description ?? "")
   const [basePrice, setBasePrice] = useState(initial.basePrice ?? 0)
   const [compareAtPrice, setCompareAtPrice] = useState((initial as any).compareAtPrice ?? 0)
-  const [status, setStatus] = useState<"active"|"draft"|"archived">(initial.status ?? "active")
+  const [status, setStatus] = useState<"active"|"draft"|"archived">(initial.status ?? "draft")
   const [featured, setFeatured] = useState(initial.featured ?? false)
   const [categoryId, setCategoryId] = useState(initial.category ?? "")
-  const defaultVar = initial.variants?.[0]
-  const [sku, setSku] = useState((initial as any).sku ?? defaultVar?.sku ?? "")
-  const [weight, setWeight] = useState((initial as any).weight ?? (defaultVar as any)?.weight ?? 0)
-  const [stock, setStock] = useState((initial as any).stock ?? defaultVar?.stock ?? 0)
 
   // Images (multiple)
   const [images, setImages] = useState<string[]>(initial.images ?? [])
@@ -575,7 +582,7 @@ function ProductForm({ initial, onSave, onCancel }: {
         color: v.color,
       }))
     }
-    return []
+    return [{ id: `variant-${Math.random().toString(36).slice(2, 9)}`, name: "Mặc định", price: initial.basePrice ?? 0, stock: 0, sku: "", options: {} }]
   })
 
   const handleUpdateVariant = (index: number, field: keyof ProductVariant, value: any) => {
@@ -598,7 +605,7 @@ function ProductForm({ initial, onSave, onCancel }: {
         name: `Biến thể mới ${prev.length + 1}`,
         price: basePrice,
         stock: 10,
-        sku: `SKU-${Date.now().toString().slice(-4)}`,
+        sku: `${createSkuPrefix(title)}-${prev.length + 1}`,
         options: {},
       }
     ])
@@ -653,16 +660,18 @@ function ProductForm({ initial, onSave, onCancel }: {
 
   const typeConfig = PRODUCT_TYPES.find(t => t.value === productType)
   const hasVariants = (typeConfig?.dimensions?.length ?? 0) > 0
+  const skuPrefix = createSkuPrefix(title)
 
   const generatedVariants = useMemo(() => {
     if (!typeConfig) return []
-    return generateVariants(selectedOptions, typeConfig.dimensions, variantPrices, variantStocks, basePrice, initial.variants as ProductVariant[])
-  }, [selectedOptions, variantPrices, variantStocks, basePrice, typeConfig, initial.variants])
+    return generateVariants(selectedOptions, typeConfig.dimensions, variantPrices, variantStocks, basePrice, skuPrefix, initial.variants as ProductVariant[])
+  }, [selectedOptions, variantPrices, variantStocks, basePrice, skuPrefix, typeConfig, initial.variants])
 
   const handleApplyGenerated = () => {
     if (generatedVariants.length === 0) return
     setCurrentVariants(prev => {
-      const merged = [...prev]
+      const isNewDefault = prev.length === 1 && prev[0].name === "Mặc định" && Object.keys(prev[0].options ?? {}).length === 0
+      const merged = isNewDefault ? [] : [...prev]
       generatedVariants.forEach(gv => {
         const existingIdx = merged.findIndex(mv => mv.name === gv.name)
         if (existingIdx >= 0) {
@@ -683,36 +692,25 @@ function ProductForm({ initial, onSave, onCancel }: {
       })
       return merged
     })
-    toast.success(`Đã đồng bộ ${generatedVariants.length} biến thể vào bảng tồn kho!`)
+    toast.success(`Đã áp dụng ${generatedVariants.length} biến thể.`)
   }
 
   const addImageFromFile = async (file: File) => {
     setUploadingImage(true)
     try {
       const token = typeof window !== "undefined" ? useAuthStore.getState().session?.token : null
-      if (token) {
-        const formData = new FormData()
-        formData.append("image", file)
-        const res = await fetch("/api/upload/image", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setImages(prev => [...prev, data.url])
-          setUploadingImage(false)
-          return
-        }
-      }
-    } catch { /* fall through to base64 */ }
-    // Fallback: base64
-    const reader = new FileReader()
-    reader.onload = ev => {
-      setImages(prev => [...prev, ev.target?.result as string])
+      if (!token) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.")
+      const formData = new FormData()
+      formData.append("image", file)
+      const res = await fetch("/api/upload/image", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) throw new Error(data.error || "Không thể tải ảnh lên")
+      setImages(prev => [...prev, data.url])
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể tải ảnh lên")
+    } finally {
       setUploadingImage(false)
     }
-    reader.readAsDataURL(file)
   }
 
   const addImageFromUrl = () => {
@@ -750,6 +748,9 @@ function ProductForm({ initial, onSave, onCancel }: {
   const handleSave = () => {
     if (!title.trim()) { toast.error("Vui lòng nhập tên sản phẩm."); return }
     if (!categoryId) { toast.error("Vui lòng chọn danh mục sản phẩm."); return }
+    if (!Number.isFinite(basePrice) || basePrice <= 0) { toast.error("Giá bán phải lớn hơn 0."); return }
+    if (compareAtPrice > 0 && compareAtPrice <= basePrice) { toast.error("Giá gốc phải lớn hơn giá bán."); return }
+    if (status === "active" && images.length === 0) { toast.error("Sản phẩm đang bán cần có ít nhất một hình ảnh."); return }
 
     const finalVariants: ProductVariant[] = currentVariants.length > 0
       ? currentVariants.map(v => ({
@@ -757,9 +758,13 @@ function ProductForm({ initial, onSave, onCancel }: {
           name: v.name?.trim() || "Biến thể",
           price: typeof v.price === "number" ? v.price : basePrice,
           stock: Math.max(0, Number(v.stock) || 0),
-          sku: v.sku?.trim() || `SKU-${(v.name || "VAR").toUpperCase().replace(/\s/g, "")}`,
+          sku: v.sku?.trim() || `${skuPrefix}-${skuToken(v.name || "DEFAULT")}`,
         }))
-      : []
+      : [{ id: `variant-${Math.random().toString(36).slice(2, 9)}`, name: "Mặc định", price: basePrice, stock: 0, sku: `${skuPrefix}-DEFAULT`, options: {} }]
+
+    if (finalVariants.some(v => !Number.isInteger(v.price) || v.price <= 0 || !Number.isInteger(v.stock) || v.stock < 0)) { toast.error("Kiểm tra lại giá và tồn kho của biến thể."); return }
+    const usedSkus = new Set<string>()
+    if (finalVariants.some(v => { const value = v.sku.trim().toUpperCase(); if (usedSkus.has(value)) return true; usedSkus.add(value); return false })) { toast.error("SKU của các biến thể không được trùng nhau."); return }
 
     onSave({
       ...(initial as Product),
@@ -768,20 +773,17 @@ function ProductForm({ initial, onSave, onCancel }: {
       slug: initial.slug || title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").toLowerCase(),
       description,
       basePrice,
-      compareAtPrice,
       images,
       status,
       featured,
       category: categoryId as any,
-      collection,
+      collection: collection.trim() || null,
       variants: finalVariants,
       tags: initial.tags ?? [],
       rating: initial.rating ?? 0,
       reviewCount: initial.reviewCount ?? 0,
       createdAt: initial.createdAt ?? new Date().toISOString(),
-      sku,
-      weight: weight > 0 ? weight : undefined,
-      stock: finalVariants.length > 0 ? finalVariants.reduce((sum, v) => sum + v.stock, 0) : stock,
+      compareAtPrice: compareAtPrice > 0 ? compareAtPrice : undefined,
     } as any)
   }
 
@@ -837,19 +839,6 @@ function ProductForm({ initial, onSave, onCancel }: {
               <span className="ml-1 text-neutral-400 font-normal text-xs">(bỏ trống nếu không sale)</span>
             </label>
             <Input type="number" value={compareAtPrice || ""} placeholder="VD: 480000" onChange={e => setCompareAtPrice(Number(e.target.value))} min={0} />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">Mã SKU</label>
-            <Input value={sku} onChange={e => setSku(e.target.value)} placeholder="VD: TOTO-TEE-BLK" />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">
-              Cân nặng (gram)
-              <span className="ml-1 text-neutral-400 font-normal text-xs">— tính phí ship</span>
-            </label>
-            <Input type="number" value={weight || ""} placeholder="VD: 250" onChange={e => setWeight(Number(e.target.value))} min={0} />
           </div>
 
           <div className="sm:col-span-2 flex items-center gap-2">
@@ -920,18 +909,18 @@ function ProductForm({ initial, onSave, onCancel }: {
           <Input value={urlInput} onChange={e => setUrlInput(e.target.value)} placeholder="Hoặc dán link ảnh URL..." onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addImageFromUrl())} />
           <Button type="button" variant="outline" onClick={addImageFromUrl} className="shrink-0">Thêm URL</Button>
         </div>
-        {images.length > 0 && <p className="text-xs text-neutral-400">💡 Hover ảnh → nhấn ⭐ để đặt làm ảnh chính</p>}
+        {images.length > 0 && <p className="text-xs text-neutral-400">Di chuột lên ảnh để đặt ảnh chính hoặc xóa.</p>}
       </section>
 
       {/* ── 3. Loại sản phẩm & Biến thể ── */}
       {/* ── 3. Loại sản phẩm & Quản lý Biến thể ── */}
       <section className="space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b pb-2">Phân loại &amp; Biến thể</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b pb-2">Kho hàng &amp; Biến thể</h3>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-neutral-600">Bộ sưu tập (Phân loại hiển thị) *</label>
-            <Input value={collection} onChange={e => setCollection(e.target.value)} placeholder="VD: jacket, pomade, tee..." />
+            <label className="text-xs font-semibold text-neutral-600">Bộ sưu tập <span className="font-normal text-neutral-400">(tùy chọn)</span></label>
+            <Input value={collection} onChange={e => setCollection(e.target.value)} placeholder="VD: Core Collection, Summer 2026..." />
           </div>
 
           <div className="space-y-1.5">
@@ -953,13 +942,13 @@ function ProductForm({ initial, onSave, onCancel }: {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-neutral-50 px-4 py-3 border-b gap-2">
               <div>
                 <h4 className="text-sm font-bold text-neutral-800 flex items-center gap-2">
-                  <span>📦 Biến thể &amp; Tồn kho hiện có</span>
+                  <span>Biến thể bán &amp; tồn kho</span>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
                     {currentVariants.length} loại
                   </span>
                 </h4>
                 <p className="text-xs text-neutral-500 mt-0.5">
-                  Cập nhật trực tiếp số lượng tồn kho, giá bán và mã SKU cho từng biến thể riêng biệt.
+                  Giá dùng giá mặc định ở trên; chỉ sửa khi biến thể này có giá riêng. SKU được tự sinh và có thể sửa.
                 </p>
               </div>
               <Button
@@ -980,8 +969,8 @@ function ProductForm({ initial, onSave, onCancel }: {
                     <th className="px-3 py-2.5">Tên biến thể</th>
                     <th className="px-3 py-2.5 w-32 whitespace-nowrap">Trạng thái kho</th>
                     <th className="px-3 py-2.5 w-28">Tồn kho (SP)</th>
-                    <th className="px-3 py-2.5 w-32">Giá bán (VNĐ)</th>
-                    <th className="px-3 py-2.5 w-32">Mã SKU</th>
+                    <th className="px-3 py-2.5 w-32">Giá riêng (VNĐ)</th>
+                    <th className="px-3 py-2.5 w-32">SKU tự sinh</th>
                     <th className="px-3 py-2.5 w-12 text-center">Xóa</th>
                   </tr>
                 </thead>
@@ -990,6 +979,7 @@ function ProductForm({ initial, onSave, onCancel }: {
                     const stockNum = Number(v.stock) || 0
                     const isOutOfStock = stockNum === 0
                     const isLowStock = stockNum > 0 && stockNum < 5
+                    const automaticSku = v.sku || `${skuPrefix}-${skuToken(v.name || "DEFAULT")}`
 
                     return (
                       <tr key={v.id || idx} className={isOutOfStock ? "bg-red-50/40" : isLowStock ? "bg-amber-50/30" : "hover:bg-neutral-50/50"}>
@@ -1005,15 +995,15 @@ function ProductForm({ initial, onSave, onCancel }: {
                         <td className="px-3 py-2 whitespace-nowrap">
                           {isOutOfStock ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100/90 px-2 py-0.5 rounded-full border border-red-200">
-                              🔴 Hết hàng (0)
+                              Hết hàng (0)
                             </span>
                           ) : isLowStock ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-200">
-                              🟡 Sắp hết ({stockNum})
+                              Sắp hết ({stockNum})
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-200">
-                              🟢 Còn hàng ({stockNum})
+                              Còn hàng ({stockNum})
                             </span>
                           )}
                         </td>
@@ -1050,9 +1040,9 @@ function ProductForm({ initial, onSave, onCancel }: {
                         <td className="px-3 py-2">
                           <input
                             type="text"
-                            value={v.sku || ""}
+                            value={automaticSku}
                             onChange={e => handleUpdateVariant(idx, "sku", e.target.value)}
-                            placeholder="Mã SKU"
+                            aria-label={`SKU của biến thể ${v.name}`}
                             className="w-full max-w-[120px] border rounded px-2 py-1 font-mono text-[11px] outline-none focus:border-primary uppercase bg-white"
                           />
                         </td>
@@ -1074,7 +1064,7 @@ function ProductForm({ initial, onSave, onCancel }: {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-neutral-50 border-t text-xs text-neutral-500 gap-2">
-              <span>💡 Tổng tồn kho cộng dồn: <strong className="text-neutral-800 font-bold">{currentVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)} SP</strong></span>
+              <span>Tổng tồn kho: <strong className="text-neutral-800 font-bold">{currentVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)} SP</strong></span>
               <Button
                 type="button"
                 variant="ghost"
@@ -1087,21 +1077,9 @@ function ProductForm({ initial, onSave, onCancel }: {
             </div>
           </div>
         ) : (
-          /* Tồn kho cho sản phẩm đơn (chưa có biến thể) */
-          <div className="space-y-1.5 p-4 border rounded-xl bg-blue-50/40 border-blue-100">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <label className="text-xs font-bold text-neutral-700">Số lượng tồn kho (Sản phẩm không có biến thể)</label>
-                <p className="text-xs text-neutral-500 mt-0.5">Sản phẩm này chưa khai báo biến thể riêng lẻ. Bạn có thể nhập tổng tồn kho bán hàng trực tiếp tại đây.</p>
-              </div>
-              <Input
-                type="number"
-                value={stock}
-                onChange={e => setStock(Math.max(0, Number(e.target.value) || 0))}
-                min={0}
-                className="w-32 font-bold text-sm bg-white"
-              />
-            </div>
+          <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/40 p-4">
+            <p className="text-xs text-neutral-600">Mỗi sản phẩm cần ít nhất một biến thể để quản lý tồn kho và SKU.</p>
+            <Button type="button" size="sm" onClick={handleAddManualVariant}>+ Thêm biến thể</Button>
           </div>
         )}
 
@@ -1114,7 +1092,7 @@ function ProductForm({ initial, onSave, onCancel }: {
               className="flex w-full items-center justify-between bg-neutral-50 px-4 py-3 text-sm font-semibold hover:bg-neutral-100 transition-colors border-b"
             >
               <div className="flex items-center gap-2 text-left">
-                <span>⚙️ Sinh biến thể tự động theo thuộc tính</span>
+                <span>Sinh biến thể theo thuộc tính</span>
                 <span className="text-xs px-2 py-0.5 rounded bg-neutral-200 text-neutral-600 font-normal">
                   {typeConfig.label}
                 </span>
@@ -1125,17 +1103,7 @@ function ProductForm({ initial, onSave, onCancel }: {
             {variantOpen && (
               <div className="p-4 space-y-5">
                 <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center justify-between flex-wrap gap-2">
-                  <span>💡 Chọn các thuộc tính dưới đây để tổ hợp hàng loạt biến thể mới.</span>
-                  {generatedVariants.length > 0 && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleApplyGenerated}
-                      className="text-xs h-7 bg-primary text-white hover:bg-primary/90"
-                    >
-                      📥 Áp dụng {generatedVariants.length} biến thể vào bảng trên
-                    </Button>
-                  )}
+                  <span>Chọn thuộc tính để tạo các tổ hợp biến thể.</span>
                 </div>
 
                 {typeConfig.dimensions.map(dim => (
@@ -1191,7 +1159,7 @@ function ProductForm({ initial, onSave, onCancel }: {
                         onClick={handleApplyGenerated}
                         className="text-xs h-7 bg-emerald-600 text-white hover:bg-emerald-700"
                       >
-                        Đồng bộ vào bảng tồn kho ➔
+                        Áp dụng {generatedVariants.length} biến thể
                       </Button>
                     </div>
 
@@ -1483,7 +1451,232 @@ function ChangeAdminPasswordCard() {
 // ============================================================================
 const EXCLUDED_KEYS = ["id", "createdAt", "updatedAt", "slug", "images", "variants", "tags", "relatedProductIds", "timeline", "items", "modules", "roadmap", "benefits", "audience", "productCount", "totalOrders", "totalSpent", "orders", "addresses", "resetTokens"]
 // Những field dùng UI dynamic list thay vì textarea JSON
-const JSON_LIST_KEYS = ["process", "blocks", "gallery"]
+const JSON_LIST_KEYS = ["process", "gallery"]
+const HIDDEN_STORY_KEYS = ["gallery"]
+
+const STORY_BLOCK_TYPES: { value: StoryBlockType; label: string; hint: string }[] = [
+  { value: "text", label: "Văn bản", hint: "Một đoạn nội dung có tiêu đề tùy chọn." },
+  { value: "image", label: "Ảnh đơn", hint: "Một ảnh toàn chiều rộng của câu chuyện." },
+  { value: "quote", label: "Trích dẫn", hint: "Một câu nói hoặc quan điểm nổi bật." },
+  { value: "gallery", label: "Bộ ảnh", hint: "Nhiều ảnh trình bày theo layout editorial." },
+]
+
+function normalizeStoryBlocks(value: unknown): StoryBlock[] {
+  let raw = value
+  if (typeof raw === "string") {
+    try { raw = JSON.parse(raw) } catch { raw = [] }
+  }
+  if (!Array.isArray(raw)) return []
+
+  return raw.map((block, index) => {
+    if (typeof block === "string") {
+      return { id: `block-${index + 1}`, type: "text", body: block } as StoryBlock
+    }
+    const candidate = (block && typeof block === "object" ? block : {}) as Partial<StoryBlock>
+    const type = STORY_BLOCK_TYPES.some((item) => item.value === candidate.type)
+      ? candidate.type as StoryBlockType
+      : "text"
+    return {
+      id: candidate.id ?? `block-${index + 1}`,
+      type,
+      heading: typeof candidate.heading === "string" ? candidate.heading : "",
+      body: typeof candidate.body === "string" ? candidate.body : "",
+      image: typeof candidate.image === "string" ? candidate.image : "",
+      images: Array.isArray(candidate.images) ? candidate.images.filter((image): image is string => typeof image === "string") : [],
+    }
+  })
+}
+
+function StoryBlocksEditor({
+  value,
+  onChange,
+  onPickImage,
+}: {
+  value: unknown
+  onChange: (blocks: StoryBlock[]) => void
+  onPickImage: (blockIndex: number, imageIndex?: number) => void
+}) {
+  const blocks = normalizeStoryBlocks(value)
+
+  const updateBlock = (index: number, patch: Partial<StoryBlock>) => {
+    onChange(blocks.map((block, blockIndex) => blockIndex === index ? { ...block, ...patch } : block))
+  }
+
+  const addBlock = () => {
+    onChange([...blocks, { id: `block-${blocks.length + 1}`, type: "text", heading: "", body: "" }])
+  }
+
+  const removeBlock = (index: number) => {
+    onChange(blocks.filter((_, blockIndex) => blockIndex !== index))
+  }
+
+  const updateGalleryImage = (blockIndex: number, imageIndex: number, image: string) => {
+    const images = [...(blocks[blockIndex].images ?? [])]
+    images[imageIndex] = image
+    updateBlock(blockIndex, { images })
+  }
+
+  const changeBlockType = (index: number, type: StoryBlockType) => {
+    const block = blocks[index]
+    updateBlock(index, {
+      type,
+      ...(type === "gallery" && !(block.images ?? []).length ? { images: [""] } : {}),
+    })
+  }
+
+  const addGalleryImage = (blockIndex: number) => {
+    updateBlock(blockIndex, { images: [...(blocks[blockIndex].images ?? []), ""] })
+  }
+
+  const uploadGalleryImage = async (blockIndex: number, imageIndex: number, file?: File) => {
+    if (!file) return
+    try {
+      const token = useAuthStore.getState().session?.token
+      const formData = new FormData()
+      formData.append("image", file)
+      const response = await fetch("/api/upload/image", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      if (!response.ok) {
+        toast.error("Tải ảnh thất bại")
+        return
+      }
+      const data = await response.json()
+      updateGalleryImage(blockIndex, imageIndex, data.url)
+      toast.success("Tải ảnh lên thành công")
+    } catch {
+      toast.error("Lỗi tải ảnh")
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border border-neutral-200 bg-neutral-50/70 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-neutral-900">Các khối nội dung</p>
+          <p className="mt-1 text-xs leading-5 text-neutral-500">Mỗi khối là một phần hiển thị trên trang story. Chọn loại khối rồi nhập nội dung tương ứng.</p>
+        </div>
+        <span className="shrink-0 rounded-md bg-white px-2 py-1 text-[11px] font-semibold text-neutral-500 ring-1 ring-neutral-200">{blocks.length} khối</span>
+      </div>
+
+      {blocks.length === 0 ? (
+        <div className="rounded-md border border-dashed border-neutral-300 bg-white px-4 py-5 text-center">
+          <p className="text-sm font-medium text-neutral-700">Story chưa có khối nội dung</p>
+          <p className="mt-1 text-xs text-neutral-500">Bắt đầu bằng một khối văn bản, ảnh hoặc trích dẫn.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {blocks.map((block, index) => {
+            const typeMeta = STORY_BLOCK_TYPES.find((item) => item.value === block.type) ?? STORY_BLOCK_TYPES[0]
+            return (
+              <div key={String(block.id)} className="rounded-md border border-neutral-200 bg-white p-3 shadow-sm">
+                <div className="flex items-center justify-between gap-3 border-b border-neutral-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="grid size-6 place-items-center rounded bg-neutral-900 text-[11px] font-bold text-white">{index + 1}</span>
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-900">{typeMeta.label}</p>
+                      <p className="text-[11px] text-neutral-400">{typeMeta.hint}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeBlock(index)}
+                    className="rounded px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
+                  >
+                    Xóa khối
+                  </button>
+                </div>
+
+                <div className="mt-3 grid gap-3">
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold text-neutral-600">Loại khối</span>
+                    <select
+                      value={block.type}
+                      onChange={(event) => changeBlockType(index, event.target.value as StoryBlockType)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {STORY_BLOCK_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                    </select>
+                  </label>
+
+                  {block.type === "text" && (
+                    <>
+                      <label className="space-y-1.5">
+                        <span className="text-xs font-semibold text-neutral-600">Tiêu đề khối <span className="font-normal text-neutral-400">(tùy chọn)</span></span>
+                        <Input value={block.heading ?? ""} onChange={(event) => updateBlock(index, { heading: event.target.value })} placeholder="Ví dụ: Từ xưởng đến phố" />
+                      </label>
+                      <label className="space-y-1.5">
+                        <span className="text-xs font-semibold text-neutral-600">Nội dung</span>
+                        <textarea value={block.body ?? ""} onChange={(event) => updateBlock(index, { body: event.target.value })} rows={4} placeholder="Viết nội dung của chương..." className="flex min-h-[100px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                      </label>
+                    </>
+                  )}
+
+                  {block.type === "quote" && (
+                    <label className="space-y-1.5">
+                      <span className="text-xs font-semibold text-neutral-600">Trích dẫn</span>
+                      <textarea value={block.body ?? ""} onChange={(event) => updateBlock(index, { body: event.target.value })} rows={3} placeholder="Nhập câu trích dẫn nổi bật..." className="flex min-h-[84px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                    </label>
+                  )}
+
+                  {block.type === "image" && (
+                    <>
+                      <label className="space-y-1.5">
+                        <span className="text-xs font-semibold text-neutral-600">Chú thích ảnh <span className="font-normal text-neutral-400">(tùy chọn)</span></span>
+                        <Input value={block.heading ?? ""} onChange={(event) => updateBlock(index, { heading: event.target.value })} placeholder="Mô tả ngắn cho ảnh" />
+                      </label>
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-neutral-600">Ảnh</span>
+                        <div className="flex gap-2">
+                          <Input value={block.image ?? ""} onChange={(event) => updateBlock(index, { image: event.target.value })} placeholder="Dán URL ảnh hoặc chọn từ Media" />
+                          <Button type="button" variant="outline" onClick={() => onPickImage(index)} className="shrink-0 gap-1.5 text-xs"><Images className="size-3.5" /> Chọn ảnh</Button>
+                        </div>
+                        {block.image && <MediaThumbnail src={block.image} alt={block.heading || "Ảnh trong story"} className="h-28 rounded-md object-contain" />}
+                      </div>
+                    </>
+                  )}
+
+                  {block.type === "gallery" && (
+                    <>
+                      <label className="space-y-1.5">
+                        <span className="text-xs font-semibold text-neutral-600">Tiêu đề bộ ảnh <span className="font-normal text-neutral-400">(tùy chọn)</span></span>
+                        <Input value={block.heading ?? ""} onChange={(event) => updateBlock(index, { heading: event.target.value })} placeholder="Ví dụ: Chất liệu và chi tiết" />
+                      </label>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs font-semibold text-neutral-600">Ảnh trong bộ</span>
+                          <span className="text-[11px] text-neutral-400">Ảnh đầu là ảnh chính, các ảnh sau là ảnh phụ.</span>
+                        </div>
+                        {(block.images ?? []).map((image, imageIndex) => (
+                          <div key={`${String(block.id)}-${imageIndex}`} className="grid gap-2 rounded-md border border-neutral-200 bg-neutral-50 p-2 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] sm:items-center">
+                            <span className="grid size-7 place-items-center rounded bg-neutral-900 text-[11px] font-bold text-white">{imageIndex + 1}</span>
+                            <Input value={image} onChange={(event) => updateGalleryImage(index, imageIndex, event.target.value)} placeholder={`Dán URL ảnh ${imageIndex + 1}`} />
+                            <Button type="button" variant="outline" onClick={() => onPickImage(index, imageIndex)} className="shrink-0 gap-1.5 text-xs" aria-label={`Chọn ảnh ${imageIndex + 1} từ Media`}><Images className="size-3.5" /> Media</Button>
+                            <label className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100">
+                              <input type="file" accept="image/*" className="hidden" onChange={(event) => uploadGalleryImage(index, imageIndex, event.target.files?.[0])} />
+                              <UploadCloud className="size-3.5" /> Tải lên
+                            </label>
+                            <button type="button" onClick={() => updateBlock(index, { images: (block.images ?? []).filter((_, itemIndex) => itemIndex !== imageIndex) })} className="justify-self-end px-2 text-lg leading-none text-red-400 hover:text-red-600" aria-label={`Xóa ảnh ${imageIndex + 1}`}>×</button>
+                          </div>
+                        ))}
+                        <Button type="button" variant="outline" onClick={() => addGalleryImage(index)} className="gap-1.5 border-dashed text-sm"><Plus className="size-4" /> Thêm ảnh</Button>
+                        {!(block.images ?? []).length && <p className="text-xs italic text-neutral-400">Thêm ảnh đầu tiên để bắt đầu bộ ảnh.</p>}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <Button type="button" variant="outline" onClick={addBlock} className="w-full gap-1.5 border-dashed"><Plus className="size-4" /> Thêm khối nội dung</Button>
+    </div>
+  )
+}
 
 function generateDefaultForm(section: string) {
   switch (section) {
@@ -1491,7 +1684,7 @@ function generateDefaultForm(section: string) {
     case "services": return { name: "", category: "Tóc & tạo kiểu", price: 100000, duration: 45, description: "", process: ["Tư vấn kiểu tóc", "Cắt tỉa tạo form", "Gội sấy & vuốt sáp tạo kiểu"], image: "", featured: false }
     case "training": return { title: "", duration: "2 tháng", price: 15000000, description: "", excerpt: "", startDate: "Khai giảng hàng tháng", status: "active" }
     case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", blocks: [], gallery: [], status: "published", order: 1 }
-    case "lookbook": return { title: "", category: "Classic", image: "" }
+    case "lookbook": return { title: "", category: "Classic", image: "", order: 0 }
     case "customers": return { name: "", email: "", password: "", phone: "", role: "CUSTOMER" }
     case "staff": return { name: "", email: "", password: "", phone: "", role: "ADMIN" }
     case "promo-codes": return { code: "", discountType: "PERCENT", discountValue: 0, minOrderValue: 0, maxDiscount: 0, usageLimit: 100, isActive: true, expiresAt: null }
@@ -1735,9 +1928,10 @@ export function CrudPage({ section }: { section: string }) {
   
   // Product Filters
   const [filterCategory, setFilterCategory] = useState("ALL")
+  const [filterSubcategory, setFilterSubcategory] = useState("ALL")
+  const [categoryParentTab, setCategoryParentTab] = useState("ALL")
   const [filterStatus, setFilterStatus] = useState("ALL")
   const [productStockFilter, setProductStockFilter] = useState("ALL")
-  const [sortOrder, setSortOrder] = useState("NEWEST")
 
   // Customer Filters
   const [customerTypeFilter, setCustomerTypeFilter] = useState("ALL")
@@ -1762,6 +1956,10 @@ export function CrudPage({ section }: { section: string }) {
 
   // Media & Media Picker States
   const { media: cMedia, products: cProducts, lookbook: cLookbook, stories: cStories } = d
+  const productSubcategories = useMemo(
+    () => filterCategory === "ALL" ? [] : d.categories.filter(category => category.parent === filterCategory),
+    [d.categories, filterCategory],
+  )
   const allMediaList = useMemo(
     () => getAllMediaItems({ media: cMedia, products: cProducts, lookbook: cLookbook, stories: cStories }),
     [cMedia, cProducts, cLookbook, cStories]
@@ -1899,7 +2097,8 @@ export function CrudPage({ section }: { section: string }) {
     let match = text.includes(search.toLowerCase())
     
     if (section === "products") {
-      if (filterCategory !== "ALL" && r.category !== filterCategory) match = false
+      if (filterCategory !== "ALL" && getParentCategory(r.category, d.categories) !== filterCategory) match = false
+      if (filterSubcategory !== "ALL" && r.category !== filterSubcategory) match = false
       if (filterStatus !== "ALL" && r.status !== filterStatus) match = false
       if (productStockFilter !== "ALL") {
         const variants = (r.variants && r.variants.length > 0) ? r.variants : [];
@@ -1915,6 +2114,8 @@ export function CrudPage({ section }: { section: string }) {
         if (productStockFilter === "OUT_OF_STOCK" && totalStock > 0) match = false;
       }
     }
+
+    if (section === "categories" && categoryParentTab !== "ALL" && r.parent !== categoryParentTab) match = false
 
     if (section === "customers") {
       const role = (r.role || '').toUpperCase();
@@ -1958,9 +2159,7 @@ export function CrudPage({ section }: { section: string }) {
   // Sắp xếp
   if (section === "products") {
     filtered = [...filtered].sort((a, b) => {
-      if (sortOrder === "PRICE_ASC") return (Number(a.basePrice) || 0) - (Number(b.basePrice) || 0)
-      if (sortOrder === "PRICE_DESC") return (Number(b.basePrice) || 0) - (Number(a.basePrice) || 0)
-      return 0
+      return new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()
     })
   }
 
@@ -1990,7 +2189,14 @@ export function CrudPage({ section }: { section: string }) {
 
   const handleEdit = (item: Row) => {
     setEditingItem(item)
-    setFormData({ ...item })
+    const nextFormData = { ...item }
+    if (section === "merchandise-stories") {
+      nextFormData.blocks = normalizeStoryBlocks(item.blocks)
+      if (typeof nextFormData.gallery === "string") {
+        try { nextFormData.gallery = JSON.parse(nextFormData.gallery) } catch { nextFormData.gallery = [] }
+      }
+    }
+    setFormData(nextFormData)
     setModalOpen(true)
   }
 
@@ -2041,8 +2247,8 @@ export function CrudPage({ section }: { section: string }) {
       if (!payload.slug && payload.title) {
         payload.slug = payload.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").replace(/(^-|-$)+/g, "");
       }
-      try { if (typeof payload.blocks === 'string') payload.blocks = JSON.parse(payload.blocks); } catch {}
-      try { if (typeof payload.gallery === 'string') payload.gallery = JSON.parse(payload.gallery); } catch {}
+      payload.blocks = normalizeStoryBlocks(payload.blocks)
+      try { if (typeof payload.gallery === 'string') payload.gallery = JSON.parse(payload.gallery); } catch { payload.gallery = [] }
       await d.upsertStory(payload as any)
     }
     if (section === "lookbook") {
@@ -2057,6 +2263,33 @@ export function CrudPage({ section }: { section: string }) {
   }
 
   const handleChange = (key: string, value: any) => {
+    const blockFieldMatch = key.match(/^blocks\.(\d+)\.(heading|body|image)$/)
+    if (blockFieldMatch) {
+      const [, indexValue, field] = blockFieldMatch
+      setFormData(prev => {
+        const blocks = normalizeStoryBlocks(prev.blocks)
+        const index = Number(indexValue)
+        if (!blocks[index]) return prev
+        blocks[index] = { ...blocks[index], [field]: value }
+        return { ...prev, blocks }
+      })
+      return
+    }
+    const galleryFieldMatch = key.match(/^blocks\.(\d+)\.images\.(\d+)$/)
+    if (galleryFieldMatch) {
+      const [, blockIndexValue, imageIndexValue] = galleryFieldMatch
+      setFormData(prev => {
+        const blocks = normalizeStoryBlocks(prev.blocks)
+        const blockIndex = Number(blockIndexValue)
+        const imageIndex = Number(imageIndexValue)
+        if (!blocks[blockIndex]) return prev
+        const images = [...(blocks[blockIndex].images ?? [])]
+        images[imageIndex] = value
+        blocks[blockIndex] = { ...blocks[blockIndex], images }
+        return { ...prev, blocks }
+      })
+      return
+    }
     setFormData(prev => ({ ...prev, [key]: value }))
   }
 
@@ -2124,6 +2357,16 @@ export function CrudPage({ section }: { section: string }) {
         )}
       </header>
 
+      {section === "categories" && (
+        <div className="mt-6 flex gap-2 border-b">
+          {[{ value: "ALL", label: "Tất cả" }, ...PRODUCT_CATEGORY_PARENTS].map(tab => (
+            <button key={tab.value} type="button" onClick={() => { setCategoryParentTab(tab.value); setPage(1) }} className={`border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${categoryParentTab === tab.value ? "border-primary text-primary" : "border-transparent text-neutral-500 hover:text-neutral-900"}`}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="mt-8 border bg-white max-w-full overflow-hidden">
         {/* Bộ lọc thanh công cụ (Toolbar Filters) */}
         <div className="flex flex-wrap items-center gap-3 border-b p-4 bg-white/50">
@@ -2171,11 +2414,14 @@ export function CrudPage({ section }: { section: string }) {
           {/* Bộ lọc riêng cho Sản phẩm */}
           {section === "products" && (
             <>
-              <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
-                <option value="ALL">Tất cả danh mục</option>
-                <option value="grooming">Chăm sóc tóc</option>
-                <option value="merchandise">Thời trang</option>
+              <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setFilterSubcategory("ALL"); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả nhóm ngành</option>
+                {PRODUCT_CATEGORY_PARENTS.map(category => <option key={category.value} value={category.value}>{category.label}</option>)}
               </select>
+              {filterCategory !== "ALL" && <select value={filterSubcategory} onChange={e => { setFilterSubcategory(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
+                <option value="ALL">Tất cả danh mục con</option>
+                {productSubcategories.map(category => <option key={category.id} value={category.slug}>{category.name}</option>)}
+              </select>}
               <select value={productStockFilter} onChange={e => { setProductStockFilter(e.target.value); setPage(1); }} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
                 <option value="ALL">Tất cả tồn kho</option>
                 <option value="IN_STOCK">Còn hàng (Đủ loại)</option>
@@ -2189,13 +2435,8 @@ export function CrudPage({ section }: { section: string }) {
                 <option value="draft">Bản nháp</option>
                 <option value="archived">Lưu trữ</option>
               </select>
-              <select value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="h-9 border border-neutral-200 rounded-md bg-neutral-50 px-3 text-sm focus:outline-none focus:border-primary cursor-pointer text-neutral-700">
-                <option value="NEWEST">Mới nhất</option>
-                <option value="PRICE_ASC">Giá tăng dần</option>
-                <option value="PRICE_DESC">Giá giảm dần</option>
-              </select>
-              {(filterCategory !== "ALL" || filterStatus !== "ALL" || productStockFilter !== "ALL" || sortOrder !== "NEWEST" || search) && (
-                <button onClick={() => { setSearch(""); setFilterCategory("ALL"); setFilterStatus("ALL"); setProductStockFilter("ALL"); setSortOrder("NEWEST"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
+              {(filterCategory !== "ALL" || filterSubcategory !== "ALL" || filterStatus !== "ALL" || productStockFilter !== "ALL" || search) && (
+                <button onClick={() => { setSearch(""); setFilterCategory("ALL"); setFilterSubcategory("ALL"); setFilterStatus("ALL"); setProductStockFilter("ALL"); }} className="text-xs text-primary hover:underline px-2">Xóa lọc</button>
               )}
             </>
           )}
@@ -2692,10 +2933,10 @@ export function CrudPage({ section }: { section: string }) {
                         <div className="flex items-center gap-3">
                           {r.image && (
                             <div className="relative size-10 shrink-0 bg-neutral-100 overflow-hidden rounded-md border">
-                              <MediaThumbnail src={r.image} alt={r.title} />
+                              <MediaThumbnail src={r.image} alt={r.name} />
                             </div>
                           )}
-                          <div className="font-bold text-neutral-900">{r.title || "Tên dịch vụ"}</div>
+                          <div className="font-bold text-neutral-900">{r.name || "Tên dịch vụ"}</div>
                         </div>
                       </td>
                       <td>
@@ -2849,8 +3090,8 @@ export function CrudPage({ section }: { section: string }) {
                         </div>
                       </td>
                       <td>
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded ${r.category === 'grooming' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-blue-50 text-blue-800 border border-blue-200'}`}>
-                          {r.category === 'grooming' ? 'Chăm sóc tóc' : r.category === 'merchandise' ? 'Thời trang' : r.category}
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded ${getParentCategory(r.category, d.categories) === 'grooming' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-blue-50 text-blue-800 border border-blue-200'}`}>
+                          {getCategoryLabel(r.category, d.categories)}
                         </span>
                       </td>
                       <td className="font-bold text-emerald-600">
@@ -3041,7 +3282,7 @@ export function CrudPage({ section }: { section: string }) {
 
       {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className={section === "products" ? "sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : "sm:max-w-[500px] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6"}>
+        <DialogContent className={section === "products" ? "sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : section === "merchandise-stories" ? "sm:max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : "sm:max-w-[500px] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6"}>
           <DialogHeader>
             <DialogTitle>{editingItem ? "Chỉnh sửa" : "Thêm mới"} {labels[section]?.toLowerCase()}</DialogTitle>
           </DialogHeader>
@@ -3049,7 +3290,7 @@ export function CrudPage({ section }: { section: string }) {
           {section === "products" ? (
             <ProductForm
               initial={editingItem ?? {}}
-              onSave={async (product) => { await d.upsertProduct(product); setModalOpen(false) }}
+              onSave={async (product) => { if (await d.upsertProduct(product)) setModalOpen(false) }}
               onCancel={() => setModalOpen(false)}
             />
           ) : section === "orders" ? (
@@ -3083,8 +3324,16 @@ export function CrudPage({ section }: { section: string }) {
             </div>
           ) : (
             <div className="grid gap-4 py-4">
+              {section === "merchandise-stories" && (
+                <div className="border-l-2 border-primary/60 bg-primary/5 px-4 py-3 text-sm text-neutral-600">
+                  <p className="font-semibold text-neutral-800">Cấu trúc câu chuyện</p>
+                  <p className="mt-1 leading-6">
+                    Dùng <strong>Ảnh bìa</strong> cho hình mở đầu. Dùng <strong>Nội dung các khối</strong> để thêm văn bản, ảnh đơn, trích dẫn hoặc bộ ảnh hiển thị trên website.
+                  </p>
+                </div>
+              )}
               {Object.keys(formData).map((key) => {
-                if (EXCLUDED_KEYS.includes(key)) return null
+                if (EXCLUDED_KEYS.includes(key) || (section === "merchandise-stories" && HIDDEN_STORY_KEYS.includes(key))) return null
                 return (
                   <div key={key} className="space-y-1.5">
                     <label className="text-xs font-semibold text-neutral-600">{fieldLabels[key] ?? key}</label>
@@ -3210,6 +3459,14 @@ export function CrudPage({ section }: { section: string }) {
                         <option value="Grooming">Grooming</option>
                         <option value="Coloring">Tẩy nhuộm</option>
                       </select>
+                    ) : key === "order" && section === "lookbook" ? (
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={formData[key] ?? 0}
+                        onChange={e => handleChange(key, Math.max(0, Number.parseInt(e.target.value, 10) || 0))}
+                      />
                     ) : key === "category" && section === "faqs" ? (
                       <select 
                         value={formData[key] || "shop"} 
@@ -3239,6 +3496,15 @@ export function CrudPage({ section }: { section: string }) {
                         <option value="grooming">Grooming (Chăm sóc tóc & râu)</option>
                         <option value="merchandise">Merchandise (Thời trang)</option>
                       </select>
+                    ) : key === "blocks" && section === "merchandise-stories" ? (
+                      <StoryBlocksEditor
+                        value={formData.blocks}
+                        onChange={(blocks) => handleChange("blocks", blocks)}
+                        onPickImage={(blockIndex, imageIndex) => {
+                          setGenericMediaField(imageIndex === undefined ? `blocks.${blockIndex}.image` : `blocks.${blockIndex}.images.${imageIndex}`)
+                          setOpenGenericMediaPicker(true)
+                        }}
+                      />
                     ) : JSON_LIST_KEYS.includes(key) ? (
                       // UI Dynamic List thay vì textarea JSON thô
                       <div className="space-y-2">

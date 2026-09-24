@@ -148,7 +148,7 @@ export function SectionTitle({
       </p>
       <h2
         className={cn(
-          "font-display text-4xl font-bold uppercase leading-none md:text-6xl",
+          "font-display text-4xl font-bold uppercase leading-tight md:text-6xl",
           dark && "text-[#f2f5f3]",
         )}
       >

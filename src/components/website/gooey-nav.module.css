@@ -20,9 +20,11 @@
   transition: color 180ms ease, transform 180ms ease;
 }
 
-.item a {
+.item > a {
   display: block;
-  padding: 0.52rem 0.72rem;
+  min-height: 2rem;
+  padding: 0.45rem 0.72rem;
+  border: 1px solid transparent;
   border-radius: inherit;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -30,56 +32,32 @@
   line-height: 1;
   text-transform: uppercase;
   outline: none;
+  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease;
 }
 
-.item:not(.active):hover {
+.item:not(.active):hover,
+.item:focus-within {
   color: var(--foreground);
   transform: translateY(-1px);
 }
 
-.item a:focus-visible {
+.item:not(.active):hover > a,
+.item:not(.active):focus-within > a {
+  border-color: color-mix(in srgb, var(--primary) 62%, transparent);
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+
+.item > a:focus-visible {
   outline: 2px solid var(--ring);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
-.active { color: var(--primary); }
-
-.highlight {
-  color: var(--primary-foreground);
-  background: var(--primary);
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--primary) 26%, transparent);
+.active {
+  color: var(--primary);
 }
 
-.highlight:hover {
-  color: var(--primary-foreground);
-  background: color-mix(in srgb, var(--primary) 88%, black);
-}
-
-.effect {
-  position: absolute;
-  z-index: 0;
-  display: block;
-  pointer-events: none;
-  border-radius: 9999px 9999px 0 0;
-  background: var(--primary);
-  transition: left 460ms cubic-bezier(0.16, 1, 0.3, 1), top 460ms cubic-bezier(0.16, 1, 0.3, 1), width 460ms cubic-bezier(0.16, 1, 0.3, 1), height 460ms cubic-bezier(0.16, 1, 0.3, 1), opacity 180ms ease;
-}
-
-.effectHidden {
-  opacity: 0;
-}
-
-.particle {
-  position: absolute;
-  top: calc(50% - 5px);
-  left: calc(50% - 5px);
-  width: 10px;
-  height: 10px;
-  border-radius: 9999px;
-  background: var(--primary);
-  opacity: 0;
-  transform: translate3d(0, 0, 0) scale(0);
-  animation: scatter 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--delay) both;
+.active > a {
+  color: var(--primary);
 }
 
 @media (min-width: 48rem) and (max-width: 79.9375rem) {
@@ -87,19 +65,16 @@
     gap: 0;
   }
 
-  .item a {
+  .item > a {
     padding: 0.42rem 0.4rem;
     font-size: 0.625rem;
     letter-spacing: 0.045em;
   }
 }
 
-@keyframes scatter {
-  18% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(var(--x), var(--y), 0) scale(var(--scale)); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .item, .effect { transition: none; }
-  .particle { display: none; }
+  .item,
+  .item > a {
+    transition: none;
+  }
 }

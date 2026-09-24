@@ -70,7 +70,7 @@ export function ContactForm() {
     <form noValidate onSubmit={handleSubmit} className="grid gap-4 bg-[#f5f9f7] p-6 text-[#101715] md:col-span-7 md:p-10">
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">Lời nhắn</p>
-        <h2 className="mt-3 font-display text-4xl font-bold uppercase leading-none md:text-5xl">Chúng tôi lắng nghe</h2>
+        <h2 className="mt-3 font-display text-4xl font-bold uppercase leading-tight md:text-5xl">Chúng tôi lắng nghe</h2>
       </div>
       <label className="mt-4 grid gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
         Họ và tên*

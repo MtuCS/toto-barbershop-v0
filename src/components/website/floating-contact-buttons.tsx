@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { Phone, X, MessageCircle } from "lucide-react"
+import { Phone } from "lucide-react"
 
 function ZaloIcon({ className = "size-5" }: { className?: string }) {
   return (
@@ -46,6 +45,8 @@ interface SocialContact {
   href: string
   icon: React.ReactNode
   color: string
+  rippleBorder: string
+  rippleBg: string
 }
 
 const SOCIAL_CONTACTS: SocialContact[] = [
@@ -53,9 +54,11 @@ const SOCIAL_CONTACTS: SocialContact[] = [
     id: "phone",
     label: "Hotline",
     sublabel: "0981 378 179",
-    href: "tel:0981378179",
+    href: "0981378179",
     icon: <Phone className="size-5 text-white animate-phone-ring" />,
     color: "hover:bg-[#1f6b5c] hover:border-[#79b8a7]",
+    rippleBorder: "border-[#79b8a7]/60",
+    rippleBg: "bg-[#79b8a7]/20",
   },
   {
     id: "zalo",
@@ -64,136 +67,75 @@ const SOCIAL_CONTACTS: SocialContact[] = [
     href: "https://zalo.me/0981378179",
     icon: <ZaloIcon className="size-5" />,
     color: "hover:bg-[#0068FF] hover:border-[#0068FF]/50",
+    rippleBorder: "border-[#0068FF]/60",
+    rippleBg: "bg-[#0068FF]/20",
   },
   {
     id: "messenger",
     label: "Messenger",
     sublabel: "Fanpage ToTo",
-    href: "https://m.me/totobarbershopHCM",
+    href: "https://www.facebook.com/totobarbershopHCM/#",
     icon: <MessengerIcon className="size-5 text-white" />,
     color: "hover:bg-[#0084FF] hover:border-[#0084FF]/50",
+    rippleBorder: "border-[#0084FF]/60",
+    rippleBg: "bg-[#0084FF]/20",
   },
 ]
 
 export function FloatingContactButtons() {
-  const [isOpen, setIsOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  // Click outside or press Escape to close
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    document.addEventListener("keydown", handleKeyDown)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-      document.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [])
-
   return (
-    <div
-      ref={containerRef}
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-      className="fixed bottom-20 right-4 z-50 flex flex-row-reverse items-center md:bottom-8 md:right-8"
-      aria-label="Cụm nút liên hệ ToTo Barbershop"
+    <aside
+      className="fixed bottom-6 right-4 z-40 flex flex-col items-center gap-3.5 md:bottom-8 md:right-6"
+      aria-label="Kênh liên hệ nhanh ToTo Barbershop"
     >
-      {/* Main Hub Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-expanded={isOpen}
-        aria-label={isOpen ? "Đóng menu liên hệ" : "Mở menu liên hệ ToTo"}
-        title={isOpen ? "Đóng liên hệ" : "Liên hệ ToTo Barbershop (Click để mở)"}
-        className="group relative flex size-12 items-center justify-center rounded-full border border-[#79b8a7]/40 bg-[#07110f]/95 text-white shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-[#79b8a7] hover:bg-primary active:scale-95 md:size-14 cursor-pointer"
-      >
-        {/* Radar concentric pulse rings (only active when closed) */}
-        {!isOpen && (
-          <>
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full border-2 border-[#79b8a7] animate-radar-pulse"
-            />
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full border border-[#79b8a7]/70 animate-radar-pulse-delayed"
-            />
-          </>
-        )}
-
-        {/* Live status dot */}
-        <span
-          aria-hidden="true"
-          className="absolute -right-0.5 -top-0.5 flex size-3.5 items-center justify-center"
+      {SOCIAL_CONTACTS.map((item) => (
+        <a
+          key={item.id}
+          href={item.href}
+          target={item.href.startsWith("tel:") ? undefined : "_blank"}
+          rel={item.href.startsWith("tel:") ? undefined : "noopener noreferrer"}
+          aria-label={`${item.label} - ${item.sublabel}`}
+          className="group relative flex items-center justify-center transition-transform duration-200 active:scale-95"
         >
-          <span className="absolute size-3 rounded-full bg-[#79b8a7] animate-live-dot" />
-          <span className="relative size-2 rounded-full bg-[#a8e0d1]" />
-        </span>
+          {/* Ripple Wave 1 (Vòng gợn sóng thứ nhất) */}
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 rounded-full border ${item.rippleBorder} ${item.rippleBg} animate-radar-pulse`}
+          />
 
-        {/* Icon with smooth rotation transition */}
-        <span
-          className={`relative flex items-center justify-center transition-transform duration-300 ${isOpen ? "rotate-90 scale-100" : "rotate-0 scale-100"
-            }`}
-        >
-          {isOpen ? (
-            <X className="size-6 text-white" />
-          ) : (
-            <MessageCircle className="size-6 text-[#79b8a7] transition-colors group-hover:text-white" />
-          )}
-        </span>
-      </button>
+          {/* Ripple Wave 2 (Vòng gợn sóng thứ hai - lệch pha) */}
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 rounded-full border ${item.rippleBorder} ${item.rippleBg} animate-radar-pulse-delayed`}
+          />
 
-      {/* 3 Floating Action Buttons (Slides out horizontally to the left) */}
-      <div
-        className={`mr-3 flex items-center gap-3 transition-all duration-300 ease-out ${isOpen
-          ? "pointer-events-auto translate-x-0 opacity-100 scale-100"
-          : "pointer-events-none translate-x-6 opacity-0 scale-90"
-          }`}
-      >
-        {SOCIAL_CONTACTS.map((item, index) => (
-          <a
-            key={item.id}
-            href={item.href}
-            target={item.href.startsWith("tel:") ? undefined : "_blank"}
-            rel={item.href.startsWith("tel:") ? undefined : "noopener noreferrer"}
-            tabIndex={isOpen ? 0 : -1}
-            aria-label={`${item.label} - ${item.sublabel}`}
-            className={`group relative flex items-center transition-all duration-300 ease-out ${isOpen ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
-              }`}
-            style={{
-              transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
-            }}
+          {/* Tooltip on the left side of each button on hover */}
+          <span className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/15 bg-[#07110f]/95 px-2.5 py-1 text-center opacity-0 shadow-2xl backdrop-blur-md transition-all duration-200 group-hover:opacity-100 group-hover:-translate-x-0.5">
+            <span className="block font-sans text-[11px] font-bold text-white">
+              {item.label}
+            </span>
+            <span className="block font-mono text-[9px] text-[#79b8a7]">
+              {item.sublabel}
+            </span>
+          </span>
+
+          {/* Circular Button */}
+          <span
+            className={`relative flex size-11 items-center justify-center rounded-full border border-white/20 bg-[#07110f]/95 text-white shadow-xl backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(121,184,167,0.35)] md:size-12 ${item.color}`}
           >
-            {/* Tooltip on top of each button */}
-            <span className="pointer-events-none absolute bottom-full left-1/2 mb-2.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/15 bg-[#07110f]/95 px-2.5 py-1 text-center opacity-0 shadow-2xl backdrop-blur-md transition-all duration-200 group-hover:opacity-100 group-hover:-translate-y-1">
-              <span className="block font-sans text-[11px] font-bold text-white">
-                {item.label}
+            {item.id === "phone" && (
+              <span
+                aria-hidden="true"
+                className="absolute -right-0.5 -top-0.5 flex size-3 items-center justify-center"
+              >
+                <span className="absolute size-2.5 rounded-full bg-[#79b8a7] animate-ping opacity-75" />
+                <span className="relative size-2 rounded-full bg-[#79b8a7]" />
               </span>
-              <span className="block font-mono text-[9px] text-[#79b8a7]">
-                {item.sublabel}
-              </span>
-            </span>
-
-            {/* Circular Button */}
-            <span
-              className={`relative flex size-11 items-center justify-center rounded-full border border-white/20 bg-[#07110f]/95 text-white shadow-xl backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(121,184,167,0.35)] group-active:scale-95 md:size-12 ${item.color}`}
-            >
-              {item.icon}
-            </span>
-          </a>
-        ))}
-      </div>
-    </div>
+            )}
+            {item.icon}
+          </span>
+        </a>
+      ))}
+    </aside>
   )
 }

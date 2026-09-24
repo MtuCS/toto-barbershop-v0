@@ -155,7 +155,7 @@ export default async function TrainingPage() {
                     </p>
                     <p className="text-sm font-medium text-neutral-500">{course.duration || "Theo lộ trình"}</p>
                   </div>
-                  <h3 className="mt-6 flex items-start font-display text-3xl uppercase leading-[0.95] sm:text-4xl md:min-h-[5.5rem] md:text-5xl">
+                  <h3 className="mt-6 flex items-start font-display text-3xl uppercase leading-tight sm:text-4xl md:min-h-[5.5rem] md:text-5xl">
                     {course.title}
                   </h3>
                   <p className="mt-4 max-w-lg leading-relaxed text-neutral-600 md:min-h-[3.5rem]">
@@ -243,7 +243,7 @@ export default async function TrainingPage() {
 
           <div className="rounded-3xl border border-white/10 bg-[#07110f]/90 p-8 md:col-span-7 md:p-10 backdrop-blur-md">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#79b8a7]">Đăng ký tư vấn trực tuyến</p>
-            <h2 className="mt-3 font-display text-4xl uppercase leading-[0.9] text-[#f2f5f3] md:text-5xl">Gia nhập TOTO Academy</h2>
+            <h2 className="mt-3 font-display text-4xl uppercase leading-tight text-[#f2f5f3] md:text-5xl">Gia nhập TOTO Academy</h2>
             <p className="mt-3 text-sm leading-relaxed text-white/70 mb-6">
               Để lại thông tin để nhận giáo trình chi tiết, lịch khai giảng và chính sách hỗ trợ đồ nghề:
             </p>

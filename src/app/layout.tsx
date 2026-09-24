@@ -33,12 +33,13 @@ const akira = localFont({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://totobarbershop.vn'),
   title: {
-    default: 'Toto Barbershop — Barber. Culture. Craft.',
-    template: '%s | Toto Barbershop',
+    default: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại TP.HCM',
+    template: '%s | TOTO Barbershop',
   },
   description:
-    'Toto Barbershop — barber culture, grooming, training và merchandise. Cắt tóc chuẩn barber, sản phẩm chăm sóc và đồ streetwear mang tinh thần của tiệm.',
+    'Không chỉ là cắt tóc, TOTO gửi gắm sự tỉ mỉ, tử tế và gu sống vào từng đường kéo. Đến TOTO để chỉn chu, thư giãn và tìm lại phong độ vốn có của bạn.',
   keywords: [
     'barbershop',
     'barber',
@@ -47,16 +48,42 @@ export const metadata: Metadata = {
     'đào tạo barber',
     'merchandise',
     'streetwear',
+    'TOTO Barbershop TP.HCM',
   ],
   icons: {
     icon: [
+      { url: '/images/Artboard 1.png', sizes: '32x32', type: 'image/png' },
       { url: '/icon.png', sizes: '32x32', type: 'image/png' },
       { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
     ],
-    shortcut: '/favicon.ico',
+    shortcut: '/images/Artboard 1.png',
     apple: [
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/images/Artboard 1.png', sizes: '180x180', type: 'image/png' },
     ],
+  },
+  openGraph: {
+    title: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại TP.HCM',
+    description:
+      'Không chỉ là cắt tóc, TOTO gửi gắm sự tỉ mỉ, tử tế và gu sống vào từng đường kéo. Đến TOTO để chỉn chu, thư giãn và tìm lại phong độ vốn có của bạn.',
+    url: 'https://totobarbershop.vn',
+    siteName: 'TOTO Barbershop',
+    images: [
+      {
+        url: '/images/Artboard 1.png',
+        width: 800,
+        height: 800,
+        alt: 'TOTO Barbershop Logo',
+      },
+    ],
+    locale: 'vi_VN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TOTO Barbershop - Trải nghiệm Barber chưa từng có tại TP.HCM',
+    description:
+      'Không chỉ là cắt tóc, TOTO gửi gắm sự tỉ mỉ, tử tế và gu sống vào từng đường kéo. Đến TOTO để chỉn chu, thư giãn và tìm lại phong độ vốn có của bạn.',
+    images: ['/images/Artboard 1.png'],
   },
 }
 

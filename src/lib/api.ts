@@ -48,7 +48,8 @@ export async function getCourses(): Promise<TrainingCourse[]> {
 }
 
 export async function getStories(): Promise<MerchandiseStory[]> {
-  return safeFetch<MerchandiseStory[]>('/api/stories', [], { next: { revalidate: 60 } } as any);
+  // The public editorial surfaces must never expose draft stories.
+  return safeFetch<MerchandiseStory[]>('/api/stories?status=published', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getStoryBySlug(slug: string): Promise<MerchandiseStory | null> {
@@ -56,11 +57,8 @@ export async function getStoryBySlug(slug: string): Promise<MerchandiseStory | n
   return stories.find((s) => s.slug === slug) || null;
 }
 
-import { lookbookItems as defaultLookbookItems } from "@/data/lookbook";
-
 export async function getLookbooks(): Promise<LookbookItem[]> {
-  const items = await safeFetch<LookbookItem[]>('/api/lookbooks', defaultLookbookItems, { next: { revalidate: 60 } } as any);
-  return items && items.length > 0 ? items : defaultLookbookItems;
+  return safeFetch<LookbookItem[]>('/api/lookbooks', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getFaqs(): Promise<any[]> {

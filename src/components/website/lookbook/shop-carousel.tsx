@@ -40,7 +40,7 @@ export function ShopCarousel({ items }: { items: LookbookItem[] }) {
           }
         }
         .animate-marquee {
-          animation: marquee 25s linear infinite;
+          animation: marquee 75s linear infinite;
         }
       `}</style>
     </div>

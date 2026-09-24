@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/accordion";
 import { MarketingPageShell } from "@/components/website/marketing-page-shell";
 import { Breadcrumbs } from "@/components/website/breadcrumbs";
-import { getServices, getFaqs } from "@/lib/api";
+import { LookbookSection } from "@/components/website/lookbook/lookbook-section";
+import { getServices, getFaqs, getLookbooks } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -54,20 +55,12 @@ const processSteps = [
   },
 ] as const;
 
-const lookbook = [
-  ["Side part mềm", "/images/lookbook-1.png"],
-  ["Textured crop", "/images/lookbook-2.png"],
-  ["Skin fade", "/images/lookbook-3.png"],
-  ["Màu khói", "/images/lookbook-4.png"],
-  ["Classic volume", "/images/lookbook-6.png"],
-  ["Modern fringe", "/images/lookbook-7.png"],
-  ["Layer tự nhiên", "/images/lookbook-8.png"],
-  ["Clean cut", "/images/barber-3.png"],
-] as const;
-
 export default async function Page() {
-  const services = await getServices();
-  const allFaqs = await getFaqs();
+  const [services, allFaqs, lookbookItems] = await Promise.all([
+    getServices(),
+    getFaqs(),
+    getLookbooks(),
+  ]);
   const serviceFaqs = allFaqs.filter(f => f.category === 'service');
 
   return (
@@ -92,8 +85,8 @@ export default async function Page() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 md:col-span-7 md:pl-4 items-stretch">
-            {/* Ảnh lớn bên trái chiếm trọn chiều cao */}
-            <div className="relative md:col-span-7 aspect-[3/4] md:aspect-auto md:h-full min-h-[380px] md:min-h-[500px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
+            {/* Ảnh lớn bên trái: tỉ lệ 4/3 gọn gàng trên mobile, stretch đều toàn chiều cao trên desktop */}
+            <div className="relative md:col-span-7 aspect-[4/3] sm:aspect-[16/10] md:aspect-auto md:h-full md:min-h-[460px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
               <Image
                 src="/images/service-cut.jpg"
                 alt="Barber ToTo đang hoàn thiện kiểu tóc"
@@ -103,9 +96,9 @@ export default async function Page() {
                 className="object-cover"
               />
             </div>
-            {/* 2 ảnh bên phải xếp chồng cân đối */}
+            {/* 2 ảnh bên phải: 2 ô vuông đều đặn trên mobile, xếp chồng 2 nửa bằng nhau trên desktop */}
             <div className="grid grid-cols-2 md:grid-cols-1 md:grid-rows-2 gap-3 md:gap-4 md:col-span-5 md:h-full">
-              <div className="relative aspect-[4/3] md:aspect-auto md:h-full min-h-[180px] md:min-h-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
+              <div className="relative aspect-square md:aspect-auto md:h-full overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
                 <Image
                   src="/images/barber-2.png"
                   alt="Không gian phục vụ tại ToTo Barbershop"
@@ -115,7 +108,7 @@ export default async function Page() {
                   className="object-cover"
                 />
               </div>
-              <div className="relative aspect-[4/3] md:aspect-auto md:h-full min-h-[180px] md:min-h-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
+              <div className="relative aspect-square md:aspect-auto md:h-full overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
                 <Image
                   src="/images/service-shave.jpg"
                   alt="Dịch vụ cạo râu khăn nóng tại ToTo"
@@ -157,7 +150,7 @@ export default async function Page() {
                   </span>
                 </div>
 
-                <h3 className="mt-8 font-display text-3xl font-bold uppercase leading-none text-[#f2f5f3]">
+                <h3 className="mt-8 font-display text-3xl font-bold uppercase leading-tight text-[#f2f5f3]">
                   {title}
                 </h3>
 
@@ -182,7 +175,7 @@ export default async function Page() {
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#79b8a7]">
                 Bảng giá
               </p>
-              <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-none text-[#f2f5f3] md:text-7xl">
+              <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-tight text-[#f2f5f3] md:text-7xl">
                 Chọn dịch vụ của bạn
               </h2>
             </div>
@@ -205,7 +198,7 @@ export default async function Page() {
                     {service.duration} phút
                   </span>
                 </div>
-                <h3 className="mt-5 max-w-sm font-display text-4xl font-bold uppercase leading-[0.92] text-[#f2f5f3]">
+                <h3 className="mt-5 max-w-sm font-display text-4xl font-bold uppercase leading-tight text-[#f2f5f3]">
                   {service.name}
                 </h3>
                 <p className="mt-5 text-sm leading-6 text-white/60">
@@ -290,46 +283,13 @@ export default async function Page() {
         </div>
       </section> */}
 
-      <section className="bg-[#07110f] px-5 py-16 md:px-8 md:py-24">
-        <div className="mx-auto max-w-[1400px]">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <h2 className="font-display text-5xl font-bold uppercase leading-none text-[#f2f5f3] md:text-7xl">
-              Hot looks
-            </h2>
-            <p className="max-w-xs text-sm leading-6 text-white/60">
-              Không có một kiểu tóc đẹp cho tất cả mọi người. Hãy xem đây là
-              điểm khởi đầu cho cuộc trao đổi với barber.
-            </p>
-          </div>
-          <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-6">
-            {lookbook.map(([title, image]) => (
-              <figure key={image} className="group">
-                <div className="relative aspect-[4/5] overflow-hidden bg-[#0d211d]">
-                  <Image
-                    src={image}
-                    alt={`Kiểu tóc ${title}`}
-                    fill
-                    sizes="(max-width: 767px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-[1.035]"
-                  />
-                </div>
-                <figcaption className="mt-3 font-display text-lg font-bold uppercase leading-none text-[#f2f5f3]">
-                  {title}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
       <section className="border-t border-white/10 bg-[#0b1b18] px-5 py-16 md:px-8 md:py-24">
         <div className="mx-auto grid max-w-[1400px] gap-10 md:grid-cols-12">
           <div className="md:col-span-4">
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#79b8a7]">
               Câu hỏi thường gặp
             </p>
-            <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-[0.9] text-[#f2f5f3]">
+            <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-tight text-[#f2f5f3]">
               Trước khi ngồi ghế
             </h2>
             <Scissors
@@ -355,6 +315,8 @@ export default async function Page() {
           </Accordion>
         </div>
       </section>
+
+      <LookbookSection items={lookbookItems} />
     </MarketingPageShell>
   );
 }
