@@ -51,13 +51,6 @@ export function LocalBusinessSchema() {
       "https://www.tiktok.com/@totobarbershop85",
       "https://www.google.com/maps/place/Toto+babershop/@10.793289,106.644723,17z/data=!3m1!4b1!4m6!3m5!1s0x317529fab862286b:0x558f62689c90fdae!8m2!3d10.793289!4d106.644723",
     ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.1",
-      reviewCount: "73",
-      bestRating: "5",
-      worstRating: "1",
-    },
   }
 
   return (
