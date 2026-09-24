@@ -296,7 +296,7 @@ export function ServicesBento() {
         className="home-services-step relative z-10 px-5 pb-16 pt-14 sm:px-6 md:px-8 md:pb-20 md:pt-16 lg:px-10 lg:py-[clamp(2rem,4svh,3.5rem)] xl:px-14"
       >
         <div className="mx-auto flex w-full max-w-[1400px] flex-col lg:h-full lg:justify-between">
-          <header className="mx-auto w-full max-w-[72rem] text-center">
+          <header className="w-full max-w-[72rem] text-left">
             <p
               data-services-label
               className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]"
@@ -311,7 +311,7 @@ export function ServicesBento() {
 
             <h2
               id="home-services-title"
-              className="mt-7 font-sans text-[clamp(4rem,8.2vw,8.8rem)] font-bold leading-[0.9] tracking-[-0.055em] text-[#f2f5f3]"
+              className="mt-6 font-sans text-[clamp(2.75rem,5.5vw,4.75rem)] font-bold leading-[0.98] tracking-[-0.045em] text-[#f2f5f3]"
             >
               <span
                 data-services-title-mask
