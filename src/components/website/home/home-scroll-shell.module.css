@@ -6,7 +6,7 @@
   --home-header-height: 4rem;
   --home-scene-height: calc(100svh - var(--home-header-height));
   --home-section-eyebrow-size: 0.75rem;
-  --home-section-title-size: clamp(2.5rem, 3.5vw, 3.75rem);
+  --home-section-title-size: clamp(2.5rem, 5vw, 4.25rem);
   --home-section-description-size: clamp(0.9375rem, 1vw, 1rem);
   --home-card-title-size: clamp(1.35rem, 1.75vw, 1.75rem);
   --home-card-body-size: 0.875rem;
