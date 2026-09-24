@@ -299,14 +299,14 @@ export function ServicesBento() {
           <header className="mx-auto w-full max-w-[72rem] text-center">
             <p
               data-services-label
-              className="flex items-center  gap-3 text-[0.72rem] font-semibold tracking-[0.14em] text-[#79b8a7]"
+              className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]"
             >
               <span
                 data-services-rule
-                className="h-px w-12 origin-left bg-[#79b8a7]/70"
+                className="h-px w-10 origin-left bg-[#79b8a7]/70"
                 aria-hidden="true"
               />
-              Dịch vụ tại ToTo
+              DỊCH VỤ
             </p>
 
             <h2

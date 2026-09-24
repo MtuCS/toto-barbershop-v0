@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og"
 
 export const runtime = "edge"
 
-export const alt = "TOTO Barbershop - Trải nghiệm Barber chưa từng có tại TP.HCM"
+export const alt = "TOTO Barbershop - Trải nghiệm Barber chưa từng có tại HCM"
 export const size = {
   width: 1200,
   height: 630,

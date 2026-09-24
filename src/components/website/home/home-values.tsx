@@ -42,19 +42,20 @@ export function HomeValues() {
       />
 
       <div className="home-scene-inner relative mx-auto flex h-full max-w-[1400px] flex-col justify-center">
-        <div className="max-w-3xl">
-          <p className="home-section-eyebrow text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
-            Tâm nghề
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="home-section-eyebrow inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
+            <span
+              className="h-px w-10 origin-left bg-[#79b8a7]/70"
+              aria-hidden="true"
+            />
+            TÂM NGHỀ
           </p>
           <h2
             id="home-values-title"
-            className="home-section-title mt-3 text-3xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.15]"
+            className="home-section-title mt-4 font-sans text-[clamp(2.5rem,6.5vw,5.5rem)] font-bold uppercase leading-[0.95] tracking-[-0.04em] text-[#f2f5f3]"
           >
-            Tâm nghề tại ToTo
+            TÂM NGHỀ TẠI TOTO
           </h2>
-          <p className="home-section-description mt-4 max-w-2xl text-sm leading-relaxed text-white/75 md:text-base">
-            ToTo chẳng có gì để giữ chân bạn, ngoài sự chỉn chu, chân thành và sạch sẽ.
-          </p>
         </div>
 
         <div className="home-scene-card-grid mt-10 grid gap-6 md:mt-14 md:grid-cols-3">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Menu, ShoppingBag, User, LogIn, LogOut, Dices, ChevronRight } from "lucide-react"
@@ -46,14 +46,14 @@ function Logo() {
   )
 }
 
-const HEADER_NAV = MAIN_NAV.filter((link) => link.showInHeader !== false)
+const FULL_HEADER_NAV = MAIN_NAV.filter((link) => link.showInHeader !== false)
 
-const MOBILE_NAV_LIST = [
-  { label: "Service", href: "/services" },
+const FULL_MOBILE_NAV_LIST = [
+  { label: "Dịch vụ", href: "/services" },
   { label: "Shop", href: "/shop" },
   { label: "TOTO Merchandise", href: "/merchandise" },
-  { label: "Training", href: "/training" },
-  { label: "Contact", href: "/contact" },
+  { label: "Đào tạo", href: "/training" },
+  { label: "Liên hệ", href: "/contact" },
 ]
 
 export function SiteHeader() {
@@ -61,6 +61,28 @@ export function SiteHeader() {
   const router = useRouter()
   const mounted = useMounted()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [isPreviewMode, setIsPreviewMode] = useState(false)
+
+  // Kiểm tra cờ preview=all từ URL query an toàn trong client-side hoặc từ localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const params = new URLSearchParams(window.location.search)
+    const previewParam = params.get("preview")
+
+    if (previewParam === "all" || previewParam === "true") {
+      localStorage.setItem("toto_preview_mode", "all")
+      setIsPreviewMode(true)
+    } else if (previewParam === "off" || previewParam === "none") {
+      localStorage.removeItem("toto_preview_mode")
+      setIsPreviewMode(false)
+    } else if (localStorage.getItem("toto_preview_mode") === "all") {
+      setIsPreviewMode(true)
+    }
+  }, [pathname])
+
+  const headerNav = isPreviewMode ? FULL_HEADER_NAV : []
+  const mobileNavList = isPreviewMode ? FULL_MOBILE_NAV_LIST : []
 
   // Stores
   const { user, isAuthModalOpen: authOpen, setAuthModalOpen: setAuthOpen, logout } = useCustomerUserStore()
@@ -77,9 +99,11 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-5 md:gap-3 md:px-6 xl:gap-4">
         <Logo />
 
-        <div className="hidden shrink-0 md:block">
-          <GooeyNav items={HEADER_NAV} />
-        </div>
+        {headerNav.length > 0 && (
+          <div className="hidden shrink-0 md:block">
+            <GooeyNav items={headerNav} />
+          </div>
+        )}
 
         {/* Right Section: Desktop Icons (hidden on mobile) + Mobile Menu (hidden on desktop) */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -180,27 +204,29 @@ export function SiteHeader() {
               </SheetHeader>
 
               {/* 1. Navigation Links (Có khoảng đệm thanh lịch bên dưới ToTo Barbershop) */}
-              <nav className="flex flex-col space-y-1.5 pt-5 pb-2" aria-label="Điều hướng di động">
-                {MOBILE_NAV_LIST.map((link) => {
-                  const active = isActive(link.href)
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setSheetOpen(false)}
-                      className={cn(
-                        "flex items-center justify-between rounded-lg px-3 py-3 font-display text-base uppercase tracking-wide transition-colors",
-                        active
-                          ? "bg-primary/10 text-primary font-bold"
-                          : "text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-primary"
-                      )}
-                    >
-                      <span>{link.label}</span>
-                      <ChevronRight className={cn("size-4 text-muted-foreground", active && "text-primary")} />
-                    </Link>
-                  )
-                })}
-              </nav>
+              {mobileNavList.length > 0 && (
+                <nav className="flex flex-col space-y-1.5 pt-5 pb-2" aria-label="Điều hướng di động">
+                  {mobileNavList.map((link) => {
+                    const active = isActive(link.href)
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setSheetOpen(false)}
+                        className={cn(
+                          "flex items-center justify-between rounded-lg px-3 py-3 font-display text-base uppercase tracking-wide transition-colors",
+                          active
+                            ? "bg-primary/10 text-primary font-bold"
+                            : "text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-primary"
+                        )}
+                      >
+                        <span>{link.label}</span>
+                        <ChevronRight className={cn("size-4 text-muted-foreground", active && "text-primary")} />
+                      </Link>
+                    )
+                  })}
+                </nav>
+              )}
 
               {/* 2. Cụm Tiện ích & Đăng nhập (Được kéo lên gần danh sách hơn, tạo khối gắn kết) */}
               <div className="mt-6 space-y-3 pt-5 border-t border-border/60">
