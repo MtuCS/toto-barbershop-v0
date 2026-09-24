@@ -52,7 +52,7 @@ export function HomeValues() {
           </p>
           <h2
             id="home-values-title"
-            className="home-section-title mt-4 font-sans text-[clamp(2.5rem,6.5vw,5.5rem)] font-bold uppercase leading-[0.95] tracking-[-0.04em] text-[#f2f5f3]"
+            className="home-section-title mt-4 font-sans text-[clamp(2rem,4.5vw,3.75rem)] font-bold uppercase leading-[0.95] tracking-[-0.04em] text-[#f2f5f3]"
           >
             TÂM NGHỀ TẠI TOTO
           </h2>
