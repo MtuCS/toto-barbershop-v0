@@ -19,7 +19,8 @@ export default function HomePage() {
       {/* <QuickInfo /> */}
       <ServicesBento />
       <HomeValues />
-      <HomeTestimonials />
+      {/* Đã bỏ phần review Google theo yêu cầu */}
+      {/* <HomeTestimonials /> */}
       <HomeLookbook />
       {/* <FaqAccordion /> */}
 

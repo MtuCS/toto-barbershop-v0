@@ -46,14 +46,16 @@ function Logo() {
   )
 }
 
-const HEADER_NAV = MAIN_NAV.filter((link) => link.showInHeader !== false)
+const HEADER_NAV = MAIN_NAV.filter((link) => link.showInHeader !== false && link.href === "/")
 
 const MOBILE_NAV_LIST = [
-  { label: "Service", href: "/services" },
-  { label: "Shop", href: "/shop" },
-  { label: "TOTO Merchandise", href: "/merchandise" },
-  { label: "Training", href: "/training" },
-  { label: "Contact", href: "/contact" },
+  { label: "Trang chủ", href: "/" },
+  // Tạm ẩn các trang khác để ưu tiên trang chủ
+  // { label: "Service", href: "/services" },
+  // { label: "Shop", href: "/shop" },
+  // { label: "TOTO Merchandise", href: "/merchandise" },
+  // { label: "Training", href: "/training" },
+  // { label: "Contact", href: "/contact" },
 ]
 
 export function SiteHeader() {

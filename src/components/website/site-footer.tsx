@@ -66,7 +66,7 @@ export function SiteFooter() {
           <div className="flex flex-col justify-between">
             <div>
               <h2 className="home-section-title home-contact-title text-3xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-4xl lg:text-5xl leading-[1.15]">
-                Bạn muốn ghé ToTo thử một chuyến?
+                BẠN MUỐN GHÉ TOTO?
               </h2>
 
               <ul className="home-contact-list mt-8 space-y-6 text-sm md:text-base text-white/85">
@@ -120,21 +120,36 @@ export function SiteFooter() {
                     <Share2 className="size-5" />
                   </div>
                   <div>
-                    <span className="block font-semibold uppercase tracking-wider text-xs text-[#79b8a7] mb-1.5">
-                      Social của tiệm
+                    <span className="block font-semibold uppercase tracking-wider text-xs text-[#79b8a7] mb-2">
+                      SOCIAL
                     </span>
-                    <div className="flex items-center gap-3">
-                      <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
-                        <FacebookIcon className="size-4 text-white" />
-                        FB
+                    <div className="flex items-center gap-2.5">
+                      <a
+                        href={facebookUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Facebook ToTo Barbershop"
+                        className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/90 transition-all hover:border-[#79b8a7] hover:bg-white/10 hover:text-white"
+                      >
+                        <FacebookIcon className="size-4" />
                       </a>
-                      <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
-                        <InstagramIcon className="size-4 text-white" />
-                        IG
+                      <a
+                        href={instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Instagram ToTo Barbershop"
+                        className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/90 transition-all hover:border-[#79b8a7] hover:bg-white/10 hover:text-white"
+                      >
+                        <InstagramIcon className="size-4" />
                       </a>
-                      <a href={tiktokUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10">
-                        <TikTokIcon className="size-4 text-white" />
-                        TT
+                      <a
+                        href={tiktokUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="TikTok ToTo Barbershop"
+                        className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/90 transition-all hover:border-[#79b8a7] hover:bg-white/10 hover:text-white"
+                      >
+                        <TikTokIcon className="size-4" />
                       </a>
                     </div>
                   </div>
