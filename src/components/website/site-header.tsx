@@ -46,11 +46,14 @@ function Logo() {
   )
 }
 
-const HEADER_NAV = MAIN_NAV.filter((link) => link.showInHeader !== false && link.href === "/")
+// Tạm ẩn các nút điều hướng (kể cả "Trang chủ" vì Logo đã dẫn về trang chủ) để chờ hoàn thiện các trang con.
+// Khi các trang con hoàn thiện, chỉ cần mở lại filter hoặc danh sách bên dưới:
+const HEADER_NAV: typeof MAIN_NAV = []
+// const HEADER_NAV = MAIN_NAV.filter((link) => link.showInHeader !== false)
 
-const MOBILE_NAV_LIST = [
-  { label: "Trang chủ", href: "/" },
-  // Tạm ẩn các trang khác để ưu tiên trang chủ
+const MOBILE_NAV_LIST: { label: string; href: string }[] = [
+  // Tạm ẩn các trang để chờ hoàn thiện, sau đó mở lại:
+  // { label: "Trang chủ", href: "/" },
   // { label: "Service", href: "/services" },
   // { label: "Shop", href: "/shop" },
   // { label: "TOTO Merchandise", href: "/merchandise" },
@@ -79,9 +82,11 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-5 md:gap-3 md:px-6 xl:gap-4">
         <Logo />
 
-        <div className="hidden shrink-0 md:block">
-          <GooeyNav items={HEADER_NAV} />
-        </div>
+        {HEADER_NAV.length > 0 && (
+          <div className="hidden shrink-0 md:block">
+            <GooeyNav items={HEADER_NAV} />
+          </div>
+        )}
 
         {/* Right Section: Desktop Icons (hidden on mobile) + Mobile Menu (hidden on desktop) */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -182,27 +187,29 @@ export function SiteHeader() {
               </SheetHeader>
 
               {/* 1. Navigation Links (Có khoảng đệm thanh lịch bên dưới ToTo Barbershop) */}
-              <nav className="flex flex-col space-y-1.5 pt-5 pb-2" aria-label="Điều hướng di động">
-                {MOBILE_NAV_LIST.map((link) => {
-                  const active = isActive(link.href)
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setSheetOpen(false)}
-                      className={cn(
-                        "flex items-center justify-between rounded-lg px-3 py-3 font-display text-base uppercase tracking-wide transition-colors",
-                        active
-                          ? "bg-primary/10 text-primary font-bold"
-                          : "text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-primary"
-                      )}
-                    >
-                      <span>{link.label}</span>
-                      <ChevronRight className={cn("size-4 text-muted-foreground", active && "text-primary")} />
-                    </Link>
-                  )
-                })}
-              </nav>
+              {MOBILE_NAV_LIST.length > 0 && (
+                <nav className="flex flex-col space-y-1.5 pt-5 pb-2" aria-label="Điều hướng di động">
+                  {MOBILE_NAV_LIST.map((link) => {
+                    const active = isActive(link.href)
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setSheetOpen(false)}
+                        className={cn(
+                          "flex items-center justify-between rounded-lg px-3 py-3 font-display text-base uppercase tracking-wide transition-colors",
+                          active
+                            ? "bg-primary/10 text-primary font-bold"
+                            : "text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-primary"
+                        )}
+                      >
+                        <span>{link.label}</span>
+                        <ChevronRight className={cn("size-4 text-muted-foreground", active && "text-primary")} />
+                      </Link>
+                    )
+                  })}
+                </nav>
+              )}
 
               {/* 2. Cụm Tiện ích & Đăng nhập (Được kéo lên gần danh sách hơn, tạo khối gắn kết) */}
               <div className="mt-6 space-y-3 pt-5 border-t border-border/60">
