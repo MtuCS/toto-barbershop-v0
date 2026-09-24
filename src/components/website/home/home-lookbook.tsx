@@ -19,8 +19,8 @@ export async function HomeLookbook() {
                 />
                 Vibes
               </p>
-              <h2 id="home-our-shop-title" className="mt-4 font-sans text-[clamp(2.5rem,6.5vw,5.5rem)] font-bold uppercase leading-[0.95] tracking-[-0.04em] text-[#f2f5f3]">
-                Không gian tiệm
+              <h2 id="home-our-shop-title" className="mt-4 font-sans text-[clamp(2rem,4.5vw,3.75rem)] font-bold uppercase leading-[0.95] tracking-[-0.04em] text-[#f2f5f3]">
+                KHÔNG GIAN TIỆM
               </h2>
             </div>
           </div>
