@@ -355,17 +355,17 @@ export function ServicesBento() {
               data-services-quote
               className="mx-auto mt-6 flex max-w-xl items-center justify-center gap-3 text-center sm:gap-4 md:mt-7"
             >
-              <span
+              {/* <span
                 className="h-px w-8 origin-right bg-[#79b8a7]/40 sm:w-12"
                 aria-hidden="true"
-              />
+              /> */}
               <p className="font-agatho text-base italic tracking-wide text-[#b9e0d5] sm:text-lg md:text-xl">
                 “Tỉ mỉ từng đường kéo, êm ái từng đường cạo”
               </p>
-              <span
+              {/* <span
                 className="h-px w-8 origin-left bg-[#79b8a7]/40 sm:w-12"
                 aria-hidden="true"
-              />
+              /> */}
             </div>
           </header>
 
