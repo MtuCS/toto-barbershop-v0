@@ -99,6 +99,7 @@ export function ServicesBento() {
       )
       const arc = section.querySelector<HTMLElement>("[data-services-arc]")
       const rule = section.querySelector<HTMLElement>("[data-services-rule]")
+      const quote = section.querySelector<HTMLElement>("[data-services-quote]")
 
       const desktopQuery = window.matchMedia("(min-width: 1024px)")
       const reducedMotionQuery = window.matchMedia(
@@ -113,6 +114,7 @@ export function ServicesBento() {
         gsap.set(rule, { autoAlpha: 1, scaleX: 1 })
         gsap.set(titleMasks, { clipPath: "inset(0% 0% 0% 0%)" })
         gsap.set(titleLines, { autoAlpha: 1, yPercent: 0 })
+        if (quote) gsap.set(quote, { autoAlpha: 1, y: 0 })
         gsap.set(firstStepBlocks, { autoAlpha: 1, y: 0 })
       }
 
@@ -129,6 +131,7 @@ export function ServicesBento() {
         gsap.set(rule, { autoAlpha: 0, scaleX: 0, transformOrigin: "0% 50%" })
         gsap.set(titleMasks, { clipPath: "inset(0% 0% 100% 0%)" })
         gsap.set(titleLines, { autoAlpha: 0, yPercent: 115 })
+        if (quote) gsap.set(quote, { autoAlpha: 0, y: 16 })
         gsap.set([...firstStepBlocks, ...secondStepBlocks], {
           autoAlpha: 0,
           y: 34,
@@ -161,17 +164,31 @@ export function ServicesBento() {
           },
           0.22,
         )
-        .to(
-          firstStepBlocks,
+
+      if (quote) {
+        firstStepTimeline.to(
+          quote,
           {
             autoAlpha: 1,
             y: 0,
-            duration: 0.62,
-            stagger: 0.13,
-            ease: "power3.out",
+            duration: 0.58,
+            ease: "power2.out",
           },
-          0.58,
+          0.38,
         )
+      }
+
+      firstStepTimeline.to(
+        firstStepBlocks,
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.62,
+          stagger: 0.13,
+          ease: "power3.out",
+        },
+        0.58,
+      )
 
       const secondStepTimeline = gsap
         .timeline({ paused: true })
@@ -196,6 +213,7 @@ export function ServicesBento() {
         gsap.set(rule, { autoAlpha: 0, scaleX: 0 })
         gsap.set(titleMasks, { clipPath: "inset(0% 0% 100% 0%)" })
         gsap.set(titleLines, { autoAlpha: 0, yPercent: 115 })
+        if (quote) gsap.set(quote, { autoAlpha: 0, y: 16 })
         gsap.set([...firstStepBlocks, ...secondStepBlocks], {
           autoAlpha: 0,
           y: 34,
@@ -293,7 +311,7 @@ export function ServicesBento() {
       <div
         data-home-scroll-step="0"
         data-testid="home-services-step-0"
-        className="home-services-step relative z-10 px-5 pb-16 pt-14 sm:px-6 md:px-8 md:pb-20 md:pt-16 lg:px-10 lg:py-[clamp(2rem,4svh,3.5rem)] xl:px-14"
+        className="home-services-step relative z-10 px-5 pb-16 pt-14 sm:px-6 md:px-8 md:pb-20 md:pt-16 lg:px-10 lg:py-[clamp(2.5rem,5svh,4.5rem)] xl:px-14"
       >
         <div className="mx-auto flex w-full max-w-[1400px] flex-col lg:h-full lg:justify-between">
           <header className="w-full">
@@ -311,7 +329,7 @@ export function ServicesBento() {
 
             <h2
               id="home-services-title"
-              className="mt-6 text-center font-sans text-[clamp(2.75rem,5.5vw,4.75rem)] font-bold leading-[0.98] tracking-[-0.045em] text-[#f2f5f3]"
+              className="mt-6 text-center font-sans text-[clamp(2.85rem,5.8vw,5rem)] font-bold leading-[0.98] tracking-[-0.045em] text-[#f2f5f3]"
             >
               <span
                 data-services-title-mask
@@ -332,6 +350,23 @@ export function ServicesBento() {
                 </span>
               </span>
             </h2>
+
+            <div
+              data-services-quote
+              className="mx-auto mt-6 flex max-w-xl items-center justify-center gap-3 text-center sm:gap-4 md:mt-7"
+            >
+              <span
+                className="h-px w-8 origin-right bg-[#79b8a7]/40 sm:w-12"
+                aria-hidden="true"
+              />
+              <p className="font-agatho text-base italic tracking-wide text-[#b9e0d5] sm:text-lg md:text-xl">
+                “Tỉ mỉ từng đường kéo, êm ái từng đường cạo”
+              </p>
+              <span
+                className="h-px w-8 origin-left bg-[#79b8a7]/40 sm:w-12"
+                aria-hidden="true"
+              />
+            </div>
           </header>
 
           <div className="mt-14 grid gap-y-10 lg:grid-cols-12 lg:items-start lg:gap-x-8 lg:gap-y-0 xl:gap-x-12">
