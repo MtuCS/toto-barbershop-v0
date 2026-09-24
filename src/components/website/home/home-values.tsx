@@ -42,8 +42,8 @@ export function HomeValues() {
       />
 
       <div className="home-scene-inner relative mx-auto flex h-full max-w-[1400px] flex-col justify-center">
-        <div className="max-w-4xl text-left">
-          <p className="home-section-eyebrow inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
+        <div className="w-full">
+          <p className="home-section-eyebrow flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#79b8a7]">
             <span
               className="h-px w-10 origin-left bg-[#79b8a7]/70"
               aria-hidden="true"
@@ -52,7 +52,7 @@ export function HomeValues() {
           </p>
           <h2
             id="home-values-title"
-            className="home-section-title mt-4 font-sans text-[clamp(2.5rem,5vw,4.25rem)] font-bold leading-[1.05] tracking-[-0.04em] text-[#f2f5f3]"
+            className="home-section-title mt-4 text-center font-sans text-[clamp(2.5rem,5vw,4.25rem)] font-bold leading-[1.05] tracking-[-0.04em] text-[#f2f5f3]"
           >
             Tâm nghề tại <span className="text-[#79b8a7]">ToTo</span>
           </h2>
