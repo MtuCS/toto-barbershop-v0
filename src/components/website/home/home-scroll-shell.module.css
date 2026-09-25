@@ -138,6 +138,8 @@
   }
 
   .root > :global(.home-values-scene),
+  .root > :global([data-home-scene="our-shop"]),
+  .root > :global(.home-our-shop-scene),
   .root > :global(.home-testimonials-scene) {
     padding-top: clamp(2rem, 5svh, 5rem);
     padding-bottom: clamp(2rem, 5svh, 5rem);
@@ -237,6 +239,8 @@
   }
 
   .root > :global(.home-values-scene),
+  .root > :global([data-home-scene="our-shop"]),
+  .root > :global(.home-our-shop-scene),
   .root > :global(.home-testimonials-scene) {
     padding-top: 2rem;
     padding-bottom: 2rem;

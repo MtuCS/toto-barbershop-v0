@@ -100,8 +100,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi" className={`bg-background ${inter.variable} ${oswald.variable} ${agatho.variable} ${akira.variable}`}>
-      <body className="font-sans antialiased">
+    <html lang="vi" className={`bg-[#07110f] ${inter.variable} ${oswald.variable} ${agatho.variable} ${akira.variable}`}>
+      <body className="font-sans antialiased bg-[#07110f] text-[#f2f5f3]">
         <GoogleAnalytics />
         {children}
         <Toaster position="top-center" richColors closeButton />

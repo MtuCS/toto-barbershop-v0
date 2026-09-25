@@ -128,8 +128,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    background-color: #07110f;
+  }
   body {
-    @apply bg-background text-foreground;
+    background-color: #07110f;
+    color: #f2f5f3;
   }
   /* Editorial display headings */
   .font-display {
