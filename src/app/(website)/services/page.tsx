@@ -149,7 +149,7 @@ export default async function ServicesPage() {
             id: String(service.id ?? service.slug ?? index),
             number: String(service.order ?? index + 1).padStart(2, "0"),
             title: service.name || fallback.title,
-            duration: `~${service.duration || 0} phút`,
+            duration: service.durationLabel || `~${service.duration || 0} phút`,
             image: service.image || fallback.image,
             description: service.description || fallback.description,
             steps: steps.length ? steps : fallback.steps,

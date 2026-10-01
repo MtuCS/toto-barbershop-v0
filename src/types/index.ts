@@ -84,6 +84,8 @@ export interface Service {
   priceLabel?: string
   /** minutes */
   duration: number
+  /** Optional display label, e.g. "~90 - 120 phút". */
+  durationLabel?: string
   description: string
   process: string[]
   image: string
