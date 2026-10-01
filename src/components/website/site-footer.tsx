@@ -59,7 +59,7 @@ export function SiteFooter() {
     `https://maps.google.com/maps?q=${encodeURIComponent(businessName + " " + address)}&t=&z=17&ie=UTF8&iwloc=&output=embed`
 
   return (
-    <footer data-nosnippet className="home-contact-footer relative isolate border-t border-white/10 bg-[#050c0a] text-[#f2f5f3]">
+    <footer id="footer" data-nosnippet className="home-contact-footer relative isolate border-t border-white/10 bg-[#050c0a] text-[#f2f5f3]">
       <div className="home-contact-inner mx-auto w-full max-w-[1400px] px-5 py-16 md:px-8 md:py-20 lg:px-10 xl:px-14">
         <div className="home-contact-grid grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-14 xl:gap-20">
           {/* Thông tin chính */}

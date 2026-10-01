@@ -1,322 +1,290 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  Check,
-  HandHeart,
-  ScanFace,
-  ScanSearch,
-  Scissors,
-} from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { ArrowUpRight, MessageCircle } from "lucide-react";
 import { MarketingPageShell } from "@/components/website/marketing-page-shell";
 import { Breadcrumbs } from "@/components/website/breadcrumbs";
-import { LookbookSection } from "@/components/website/lookbook/lookbook-section";
-import { getServices, getFaqs, getLookbooks } from "@/lib/api";
-import { formatCurrency } from "@/lib/format";
+import { FigmaServicesList, type FigmaServiceItem } from "@/components/website/services/figma-services-list";
+import { FigmaTeamList, type FigmaTeamMember } from "@/components/website/services/figma-team-list";
 
 export const metadata: Metadata = {
-  title: "Bảng Giá Dịch Vụ Cắt Tóc Nam & Grooming Chuyên Nghiệp",
+  title: "Mấy Món Nghề Tại ToTo — Dịch Vụ Chỉn Chu & Minh Bạch",
   description:
-    "Bảng giá dịch vụ cắt tóc chuẩn barber, cạo mặt khăn nóng, uốn textured, tẩy nhuộm màu thời trang tại ToTo Barbershop 85 Đồng Đen, Tân Bình.",
+    "Rõ ràng, chỉn chu và minh bạch. Mọi dịch vụ đều được thực hiện kĩ lưỡng bởi đội ngũ thợ lành nghề tại ToTo Barbershop 85 Đồng Đen, Tân Bình.",
 };
 
-
-const processSteps = [
+// 2. Danh Mục Dịch Vụ (Đúng chuẩn 100% copy và quy trình theo bảng đặc tả)
+const serviceItems: FigmaServiceItem[] = [
   {
+    id: "01",
     number: "01",
-    title: "Phân tích khuôn mặt",
-    copy: "Đánh giá tỉ lệ, đường nét & ưu khuyết điểm để đưa ra kiểu tóc phù hợp.",
-    icon: ScanFace,
+    title: "CẮT TÓC & TẠO KIỂU",
+    duration: "~45 phút",
+    image: "/images/service-cut.jpg",
+    description: "Cắt gọt và định hình form tóc chuẩn nam tính.",
+    steps: [
+      "Tư vấn dáng tóc",
+      "Xả sạch & Cắt gọt",
+      "Sấy tạo kiểu & Hướng dẫn vuốt sáp",
+    ],
+    priceLabel: "Giá từ",
+    price: "150.000đ",
+    featured: false,
   },
   {
+    id: "02",
     number: "02",
-    title: "Đánh giá chất tóc",
-    copy: "Đánh giá mật độ, chất tóc để có kỹ thuật phù hợp.",
-    icon: ScanSearch,
+    title: "CHĂM SÓC & TỈA RÂU",
+    duration: "~30 phút",
+    image: "/images/service-shave.jpg",
+    description: "Tỉa form râu và cạo sát êm ái cho gương mặt chỉn chu.",
+    steps: [
+      "Định hình khuôn râu",
+      "Ủ khăn nóng & Cạo êm ái",
+      "Thoa dưỡng da mặt",
+    ],
+    priceLabel: "Giá từ",
+    price: "120.000đ",
+    featured: false,
   },
   {
+    id: "03",
     number: "03",
-    title: "Thiết kế kiểu",
-    copy: "Tư vấn kiểu tóc phù hợp với phong cách của bạn.",
-    icon: Scissors,
+    title: "UỐN & NHUỘM TẠO FORM",
+    duration: "~90 - 120 phút",
+    image: "/images/combo.jpg",
+    description: "Hóa chất tạo nếp và đổi màu bảo vệ chất tóc.",
+    steps: [
+      "Kiểm tra chất tóc",
+      "Uốn/Nhuộm tạo phom natural",
+      "Xả dưỡng & Khóa form",
+    ],
+    priceLabel: "Giá từ",
+    price: "350.000đ",
+    featured: true,
   },
   {
+    id: "04",
     number: "04",
-    title: "Hoàn thiện",
-    copy: "Tạo kiểu và hướng dẫn bạn cách chăm sóc tóc tại nhà.",
-    icon: HandHeart,
+    title: "PHỤC HỒI & GỘI THƯ GIÃN",
+    duration: "~30 - 45 phút",
+    image: "/images/ourshop-2.jpg",
+    description: "Làm sạch sâu da đầu và giải tỏa căng thẳng.",
+    steps: [
+      "Tẩy tế bào chết da đầu",
+      "Gội ấn huyệt cổ-vai-gáy",
+      "Xả dưỡng & Sấy khô",
+    ],
+    priceLabel: "Giá từ",
+    price: "180.000đ",
+    featured: true,
   },
-] as const;
+];
 
-export default async function Page() {
-  const [services, allFaqs, lookbookItems] = await Promise.all([
-    getServices(),
-    getFaqs(),
-    getLookbooks(),
-  ]);
-  const serviceFaqs = allFaqs.filter(f => f.category === 'service');
+// 3. Lookbook (8 hình ảnh cận cảnh phom tóc thực tế, góc nghiêng/sau gáy)
+const lookbookGallery = [
+  { id: 1, src: "/images/lookbook-1.png", alt: "Phom tóc ToTo 1" },
+  { id: 2, src: "/images/lookbook-2.png", alt: "Phom tóc ToTo 2" },
+  { id: 3, src: "/images/lookbook-3.png", alt: "Phom tóc ToTo 3" },
+  { id: 4, src: "/images/lookbook-4.png", alt: "Phom tóc ToTo 4" },
+  { id: 5, src: "/images/lookbook-5.png", alt: "Phom tóc ToTo 5" },
+  { id: 6, src: "/images/lookbook-6.png", alt: "Phom tóc ToTo 6" },
+  { id: 7, src: "/images/lookbook-7.png", alt: "Phom tóc ToTo 7" },
+  { id: 8, src: "/images/lookbook-8.png", alt: "Phom tóc ToTo 8" },
+];
 
+// 4. Tổ Đội TOTO (4 Thẻ chân dung + Tên + Thế mạnh ngắn)
+const teamMembers: FigmaTeamMember[] = [
+  {
+    id: "barber-toto",
+    name: "Barber ToTo",
+    role: "Head Barber & Founder",
+    image: "/images/interior.png",
+    description: "Tư vấn kĩ lưỡng, cắt tỉ mỉ, form tóc bền đẹp chuẩn form.",
+    specialty: "Classic Pompadour, Skin Fade",
+  },
+  {
+    id: "barber-huy",
+    name: "Barber Huy",
+    role: "Senior Barber",
+    image: "/images/service-shave.jpg",
+    description: "Chuyên mảng tẩy tóc, vuốt tạo kiểu khó và form textured cá tính.",
+    specialty: "Textured Crop, Mullet",
+  },
+  {
+    id: "barber-minh",
+    name: "Barber Minh",
+    role: "Stylist & Color Specialist",
+    image: "/images/interior1.png",
+    description: "Chuyên uốn nhuộm, vào màu tự nhiên hay contrast, sấy tạo kiểu.",
+    specialty: "Uốn Texture, Nhuộm Khói",
+  },
+  {
+    id: "barber-tin",
+    name: "Barber Tín",
+    role: "Grooming & Treatment Specialist",
+    image: "/images/ourshop-4.jpg",
+    description: "Chuyên phục hồi tóc yếu, gội thư giãn và hoàn thiện mẫu tóc.",
+    specialty: "Cạo Khăn Nóng, Phục Hồi",
+  },
+];
+
+export default function ServicesPage() {
   return (
-    <MarketingPageShell className="bg-[#07110f]">
+    <MarketingPageShell className="bg-[#07110f] text-[#f2f5f3]">
       <div className="mx-auto max-w-[1400px] px-5 pt-6 md:px-8">
-        <Breadcrumbs items={[{ label: "Menu Dịch Vụ & Bảng Giá" }]} />
+        <Breadcrumbs items={[{ label: "Dịch Vụ" }]} />
       </div>
 
-      <section className="overflow-hidden border-b border-white/10 bg-[#07110f] text-[#f2f5f3]">
-        <div className="mx-auto grid max-w-[1400px] gap-10 px-5 py-12 md:grid-cols-12 md:px-8 md:py-16 lg:min-h-[670px] lg:items-center">
-          <div className="relative z-10 md:col-span-5">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#79b8a7]">
-              Dịch vụ ToTo
-            </p>
-            <h1 className="mt-5 max-w-xl font-display text-6xl font-bold uppercase leading-[0.88] tracking-[-0.045em] sm:text-7xl lg:text-[6.25rem]">
-              Precision in every cut
-            </h1>
-            <p className="mt-6 max-w-md text-sm leading-7 text-white/68 md:text-base">
-              Từ form cổ điển đến texture hiện đại, mỗi lần ngồi ghế là một cuộc
-              trao đổi để tìm ra kiểu tóc thuộc về bạn.
+      {/* ========================================================================= */}
+      {/* 2. DANH MỤC DỊCH VỤ (4 Block Grid 2x2 Mobile / 4 Cột Desktop) */}
+      {/* ========================================================================= */}
+      <section className="relative px-5 py-12 md:px-8 md:py-16 border-b border-white/10 bg-[#07110f]">
+        <div className="mx-auto max-w-[1400px]">
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <div className="flex justify-center mb-4">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#79b8a7]/30 bg-[#79b8a7]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7] backdrop-blur-md">
+                Bảng Giá &amp; Quy Trình
+              </span>
+            </div>
+            <h2 className="font-sans text-3xl sm:text-5xl md:text-6xl font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.1]">
+              DỊCH VỤ CHỈN CHU &amp; MINH BẠCH
+            </h2>
+            <p className="mt-5 text-sm sm:text-base leading-relaxed text-white/65">
+              TOTO gói gọn quy trình thô thành từng bước rõ ràng, giúp bạn nắm được dịch vụ trước khi ngồi ghế.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 md:col-span-7 md:pl-4 items-stretch">
-            {/* Ảnh lớn bên trái: tỉ lệ 4/3 gọn gàng trên mobile, stretch đều toàn chiều cao trên desktop */}
-            <div className="relative md:col-span-7 aspect-[4/3] sm:aspect-[16/10] md:aspect-auto md:h-full md:min-h-[460px] overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
-              <Image
-                src="/images/service-cut.jpg"
-                alt="Barber ToTo đang hoàn thiện kiểu tóc"
-                fill
-                priority
-                sizes="(max-width: 767px) 100vw, 40vw"
-                className="object-cover"
-              />
-            </div>
-            {/* 2 ảnh bên phải: 2 ô vuông đều đặn trên mobile, xếp chồng 2 nửa bằng nhau trên desktop */}
-            <div className="grid grid-cols-2 md:grid-cols-1 md:grid-rows-2 gap-3 md:gap-4 md:col-span-5 md:h-full">
-              <div className="relative aspect-square md:aspect-auto md:h-full overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
-                <Image
-                  src="/images/barber-2.png"
-                  alt="Không gian phục vụ tại ToTo Barbershop"
-                  fill
-                  priority
-                  sizes="(max-width: 767px) 50vw, 25vw"
-                  className="object-cover"
-                />
-              </div>
-              <div className="relative aspect-square md:aspect-auto md:h-full overflow-hidden rounded-xl border border-white/10 bg-[#0d211d]">
-                <Image
-                  src="/images/service-shave.jpg"
-                  alt="Dịch vụ cạo râu khăn nóng tại ToTo"
-                  fill
-                  priority
-                  sizes="(max-width: 767px) 50vw, 25vw"
-                  className="object-cover"
-                />
-              </div>
-            </div>
-          </div>
+          {/* 4 Service Cards Grid (Grid 2x2 Mobile / 4 Columns Desktop) */}
+          <FigmaServicesList items={serviceItems} />
         </div>
       </section>
 
-      <section className="border-b border-white/10 bg-[#0b1b18] px-5 py-16 md:px-8 md:py-24">
+      {/* ========================================================================= */}
+      {/* 3. LOOKBOOK (GÓC THÀNH PHẨM TRONG NGOẶC KÉP & 8 ẢNH PHOM TÓC) */}
+      {/* ========================================================================= */}
+      <section className="relative px-5 py-12 md:px-8 md:py-16 border-b border-white/10 bg-[#07110f]">
         <div className="mx-auto max-w-[1400px]">
-          <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#79b8a7]">
-              Bắt đầu từ sự thấu hiểu
-            </p>
-            <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-[1.3] tracking-[-0.035em] text-[#f2f5f3] md:text-7xl">
-              Kiểu tóc hợp với đời sống của bạn
+          {/* Section Title in quotation marks & exact sub-headline */}
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <div className="flex justify-center mb-4">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#79b8a7]/30 bg-[#79b8a7]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7] backdrop-blur-md">
+                Lookbook
+              </span>
+            </div>
+            <h2 className="font-sans text-3xl sm:text-5xl md:text-6xl font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.1]">
+              GÓC THÀNH PHẨM
             </h2>
+            <p className="mt-5 text-sm sm:text-base leading-relaxed text-white/65">
+              Những thành phẩm được tạo ra từ sự tin tưởng của anh em và sự tỉ mỉ của TOTO.
+            </p>
           </div>
-          <div className="mt-12 grid divide-y divide-white/10 border-y border-white/10 md:grid-cols-4 md:divide-x md:divide-y-0">
-            {processSteps.map(({ number, title, copy, icon: Icon }) => (
-              <article
-                key={number}
-                className="px-0 py-6 md:px-6 md:py-0 first:md:pl-0 last:md:pr-0"
+
+          {/* Clean 8-Image Grid (2 rows x 4 columns) */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            {lookbookGallery.map((img) => (
+              <div
+                key={img.id}
+                className="group relative rounded-2xl p-1 border border-white/10 bg-white/[0.02] transition-all duration-500 hover:border-[#79b8a7]/50 hover:shadow-[0_15px_30px_rgba(0,0,0,0.7)]"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <Icon
-                    className="size-10 stroke-[1.4] text-[#FFFFFF ]"
-                    aria-hidden="true"
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-black/40">
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
                   />
-
-                  <span className="font-mono text-xs text-[#79b8a7]">
-                    {number}
-                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-4">
+                    <span className="text-[11px] font-mono text-[#79b8a7]">ToTo Real Look #{img.id}</span>
+                  </div>
                 </div>
-
-                <h3 className="mt-8 font-display text-3xl font-bold uppercase leading-tight text-[#f2f5f3]">
-                  {title}
-                </h3>
-
-                <p className="mt-4 max-w-xs text-sm leading-6 text-white/60">
-                  {copy}
-                </p>
-              </article>
+              </div>
             ))}
+          </div>
+
+          {/* Centered Button */}
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/#lookbook"
+              className="group inline-flex items-center gap-2 rounded-full bg-[#79b8a7] px-8 py-3.5 text-xs font-bold uppercase tracking-wider text-[#07110f] transition-all duration-300 hover:bg-[#68a494] hover:shadow-[0_0_25px_rgba(121,184,167,0.35)]"
+            >
+              <span>Xem nhiều hình ảnh hơn</span>
+              <ArrowUpRight className="size-4 stroke-[2.5] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-[#07110f] px-5 py-16 md:px-8 md:py-24">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.045]"
-          style={{ backgroundImage: "url('/images/site-grain.png')" }}
-          aria-hidden="true"
-        />
-        <div className="relative mx-auto max-w-[1400px]">
-          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#79b8a7]">
-                Bảng giá
-              </p>
-              <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-tight text-[#f2f5f3] md:text-7xl">
-                Chọn dịch vụ của bạn
-              </h2>
-            </div>
-            <p className="max-w-sm text-sm leading-6 text-white/60">
-              {/* Liên hệ ToTo để nhận tư vấn phù hợp với tình trạng tóc của bạn. */}
-            </p>
-          </div>
-
-          <div className="mt-10 grid border-l border-t border-white/10 md:grid-cols-2 xl:grid-cols-3">
-            {services.map((service) => (
-              <article
-                key={service.id}
-                className="flex min-h-[390px] flex-col border-b border-r border-white/10 bg-white/[0.025] p-6 transition-colors hover:bg-[#13443b]/35 md:p-7"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#79b8a7]">
-                    {service.category}
-                  </p>
-                  <span className="font-mono text-xs text-white/45">
-                    {service.duration} phút
-                  </span>
-                </div>
-                <h3 className="mt-5 max-w-sm font-display text-4xl font-bold uppercase leading-tight text-[#f2f5f3]">
-                  {service.name}
-                </h3>
-                <p className="mt-5 text-sm leading-6 text-white/60">
-                  {service.description}
-                </p>
-                <ul className="mt-7 space-y-2 text-xs text-white/72">
-                  {service.process.map((step) => (
-                    <li key={step} className="flex items-center gap-2">
-                      <Check
-                        className="size-3.5 shrink-0 text-[#79b8a7]"
-                        aria-hidden="true"
-                      />
-                      {step}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-auto flex items-end justify-between gap-4 pt-8">
-                  <p className="font-display text-3xl font-bold text-[#f2f5f3]">
-                    <span className="mr-1 text-xs font-sans font-semibold uppercase tracking-[0.1em] text-[#79b8a7]">
-                      {service.priceLabel}
-                    </span>
-                    {formatCurrency(service.price)}
-                  </p>
-                  <Link
-                    href="/contact"
-                    aria-label={`Liên hệ đặt lịch ${service.name}`}
-                    className="inline-flex size-10 items-center justify-center border border-[#79b8a7]/60 text-[#79b8a7] transition-colors hover:bg-[#79b8a7] hover:text-[#07110f] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79b8a7]"
-                  >
-                    <ArrowUpRight className="size-4" aria-hidden="true" />
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* <section className="border-y border-white/10 bg-[#0b1b18] px-5 py-16 md:px-8 md:py-24">
+      {/* ========================================================================= */}
+      {/* 4. TỔ ĐỘI TOTO */}
+      {/* ========================================================================= */}
+      <section className="relative px-5 py-12 md:px-8 md:py-16 border-b border-white/10 bg-[#07110f]">
         <div className="mx-auto max-w-[1400px]">
-          <h2 className="font-display text-5xl font-bold uppercase leading-none text-[#f2f5f3] md:text-7xl">
-            Nâng cấp diện mạo
-          </h2>
-          <div className="mt-10 grid gap-px bg-white/10 md:grid-cols-3">
-            {upgrades.map((service) => (
-              <article
-                key={service.id}
-                className="group relative min-h-[430px] overflow-hidden bg-[#07110f] p-6 md:p-7"
-              >
-                <Image
-                  src={service.image}
-                  alt={service.name}
-                  fill
-                  sizes="(max-width: 767px) 100vw, 33vw"
-                  className="object-cover opacity-45 transition-transform duration-700 group-hover:scale-105"
-                />
-                <div
-                  className="absolute inset-0 bg-gradient-to-t from-[#07110f] via-[#07110f]/50 to-transparent"
-                  aria-hidden="true"
-                />
-                <div className="relative flex h-full flex-col justify-end">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#79b8a7]">
-                    {service.priceLabel ? `${service.priceLabel} ` : ""}
-                    {formatCurrency(service.price)} · {service.duration} phút
-                  </p>
-                  <h3 className="mt-3 font-display text-4xl font-bold uppercase leading-none text-[#f2f5f3]">
-                    {service.name}
-                  </h3>
-                  <p className="mt-3 max-w-sm text-sm leading-6 text-white/70">
-                    {service.description}
-                  </p>
-                  <Link
-                    href="/contact"
-                    className="mt-6 inline-flex w-fit items-center gap-2 border-b border-[#79b8a7] pb-2 text-xs font-bold uppercase tracking-[0.14em] text-[#f2f5f3] transition-colors hover:text-[#79b8a7] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79b8a7]"
-                  >
-                    Liên hệ đặt lịch{" "}
-                    <ArrowUpRight className="size-3.5" aria-hidden="true" />
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section> */}
-
-      <section className="border-t border-white/10 bg-[#0b1b18] px-5 py-16 md:px-8 md:py-24">
-        <div className="mx-auto grid max-w-[1400px] gap-10 md:grid-cols-12">
-          <div className="md:col-span-4">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#79b8a7]">
-              Câu hỏi thường gặp
-            </p>
-            <h2 className="mt-4 font-display text-5xl font-bold uppercase leading-tight text-[#f2f5f3]">
-              Trước khi ngồi ghế
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <div className="flex justify-center mb-4">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#79b8a7]/30 bg-[#79b8a7]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7] backdrop-blur-md">
+                Đội Ngũ Thợ
+              </span>
+            </div>
+            <h2 className="font-sans text-3xl sm:text-5xl md:text-6xl font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.1]">
+              TỔ ĐỘI TOTO
             </h2>
-            <Scissors
-              className="mt-8 size-8 text-[#79b8a7]"
-              aria-hidden="true"
-            />
+            <p className="mt-5 text-sm sm:text-base leading-relaxed text-white/65">
+              Nơi bạn yên tâm gửi gắm mái tóc. Dù là anh em quen từ trước hay một gương mặt mới, TOTO luôn ở đây để chăm chút diện mạo cho bạn. Chào mừng bạn ghé tiệm.
+            </p>
           </div>
-          <Accordion className="border-t border-white/10 md:col-span-8">
-            {serviceFaqs.map((faq, index) => (
-              <AccordionItem
-                key={faq.id || index}
-                value={`faq-${index}`}
-                className="border-b border-white/10"
-              >
-                <AccordionTrigger className="gap-8 rounded-none py-5 text-base font-semibold text-[#f2f5f3] hover:no-underline hover:text-[#79b8a7] data-[state=open]:text-[#79b8a7]">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="max-w-2xl pb-5 text-sm leading-7 text-white/65">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+
+          {/* 4 Thẻ chân dung (Ảnh chân dung + Tên + Thế mạnh ngắn) */}
+          <FigmaTeamList members={teamMembers} />
         </div>
       </section>
 
-      <LookbookSection items={lookbookItems} />
+      {/* ========================================================================= */}
+      {/* 5. KHỐI CHỐT CTA */}
+      {/* ========================================================================= */}
+      <section className="relative px-5 py-14 md:px-8 md:py-20 bg-gradient-to-b from-[#07110f] via-[#091a16]/40 to-[#07110f] text-center">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex justify-center mb-5">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#79b8a7]/30 bg-[#79b8a7]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7] backdrop-blur-md">
+              Tư Vấn &amp; Đặt Lịch
+            </span>
+          </div>
+          <h2 className="font-sans text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#f2f5f3] leading-[1.1]">
+            Tư vấn kiểu tóc hay chọn thợ hợp gu?
+          </h2>
+          <p className="mt-6 max-w-xl mx-auto text-sm sm:text-base leading-relaxed text-white/65">
+            Đội ngũ TOTO sẵn sàng lắng nghe và giải đáp mọi thắc mắc của bạn.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            {/* Primary CTA (Link Zalo / Messenger) */}
+            <a
+              href="https://zalo.me/0981378179"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Tư vấn nhanh qua Zalo hoặc Messenger"
+              className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-[#79b8a7] px-8 py-3.5 text-xs font-bold uppercase tracking-wider text-[#07110f] transition-all duration-300 hover:bg-[#68a494] hover:shadow-[0_0_25px_rgba(121,184,167,0.35)]"
+            >
+              <MessageCircle className="size-4" />
+              <span>TƯ VẤN</span>
+              <ArrowUpRight className="size-4 stroke-[2.5] transition-transform duration-300 group-hover:rotate-45" />
+            </a>
+
+            {/* Secondary CTA (Link cuộn đến footer thông tin liên hệ / bản đồ) */}
+            <Link
+              href="#footer"
+              aria-label="Xem địa chỉ và ghé ToTo hôm nay"
+              className="group inline-flex items-center justify-center gap-2.5 rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-xs font-bold uppercase tracking-wider text-white transition-all duration-300 hover:border-[#79b8a7] hover:text-[#79b8a7] hover:bg-[#79b8a7]/10"
+            >
+              <span>GHÉ TOTO HÔM NAY</span>
+              <ArrowUpRight className="size-4 stroke-[2.5] transition-transform duration-300 group-hover:rotate-45" />
+            </Link>
+          </div>
+        </div>
+      </section>
     </MarketingPageShell>
   );
 }
