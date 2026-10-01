@@ -19,6 +19,7 @@ export function AdminDataFetcher() {
   const fetchCourses = useDataStore((s) => s.fetchCourses)
   const fetchStories = useDataStore((s) => s.fetchStories)
   const fetchLookbook = useDataStore((s) => s.fetchLookbook)
+  const fetchTeamMembers = useDataStore((s) => s.fetchTeamMembers)
   const fetchMedia = useDataStore((s) => s.fetchMedia)
   const fetchFaqs = useDataStore((s) => s.fetchFaqs)
   const fetchSettings = useDataStore((s) => s.fetchSettings)
@@ -39,6 +40,7 @@ export function AdminDataFetcher() {
     fetchCourses()
     fetchStories()
     fetchLookbook()
+    fetchTeamMembers()
     fetchMedia()
     fetchFaqs()
     fetchSettings()
@@ -54,6 +56,7 @@ export function AdminDataFetcher() {
     fetchCourses,
     fetchStories,
     fetchLookbook,
+    fetchTeamMembers,
     fetchMedia,
     fetchFaqs,
     fetchSettings,

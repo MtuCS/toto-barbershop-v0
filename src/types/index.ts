@@ -182,6 +182,20 @@ export interface LookbookItem {
   order?: number
 }
 
+export type TeamMemberStatus = 'active' | 'hidden'
+
+export interface TeamMember {
+  [key: string]: unknown
+  id: ID
+  name: string
+  role: string
+  image: string
+  description: string
+  specialty?: string
+  status: TeamMemberStatus
+  order: number
+}
+
 // ---------------------------------------------------------------------------
 // Cart & Orders
 // ---------------------------------------------------------------------------

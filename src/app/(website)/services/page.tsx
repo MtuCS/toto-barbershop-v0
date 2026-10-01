@@ -6,6 +6,8 @@ import { MarketingPageShell } from "@/components/website/marketing-page-shell";
 import { Breadcrumbs } from "@/components/website/breadcrumbs";
 import { FigmaServicesList, type FigmaServiceItem } from "@/components/website/services/figma-services-list";
 import { FigmaTeamList, type FigmaTeamMember } from "@/components/website/services/figma-team-list";
+import { getLookbooks, getServices, getTeamMembers } from "@/lib/api";
+import { formatCurrency } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Mấy Món Nghề Tại ToTo — Dịch Vụ Chỉn Chu & Minh Bạch",
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 // 2. Danh Mục Dịch Vụ (Đúng chuẩn 100% copy và quy trình theo bảng đặc tả)
-const serviceItems: FigmaServiceItem[] = [
+const fallbackServiceItems: FigmaServiceItem[] = [
   {
     id: "01",
     number: "01",
@@ -82,7 +84,7 @@ const serviceItems: FigmaServiceItem[] = [
 ];
 
 // 3. Lookbook (8 hình ảnh cận cảnh phom tóc thực tế, góc nghiêng/sau gáy)
-const lookbookGallery = [
+const fallbackLookbookGallery = [
   { id: 1, src: "/images/lookbook-1.png", alt: "Phom tóc ToTo 1" },
   { id: 2, src: "/images/lookbook-2.png", alt: "Phom tóc ToTo 2" },
   { id: 3, src: "/images/lookbook-3.png", alt: "Phom tóc ToTo 3" },
@@ -94,7 +96,7 @@ const lookbookGallery = [
 ];
 
 // 4. Tổ Đội TOTO (4 Thẻ chân dung + Tên + Thế mạnh ngắn)
-const teamMembers: FigmaTeamMember[] = [
+const fallbackTeamMembers: FigmaTeamMember[] = [
   {
     id: "barber-toto",
     name: "Barber ToTo",
@@ -129,7 +131,56 @@ const teamMembers: FigmaTeamMember[] = [
   },
 ];
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const [services, lookbooks, team] = await Promise.all([getServices(), getLookbooks(), getTeamMembers()]);
+  const serviceItems: FigmaServiceItem[] = services.length
+    ? services
+        .filter((service) => service.status !== "hidden")
+        .map((service, index) => {
+          const fallback = fallbackServiceItems[index % fallbackServiceItems.length];
+          const rawProcess = service.process as unknown;
+          const steps = Array.isArray(rawProcess)
+            ? rawProcess.filter((step): step is string => typeof step === "string" && Boolean(step.trim()))
+            : typeof rawProcess === "string"
+              ? rawProcess.split("\n").filter(Boolean)
+              : [];
+
+          return {
+            id: String(service.id ?? service.slug ?? index),
+            number: String(service.order ?? index + 1).padStart(2, "0"),
+            title: service.name || fallback.title,
+            duration: `~${service.duration || 0} phút`,
+            image: service.image || fallback.image,
+            description: service.description || fallback.description,
+            steps: steps.length ? steps : fallback.steps,
+            priceLabel: service.priceLabel || "Giá từ",
+            price: typeof service.price === "number" ? formatCurrency(service.price) : fallback.price,
+            featured: Boolean(service.featured),
+          };
+        })
+    : fallbackServiceItems;
+  const lookbookGallery = lookbooks.filter((item) => item.category !== "Shop" && item.published !== false).length
+    ? lookbooks
+        .filter((item) => item.category !== "Shop" && item.published !== false)
+        .map((item, index) => ({
+          id: item.id ?? index,
+          src: item.image,
+          alt: item.title || item.caption || "Thành phẩm TOTO",
+        }))
+    : fallbackLookbookGallery;
+  const teamMembers: FigmaTeamMember[] = team.filter((member) => member.status !== "hidden").length
+    ? team
+        .filter((member) => member.status !== "hidden")
+        .map((member, index) => ({
+          id: String(member.id ?? index),
+          name: member.name,
+          role: member.role,
+          image: member.image,
+          description: member.description || "Đội ngũ TOTO chăm chút từng trải nghiệm của bạn.",
+          specialty: member.specialty,
+        }))
+    : fallbackTeamMembers;
+
   return (
     <MarketingPageShell className="bg-[#07110f] text-[#f2f5f3]">
       <div className="mx-auto max-w-[1400px] px-5 pt-6 md:px-8">

@@ -1,4 +1,4 @@
-import type { Product, Category, Service, TrainingCourse, MerchandiseStory, LookbookItem } from "@/types"
+import type { Product, Category, Service, TrainingCourse, MerchandiseStory, LookbookItem, TeamMember } from "@/types"
 import { clientLogger } from "./logger"
 
 const API_URL = process.env.BACKEND_URL || 'http://localhost:5000'
@@ -59,6 +59,10 @@ export async function getStoryBySlug(slug: string): Promise<MerchandiseStory | n
 
 export async function getLookbooks(): Promise<LookbookItem[]> {
   return safeFetch<LookbookItem[]>('/api/lookbooks', [], { next: { revalidate: 60 } } as any);
+}
+
+export async function getTeamMembers(): Promise<TeamMember[]> {
+  return safeFetch<TeamMember[]>('/api/team-members', [], { next: { revalidate: 60 } } as any);
 }
 
 export async function getFaqs(): Promise<any[]> {
