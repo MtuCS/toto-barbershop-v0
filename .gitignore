@@ -20,3 +20,7 @@ node_modules
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Tool & MCP configs
+*mcp_config.json
+.agents/
