@@ -59,6 +59,7 @@ const fieldLabels: Record<string, string> = {
   images: "Hình ảnh",
   slug: "Đường dẫn (slug)",
   duration: "Thời gian",
+  durationLabel: "Nhãn thời lượng trên website",
   excerpt: "Mô tả ngắn",
   description: "Mô tả chi tiết",
   status: "Trạng thái",
@@ -1694,7 +1695,7 @@ function StoryBlocksEditor({
 function generateDefaultForm(section: string) {
   switch (section) {
     case "categories": return { name: "", slug: "", parent: "", description: "" }
-    case "services": return { name: "", category: "Cắt tóc & tạo kiểu", price: 100000, duration: 45, description: "", process: ["Tư vấn dáng tóc", "Cắt gọt tạo form", "Sấy tạo kiểu"], image: "", featured: false, order: 0, status: "active" }
+    case "services": return { name: "", category: "Cắt tóc & tạo kiểu", price: 100000, duration: 45, durationLabel: "~45 phút", description: "", process: ["Tư vấn dáng tóc", "Cắt gọt tạo form", "Sấy tạo kiểu"], image: "", featured: false, order: 0, status: "active" }
     case "training": return { title: "", duration: "2 tháng", price: 15000000, description: "", excerpt: "", startDate: "Khai giảng hàng tháng", status: "active" }
     case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", blocks: [], gallery: [], status: "published", order: 1 }
     case "lookbook": return { title: "", category: "Classic", image: "", order: 0, published: true }
@@ -1875,7 +1876,7 @@ function ServiceEditor({
           </div>
           <Clock className="size-4 text-emerald-700" aria-hidden="true" />
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-4">
           <label className="space-y-1.5">
             <span className="text-xs font-semibold text-neutral-600">Giá niêm yết (VNĐ)</span>
             <Input type="number" min={0} value={value.price ?? 0} onChange={(event) => onChange("price", Number(event.target.value))} />
@@ -1883,6 +1884,14 @@ function ServiceEditor({
           <label className="space-y-1.5">
             <span className="text-xs font-semibold text-neutral-600">Thời lượng (phút)</span>
             <Input type="number" min={0} value={value.duration ?? 30} onChange={(event) => onChange("duration", Number(event.target.value))} />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs font-semibold text-neutral-600">Nhãn hiển thị</span>
+            <Input
+              value={value.durationLabel || `~${value.duration || 0} phút`}
+              onChange={(event) => onChange("durationLabel", event.target.value)}
+              placeholder="Ví dụ: ~90 - 120 phút"
+            />
           </label>
           <label className="space-y-1.5">
             <span className="text-xs font-semibold text-neutral-600">Thứ tự card</span>
@@ -2006,7 +2015,7 @@ function ServicesAdminGrid({
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 border-y border-neutral-100 py-3 text-xs">
-                    <div className="flex items-center gap-1.5 text-neutral-600"><Clock className="size-3.5 text-neutral-400" /> {row.duration || 0} phút</div>
+                    <div className="flex items-center gap-1.5 text-neutral-600"><Clock className="size-3.5 text-neutral-400" /> {row.durationLabel || `~${row.duration || 0} phút`}</div>
                     <div className="text-right font-bold text-emerald-700">{typeof row.price === "number" ? formatCurrency(row.price) : "Chưa có giá"}</div>
                   </div>
 
@@ -3519,7 +3528,7 @@ export function CrudPage({ section }: { section: string }) {
                         </span>
                       </td>
                       <td className="text-sm font-semibold text-neutral-700">
-                        {r.duration || 30} phút
+                        {r.durationLabel || `~${r.duration || 30} phút`}
                       </td>
                       <td className="text-xs text-neutral-500">
                         {Array.isArray(r.process) ? `${r.process.length} bước thực hiện` : typeof r.process === 'string' && r.process.trim() ? `${r.process.split('\n').filter(Boolean).length} bước thực hiện` : "Quy trình tiêu chuẩn"}
