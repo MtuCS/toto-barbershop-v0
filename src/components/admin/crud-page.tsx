@@ -1,5 +1,5 @@
 "use client"
-import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, KeyRound, Copy, Check, PhoneCall, Mail, RefreshCw, UploadCloud, Images, Film, ExternalLink, ImageOff } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, KeyRound, Copy, Check, PhoneCall, Mail, RefreshCw, UploadCloud, Images, Film, ExternalLink, ImageOff, Clock, Sparkles } from "lucide-react"
 import { useDataStore } from "@/store/data-store"
 import { useAuthStore } from "@/store/auth-store"
 import { formatCurrency } from "@/lib/format"
@@ -90,6 +90,19 @@ const fieldLabels: Record<string, string> = {
   question: "Câu hỏi",
   answer: "Câu trả lời",
 }
+
+const SERVICE_CATEGORY_OPTIONS = [
+  "Cắt tóc & tạo kiểu",
+  "Chăm sóc & tỉa râu",
+  "Uốn & nhuộm tạo form",
+  "Phục hồi & gội thư giãn",
+  "Tóc & tạo kiểu",
+  "Vệ sinh & chăm sóc",
+  "Râu & khăn nóng",
+  "Mấy gói combo",
+  "Tẩy & Nhuộm tóc",
+  "Uốn tóc Textured",
+]
 // ============================================================================
 // Config: Product variant rules by product type
 // ============================================================================
@@ -1681,10 +1694,10 @@ function StoryBlocksEditor({
 function generateDefaultForm(section: string) {
   switch (section) {
     case "categories": return { name: "", slug: "", parent: "", description: "" }
-    case "services": return { name: "", category: "Tóc & tạo kiểu", price: 100000, duration: 45, description: "", process: ["Tư vấn kiểu tóc", "Cắt tỉa tạo form", "Gội sấy & vuốt sáp tạo kiểu"], image: "", featured: false }
+    case "services": return { name: "", category: "Cắt tóc & tạo kiểu", price: 100000, duration: 45, description: "", process: ["Tư vấn dáng tóc", "Cắt gọt tạo form", "Sấy tạo kiểu"], image: "", featured: false, order: 0, status: "active" }
     case "training": return { title: "", duration: "2 tháng", price: 15000000, description: "", excerpt: "", startDate: "Khai giảng hàng tháng", status: "active" }
     case "merchandise-stories": return { title: "", subtitle: "", manifesto: "", heroImage: "", blocks: [], gallery: [], status: "published", order: 1 }
-    case "lookbook": return { title: "", category: "Classic", image: "", order: 0 }
+    case "lookbook": return { title: "", category: "Classic", image: "", order: 0, published: true }
     case "customers": return { name: "", email: "", password: "", phone: "", role: "CUSTOMER" }
     case "staff": return { name: "", email: "", password: "", phone: "", role: "ADMIN" }
     case "promo-codes": return { code: "", discountType: "PERCENT", discountValue: 0, minOrderValue: 0, maxDiscount: 0, usageLimit: 100, isActive: true, expiresAt: null }
@@ -1694,6 +1707,540 @@ function generateDefaultForm(section: string) {
 }
 
 type Row = Record<string, any>
+
+function ServiceEditor({
+  value,
+  onChange,
+  onPickImage,
+}: {
+  value: Row
+  onChange: (key: string, value: any) => void
+  onPickImage: () => void
+}) {
+  const [uploading, setUploading] = useState(false)
+  const processSteps = Array.isArray(value.process)
+    ? value.process
+    : typeof value.process === "string"
+      ? value.process.split("\n").filter(Boolean)
+      : []
+
+  const updateProcessStep = (index: number, nextValue: string) => {
+    const nextProcess = [...processSteps]
+    nextProcess[index] = nextValue
+    onChange("process", nextProcess)
+  }
+
+  const removeProcessStep = (index: number) => {
+    onChange("process", processSteps.filter((_, stepIndex) => stepIndex !== index))
+  }
+
+  const handleUpload = async (file?: File) => {
+    if (!file) return
+    setUploading(true)
+    try {
+      const token = useAuthStore.getState().session?.token
+      const formData = new FormData()
+      formData.append("image", file)
+      const response = await fetch("/api/upload/image", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      if (!response.ok) throw new Error("Upload failed")
+      const data = await response.json()
+      onChange("image", data.url)
+      toast.success("Đã tải ảnh dịch vụ lên thành công")
+    } catch {
+      toast.error("Không thể tải ảnh dịch vụ lên")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const currentCategory = String(value.category || "")
+
+  return (
+    <div className="space-y-6 py-4">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+        <p className="text-sm font-bold text-emerald-950">Nội dung thẻ trên trang Dịch vụ</p>
+        <p className="mt-1 text-xs leading-5 text-emerald-900/70">
+          Các trường bên dưới tạo nên một thẻ dịch vụ: ảnh, tiêu đề, nhóm hiển thị, thời lượng, giá và các bước thực hiện.
+        </p>
+      </div>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2">
+          <div>
+            <h3 className="text-sm font-bold text-neutral-900">1. Nội dung hiển thị</h3>
+            <p className="mt-0.5 text-xs text-neutral-500">Tên này sẽ xuất hiện như tiêu đề chính của thẻ.</p>
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700">Card content</span>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="space-y-1.5 md:col-span-2">
+            <span className="text-xs font-semibold text-neutral-600">Tên dịch vụ</span>
+            <Input
+              value={value.name || ""}
+              onChange={(event) => onChange("name", event.target.value)}
+              placeholder="Ví dụ: CẮT TÓC & TẠO KIỂU"
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-xs font-semibold text-neutral-600">Nhóm hiển thị</span>
+            <select
+              value={currentCategory}
+              onChange={(event) => onChange("category", event.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {!SERVICE_CATEGORY_OPTIONS.includes(currentCategory) && currentCategory && (
+                <option value={currentCategory}>{currentCategory}</option>
+              )}
+              <option value="">Chọn nhóm dịch vụ</option>
+              {SERVICE_CATEGORY_OPTIONS.map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-1.5 md:col-span-2">
+            <span className="text-xs font-semibold text-neutral-600">Mô tả ngắn</span>
+            <textarea
+              value={value.description || ""}
+              onChange={(event) => onChange("description", event.target.value)}
+              rows={3}
+              placeholder="Mô tả lợi ích và trải nghiệm khách hàng nhận được..."
+              className="flex min-h-[84px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2">
+          <div>
+            <h3 className="text-sm font-bold text-neutral-900">2. Ảnh đại diện</h3>
+            <p className="mt-0.5 text-xs text-neutral-500">Ảnh được crop theo khung 4:3 giống card trên trang public.</p>
+          </div>
+          <Images className="size-4 text-emerald-700" aria-hidden="true" />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
+            {value.image ? (
+              <MediaThumbnail src={String(value.image)} alt={String(value.name || "Ảnh dịch vụ")} />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-2 text-neutral-400">
+                <ImageOff className="size-6" />
+                <span className="text-[10px] font-medium">Chưa có ảnh</span>
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Input
+              value={value.image || ""}
+              onChange={(event) => onChange("image", event.target.value)}
+              placeholder="Dán URL ảnh hoặc chọn từ Media"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={onPickImage} className="gap-1.5 text-xs">
+                <Images className="size-3.5" /> Chọn từ Media
+              </Button>
+              <label className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-50 px-3 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100">
+                <UploadCloud className="size-3.5" />
+                {uploading ? "Đang tải..." : "Tải ảnh từ máy"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(event) => {
+                    void handleUpload(event.target.files?.[0])
+                    event.target.value = ""
+                  }}
+                />
+              </label>
+            </div>
+            <p className="text-[11px] leading-5 text-neutral-400">Nên dùng ảnh ngang, chủ thể nằm trong vùng trung tâm để không mất chi tiết khi hiển thị.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2">
+          <div>
+            <h3 className="text-sm font-bold text-neutral-900">3. Giá và thời lượng</h3>
+            <p className="mt-0.5 text-xs text-neutral-500">Các thông tin này được hiển thị ngay cạnh tiêu đề card.</p>
+          </div>
+          <Clock className="size-4 text-emerald-700" aria-hidden="true" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <label className="space-y-1.5">
+            <span className="text-xs font-semibold text-neutral-600">Giá niêm yết (VNĐ)</span>
+            <Input type="number" min={0} value={value.price ?? 0} onChange={(event) => onChange("price", Number(event.target.value))} />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs font-semibold text-neutral-600">Thời lượng (phút)</span>
+            <Input type="number" min={0} value={value.duration ?? 30} onChange={(event) => onChange("duration", Number(event.target.value))} />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs font-semibold text-neutral-600">Thứ tự card</span>
+            <Input type="number" min={0} value={value.order ?? 0} onChange={(event) => onChange("order", Number(event.target.value))} />
+          </label>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2">
+          <div>
+            <h3 className="text-sm font-bold text-neutral-900">4. Quy trình thực hiện</h3>
+            <p className="mt-0.5 text-xs text-neutral-500">Mỗi dòng là một bước, sẽ được đánh số trên card public.</p>
+          </div>
+          <span className="text-xs font-medium text-neutral-400">{processSteps.length} bước</span>
+        </div>
+        <div className="space-y-2">
+          {processSteps.map((step: string, index: number) => (
+            <div key={`${index}-${step}`} className="flex items-center gap-2">
+              <span className="grid size-7 shrink-0 place-items-center rounded-md bg-neutral-900 text-[11px] font-bold text-white">{index + 1}</span>
+              <Input value={step} onChange={(event) => updateProcessStep(index, event.target.value)} placeholder={`Bước ${index + 1}`} />
+              <button type="button" onClick={() => removeProcessStep(index)} className="px-2 text-lg leading-none text-red-400 transition-colors hover:text-red-600" aria-label={`Xóa bước ${index + 1}`}>×</button>
+            </div>
+          ))}
+          <Button type="button" variant="outline" onClick={() => onChange("process", [...processSteps, ""])} className="gap-1.5 border-dashed text-sm">
+            <Plus className="size-4" /> Thêm bước
+          </Button>
+          {!processSteps.length && <p className="text-xs italic text-neutral-400">Chưa có bước nào. Thêm tối thiểu một bước để card không bị trống.</p>}
+        </div>
+      </section>
+
+      <section className="grid gap-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:grid-cols-2">
+        <label className="flex items-start gap-3 rounded-lg border border-neutral-200 bg-white p-3">
+          <input type="checkbox" checked={Boolean(value.featured)} onChange={(event) => onChange("featured", event.target.checked)} className="mt-0.5 size-4 accent-emerald-700" />
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-neutral-900"><Sparkles className="size-3.5 text-amber-500" /> Gắn nhãn Signature</span>
+            <span className="mt-1 block text-xs leading-5 text-neutral-500">Card sẽ được nhấn mạnh trên trang dịch vụ.</span>
+          </span>
+        </label>
+        <label className="space-y-1.5">
+          <span className="text-xs font-semibold text-neutral-600">Trạng thái hiển thị</span>
+          <select value={value.status || "active"} onChange={(event) => onChange("status", event.target.value)} className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <option value="active">Hiển thị trên website</option>
+            <option value="hidden">Ẩn khỏi website</option>
+          </select>
+        </label>
+      </section>
+    </div>
+  )
+}
+
+function ServicesAdminGrid({
+  rows,
+  onEdit,
+  onDelete,
+}: {
+  rows: Row[]
+  onEdit: (row: Row) => void
+  onDelete: (row: Row) => void
+}) {
+  const visibleCount = rows.filter((row) => row.status !== "hidden").length
+  const signatureCount = rows.filter((row) => Boolean(row.featured)).length
+  const completeCount = rows.filter((row) => {
+    const steps = Array.isArray(row.process) ? row.process : typeof row.process === "string" ? row.process.split("\n").filter(Boolean) : []
+    return steps.length >= 3
+  }).length
+
+  return (
+    <div className="space-y-5 p-4 md:p-6">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          ["Tổng dịch vụ", rows.length, "Các card đang quản lý"],
+          ["Đang hiển thị", visibleCount, "Sẵn sàng trên website"],
+          ["Signature", signatureCount, "Được nhấn mạnh"],
+          ["Đủ quy trình", completeCount, "Có từ 3 bước trở lên"],
+        ].map(([label, value, hint]) => (
+          <div key={String(label)} className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-500">{label}</p>
+            <div className="mt-1 flex items-end justify-between gap-3">
+              <span className="text-2xl font-bold tracking-tight text-neutral-950">{value}</span>
+              <span className="text-right text-[10px] leading-4 text-neutral-400">{hint}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {rows.length ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {rows.map((row, index) => {
+            const steps = Array.isArray(row.process) ? row.process : typeof row.process === "string" ? row.process.split("\n").filter(Boolean) : []
+            const status = row.status === "hidden" ? "Đang ẩn" : "Đang hiển thị"
+            return (
+              <article key={String(row.id ?? index)} className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-lg hover:shadow-neutral-200/70">
+                <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
+                  <MediaThumbnail src={row.image} alt={row.name || "Ảnh dịch vụ"} />
+                  <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
+                    <span className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur ${row.featured ? "bg-amber-400 text-neutral-950" : "bg-neutral-950/70 text-white"}`}>
+                      {row.featured ? "Signature" : `Card ${String(row.order ?? index + 1).padStart(2, "0")}`}
+                    </span>
+                    <span className={`rounded-md px-2 py-1 text-[10px] font-semibold backdrop-blur ${row.status === "hidden" ? "bg-white/90 text-neutral-600" : "bg-emerald-700/90 text-white"}`}>
+                      {status}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-4 p-4">
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="text-base font-bold leading-tight text-neutral-950">{row.name || "Chưa đặt tên"}</h3>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger aria-label={`Tác vụ cho ${row.name || "dịch vụ"}`} className="-mr-2 -mt-2 rounded-full p-2 outline-none transition-colors hover:bg-neutral-100">
+                          <MoreHorizontal className="size-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onEdit(row)}><Edit className="mr-2 size-4" /> Chỉnh sửa</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onDelete(row)} variant="destructive"><Trash2 className="mr-2 size-4" /> Xóa</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <span className="mt-2 inline-flex rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800">{row.category || "Chưa phân nhóm"}</span>
+                    <p className="mt-3 line-clamp-2 text-xs leading-5 text-neutral-500">{row.description || "Chưa có mô tả ngắn cho card."}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 border-y border-neutral-100 py-3 text-xs">
+                    <div className="flex items-center gap-1.5 text-neutral-600"><Clock className="size-3.5 text-neutral-400" /> {row.duration || 0} phút</div>
+                    <div className="text-right font-bold text-emerald-700">{typeof row.price === "number" ? formatCurrency(row.price) : "Chưa có giá"}</div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-400">Quy trình · {steps.length} bước</p>
+                    {steps.slice(0, 3).map((step: string, stepIndex: number) => (
+                      <p key={`${stepIndex}-${step}`} className="truncate text-xs text-neutral-600"><span className="mr-1.5 font-mono text-emerald-700">{stepIndex + 1}.</span>{step || "Chưa nhập nội dung"}</p>
+                    ))}
+                    {!steps.length && <p className="text-xs italic text-neutral-400">Chưa có quy trình</p>}
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-neutral-300 px-6 py-16 text-center">
+          <p className="text-sm font-semibold text-neutral-700">Chưa có dịch vụ phù hợp</p>
+          <p className="mt-1 text-xs text-neutral-400">Thử đổi từ khóa hoặc thêm một card dịch vụ mới.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ServicesPageContentManager({
+  lookbook,
+  teamMembers,
+  onSaveLookbook,
+  onDeleteLookbook,
+  onSaveTeamMember,
+  onDeleteTeamMember,
+}: {
+  lookbook: Row[]
+  teamMembers: Row[]
+  onSaveLookbook: (item: Row) => Promise<void>
+  onDeleteLookbook: (id: string | number) => Promise<void>
+  onSaveTeamMember: (item: Row) => Promise<void>
+  onDeleteTeamMember: (id: string | number) => Promise<void>
+}) {
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorType, setEditorType] = useState<"lookbook" | "team">("lookbook")
+  const [editingItem, setEditingItem] = useState<Row | null>(null)
+  const [formData, setFormData] = useState<Row>({})
+
+  const openEditor = (type: "lookbook" | "team", item?: Row) => {
+    setEditorType(type)
+    setEditingItem(item ?? null)
+    setFormData(item ? { ...item } : type === "lookbook"
+      ? { title: "", category: "Classic", image: "", order: lookbook.length, published: true }
+      : { name: "", role: "", image: "", description: "", specialty: "", order: teamMembers.length, status: "active" })
+    setEditorOpen(true)
+  }
+
+  const updateField = (key: string, value: unknown) => setFormData((current) => ({ ...current, [key]: value }))
+
+  const handleSave = async () => {
+    if (editorType === "lookbook") {
+      if (!String(formData.image || "").trim()) {
+        toast.error("Góc thành phẩm cần có hình ảnh")
+        return
+      }
+      await onSaveLookbook({
+        ...formData,
+        title: String(formData.title || "").trim() || "Tác phẩm TOTO",
+        category: String(formData.category || "Classic"),
+        order: Math.max(0, Number(formData.order) || 0),
+        published: formData.published !== false,
+        tags: [String(formData.category || "Classic")],
+      })
+    } else {
+      if (!String(formData.name || "").trim() || !String(formData.role || "").trim() || !String(formData.image || "").trim()) {
+        toast.error("Hồ sơ đội ngũ cần có tên, vai trò và hình ảnh")
+        return
+      }
+      await onSaveTeamMember({
+        ...formData,
+        name: String(formData.name).trim(),
+        role: String(formData.role).trim(),
+        image: String(formData.image).trim(),
+        order: Math.max(0, Number(formData.order) || 0),
+        status: formData.status === "hidden" ? "hidden" : "active",
+      })
+    }
+    setEditorOpen(false)
+  }
+
+  const handleDelete = async (type: "lookbook" | "team", item: Row) => {
+    const label = type === "lookbook" ? item.title || "hình ảnh" : item.name || "thành viên"
+    if (!window.confirm(`Xóa ${label} khỏi nội dung trang Dịch vụ?`)) return
+    if (type === "lookbook") await onDeleteLookbook(item.id)
+    else await onDeleteTeamMember(item.id)
+  }
+
+  const uploadImage = async (file: File | undefined) => {
+    if (!file) return
+    try {
+      const token = useAuthStore.getState().session?.token
+      const body = new FormData()
+      body.append("image", file)
+      const response = await fetch("/api/upload/image", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      })
+      if (!response.ok) throw new Error("Upload failed")
+      const data = await response.json()
+      updateField("image", data.url)
+      toast.success("Đã tải hình ảnh lên thành công")
+    } catch {
+      toast.error("Không thể tải hình ảnh lên")
+    }
+  }
+
+  return (
+    <section className="border-t bg-neutral-50 p-4 md:p-6">
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700">Nội dung trang</p>
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-neutral-950">Góc thành phẩm &amp; Tổ đội TOTO</h2>
+          <p className="mt-1 max-w-2xl text-xs leading-5 text-neutral-500">
+            Hai khu vực bên dưới dùng chung dữ liệu với website. Có thể thay ảnh, chỉnh nội dung, sắp xếp thứ tự hoặc ẩn từng mục.
+          </p>
+        </div>
+        <span className="text-xs text-neutral-400">Không bao gồm tài khoản đăng nhập</span>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-neutral-950">Góc thành phẩm</h3>
+              <p className="mt-1 text-xs text-neutral-500">Ảnh Lookbook hiển thị trong lưới thành phẩm.</p>
+            </div>
+            <Button type="button" size="sm" onClick={() => openEditor("lookbook")} className="shrink-0 gap-1.5"><Plus className="size-3.5" /> Thêm ảnh</Button>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {lookbook.filter((item) => item.category !== "Shop").map((item, index) => (
+              <article key={String(item.id ?? index)} className="group relative overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
+                <div className="relative aspect-square"><MediaThumbnail src={item.image} alt={item.title || "Ảnh thành phẩm"} /></div>
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/80 to-transparent p-2 pt-8">
+                  <span className="truncate text-[10px] font-medium text-white">{item.title || "Tác phẩm"}</span>
+                  <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <button type="button" onClick={() => openEditor("lookbook", item)} className="rounded bg-white/90 p-1 text-neutral-800" aria-label="Sửa ảnh thành phẩm"><Edit className="size-3" /></button>
+                    <button type="button" onClick={() => void handleDelete("lookbook", item)} className="rounded bg-red-500/90 p-1 text-white" aria-label="Xóa ảnh thành phẩm"><Trash2 className="size-3" /></button>
+                  </div>
+                </div>
+                {item.published === false && <span className="absolute left-2 top-2 rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold text-neutral-600">Đang ẩn</span>}
+              </article>
+            ))}
+          </div>
+          {!lookbook.filter((item) => item.category !== "Shop").length && <p className="py-8 text-center text-xs italic text-neutral-400">Chưa có ảnh thành phẩm.</p>}
+        </div>
+
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-neutral-950">Tổ đội TOTO</h3>
+              <p className="mt-1 text-xs text-neutral-500">Hồ sơ barber hiển thị ở phần đội ngũ trên website.</p>
+            </div>
+            <Button type="button" size="sm" onClick={() => openEditor("team")} className="shrink-0 gap-1.5"><Plus className="size-3.5" /> Thêm người</Button>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {teamMembers.map((item, index) => (
+              <article key={String(item.id ?? index)} className="flex gap-3 rounded-lg border border-neutral-200 p-2.5">
+                <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-neutral-100"><MediaThumbnail src={item.image} alt={item.name || "Thành viên"} /></div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0"><h3 className="truncate text-sm font-bold text-neutral-950">{item.name || "Chưa đặt tên"}</h3><p className="truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-700">{item.role || "Chưa có vai trò"}</p></div>
+                    <div className="flex shrink-0 gap-1">
+                      <button type="button" onClick={() => openEditor("team", item)} className="rounded p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900" aria-label="Sửa thành viên"><Edit className="size-3.5" /></button>
+                      <button type="button" onClick={() => void handleDelete("team", item)} className="rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600" aria-label="Xóa thành viên"><Trash2 className="size-3.5" /></button>
+                    </div>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-neutral-500">{item.description || "Chưa có mô tả"}</p>
+                  {item.status === "hidden" && <span className="mt-1 inline-block text-[9px] font-semibold text-neutral-400">Đang ẩn trên website</span>}
+                </div>
+              </article>
+            ))}
+          </div>
+          {!teamMembers.length && <p className="py-8 text-center text-xs italic text-neutral-400">Chưa có hồ sơ đội ngũ.</p>}
+        </div>
+      </div>
+
+      <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader><DialogTitle>{editingItem ? "Chỉnh sửa" : "Thêm mới"} {editorType === "lookbook" ? "ảnh thành phẩm" : "thành viên TOTO"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-3">
+            {editorType === "lookbook" ? (
+              <>
+                <label className="block space-y-1.5"><span className="text-xs font-semibold text-neutral-600">Tên ảnh (tùy chọn)</span><Input value={formData.title || ""} onChange={(event) => updateField("title", event.target.value)} placeholder="Ví dụ: Textured crop tháng 10" /></label>
+                <label className="block space-y-1.5"><span className="text-xs font-semibold text-neutral-600">Nhóm</span><select value={formData.category || "Classic"} onChange={(event) => updateField("category", event.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option>Classic</option><option>Modern</option><option>Fade</option><option>Grooming</option><option>Coloring</option><option>Shop</option></select></label>
+                <ImageUrlEditor value={String(formData.image || "")} alt={String(formData.title || "Ảnh thành phẩm")} onChange={(value) => updateField("image", value)} onUpload={uploadImage} />
+                <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1.5"><span className="text-xs font-semibold text-neutral-600">Thứ tự</span><Input type="number" min={0} value={formData.order ?? 0} onChange={(event) => updateField("order", Number(event.target.value))} /></label><label className="flex items-center gap-2 pt-7 text-sm"><input type="checkbox" checked={formData.published !== false} onChange={(event) => updateField("published", event.target.checked)} className="size-4 accent-emerald-700" /> Hiển thị trên website</label></div>
+              </>
+            ) : (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1.5"><span className="text-xs font-semibold text-neutral-600">Tên barber</span><Input value={formData.name || ""} onChange={(event) => updateField("name", event.target.value)} placeholder="Ví dụ: Barber ToTo" /></label><label className="space-y-1.5"><span className="text-xs font-semibold text-neutral-600">Vai trò</span><Input value={formData.role || ""} onChange={(event) => updateField("role", event.target.value)} placeholder="Head Barber & Founder" /></label></div>
+                <ImageUrlEditor value={String(formData.image || "")} alt={String(formData.name || "Ảnh barber")} onChange={(value) => updateField("image", value)} onUpload={uploadImage} />
+                <label className="block space-y-1.5"><span className="text-xs font-semibold text-neutral-600">Mô tả</span><textarea value={formData.description || ""} onChange={(event) => updateField("description", event.target.value)} rows={3} placeholder="Thế mạnh và trải nghiệm của barber..." className="flex min-h-[84px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm" /></label>
+                <label className="block space-y-1.5"><span className="text-xs font-semibold text-neutral-600">Chuyên môn (tùy chọn)</span><Input value={formData.specialty || ""} onChange={(event) => updateField("specialty", event.target.value)} placeholder="Classic Pompadour, Skin Fade" /></label>
+                <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1.5"><span className="text-xs font-semibold text-neutral-600">Thứ tự</span><Input type="number" min={0} value={formData.order ?? 0} onChange={(event) => updateField("order", Number(event.target.value))} /></label><label className="space-y-1.5"><span className="text-xs font-semibold text-neutral-600">Trạng thái</span><select value={formData.status || "active"} onChange={(event) => updateField("status", event.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="active">Hiển thị trên website</option><option value="hidden">Ẩn khỏi website</option></select></label></div>
+              </>
+            )}
+          </div>
+          <DialogFooter><Button type="button" variant="outline" onClick={() => setEditorOpen(false)}>Hủy</Button><Button type="button" onClick={() => void handleSave()}>Lưu thay đổi</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
+  )
+}
+
+function ImageUrlEditor({
+  value,
+  alt,
+  onChange,
+  onUpload,
+}: {
+  value: string
+  alt: string
+  onChange: (value: string) => void
+  onUpload: (file: File | undefined) => Promise<void>
+}) {
+  return (
+    <div className="space-y-2">
+      <span className="text-xs font-semibold text-neutral-600">Hình ảnh</span>
+      <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
+        {value ? <MediaThumbnail src={value} alt={alt} className="h-full w-full object-contain" /> : <div className="flex h-full items-center justify-center text-xs text-neutral-400">Chưa có ảnh</div>}
+      </div>
+      <Input value={value} onChange={(event) => onChange(event.target.value)} placeholder="Dán URL ảnh hoặc tải từ máy" />
+      <label className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-50 px-3 text-xs font-medium text-neutral-700 hover:bg-neutral-100"><UploadCloud className="size-3.5" /> Tải ảnh từ máy<input type="file" accept="image/*" className="hidden" onChange={(event) => { void onUpload(event.target.files?.[0]); event.target.value = "" }} /></label>
+    </div>
+  )
+}
 
 // ============================================================================
 // Messages Form Component with Advanced Filters
@@ -2093,7 +2640,10 @@ export function CrudPage({ section }: { section: string }) {
   }
 
   let filtered = rows.filter(r => {
-    const text = String(r.title ?? r.name ?? r.code ?? r.email ?? r.phone ?? r.question ?? "").toLowerCase()
+    const searchableContent = section === "services"
+      ? [r.name, r.category, r.description, ...(Array.isArray(r.process) ? r.process : [])]
+      : [r.title ?? r.name ?? r.code ?? r.email ?? r.phone ?? r.question]
+    const text = searchableContent.filter(Boolean).join(" ").toLowerCase()
     let match = text.includes(search.toLowerCase())
     
     if (section === "products") {
@@ -2160,6 +2710,14 @@ export function CrudPage({ section }: { section: string }) {
   if (section === "products") {
     filtered = [...filtered].sort((a, b) => {
       return new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()
+    })
+  }
+
+  if (section === "services") {
+    filtered = [...filtered].sort((a, b) => {
+      const orderDifference = (Number(a.order) || 0) - (Number(b.order) || 0)
+      if (orderDifference !== 0) return orderDifference
+      return String(a.name || "").localeCompare(String(b.name || ""), "vi")
     })
   }
 
@@ -2600,6 +3158,22 @@ export function CrudPage({ section }: { section: string }) {
               </div>
             )}
           </div>
+        ) : section === "services" ? (
+          <>
+            <ServicesAdminGrid
+              rows={paginatedRows}
+              onEdit={handleEdit}
+              onDelete={setItemToDelete}
+            />
+            <ServicesPageContentManager
+              lookbook={d.lookbook || []}
+              teamMembers={d.teamMembers || []}
+              onSaveLookbook={async (item) => { await d.upsertLookbook(item as any) }}
+              onDeleteLookbook={async (id) => { await d.deleteLookbook(String(id)) }}
+              onSaveTeamMember={async (item) => { await d.upsertTeamMember(item as any) }}
+              onDeleteTeamMember={async (id) => { await d.deleteTeamMember(id) }}
+            />
+          </>
         ) : (
           <div className="overflow-x-auto w-full">
             <table className="w-full min-w-[700px] text-left text-sm">
@@ -3282,7 +3856,7 @@ export function CrudPage({ section }: { section: string }) {
 
       {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className={section === "products" ? "sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : section === "merchandise-stories" ? "sm:max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : "sm:max-w-[500px] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6"}>
+        <DialogContent className={section === "products" ? "sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : section === "merchandise-stories" ? "sm:max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6" : section === "services" ? "sm:max-w-4xl max-h-[92vh] overflow-y-auto overflow-x-hidden p-6" : "sm:max-w-[500px] max-h-[90vh] overflow-y-auto overflow-x-hidden p-6"}>
           <DialogHeader>
             <DialogTitle>{editingItem ? "Chỉnh sửa" : "Thêm mới"} {labels[section]?.toLowerCase()}</DialogTitle>
           </DialogHeader>
@@ -3292,6 +3866,12 @@ export function CrudPage({ section }: { section: string }) {
               initial={editingItem ?? {}}
               onSave={async (product) => { if (await d.upsertProduct(product)) setModalOpen(false) }}
               onCancel={() => setModalOpen(false)}
+            />
+          ) : section === "services" ? (
+            <ServiceEditor
+              value={formData}
+              onChange={handleChange}
+              onPickImage={() => { setGenericMediaField("image"); setOpenGenericMediaPicker(true) }}
             />
           ) : section === "orders" ? (
             <div className="grid gap-4 py-4">

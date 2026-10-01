@@ -9,6 +9,7 @@ import type {
   TrainingCourse,
   MerchandiseStory,
   LookbookItem,
+  TeamMember,
   Order,
   MediaItem,
   SettingsData,
@@ -54,6 +55,7 @@ interface DataState {
   courses: TrainingCourse[]
   stories: MerchandiseStory[]
   lookbook: LookbookItem[]
+  teamMembers: TeamMember[]
   orders: Order[]
   orderPagination: OrderPagination
   promoCodes: any[]
@@ -69,6 +71,7 @@ interface DataState {
   fetchCourses: () => Promise<void>
   fetchStories: () => Promise<void>
   fetchLookbook: () => Promise<void>
+  fetchTeamMembers: () => Promise<void>
   fetchMedia: () => Promise<void>
   fetchOrders: (params?: OrderQueryParams) => Promise<void>
   fetchPromoCodes: () => Promise<void>
@@ -109,6 +112,8 @@ interface DataState {
   // Lookbook
   upsertLookbook: (item: LookbookItem) => void
   deleteLookbook: (id: string) => void
+  upsertTeamMember: (item: Partial<TeamMember>) => Promise<void>
+  deleteTeamMember: (id: string | number) => Promise<void>
 
   // Promo Codes
   upsertPromoCode: (promo: any) => Promise<void>
@@ -143,6 +148,7 @@ const seed = {
   courses: [] as TrainingCourse[],
   stories: [] as MerchandiseStory[],
   lookbook: [] as LookbookItem[],
+  teamMembers: [] as TeamMember[],
   promoCodes: [] as any[],
   orders: [] as Order[],
   orderPagination: {
@@ -219,6 +225,12 @@ export const useDataStore = create<DataState>()(
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/lookbooks`);
           if (res.ok) set({ lookbook: await res.json() });
         } catch (error) { console.error(error); }
+      },
+      fetchTeamMembers: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/team-members`);
+          if (res.ok) set({ teamMembers: await res.json() });
+        } catch (error) { console.error("Failed to fetch team members:", error); }
       },
       fetchMedia: async () => {
         try {
@@ -764,6 +776,38 @@ export const useDataStore = create<DataState>()(
           toast.success("Đã xóa lookbook thành công!");
         } else {
           toast.error("Lỗi khi xóa lookbook");
+        }
+      },
+
+      upsertTeamMember: async (item) => {
+        const token = useAuthStore.getState().session?.token;
+        const isUpdate = Boolean(item.id);
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        const res = await fetch(isUpdate ? `${baseUrl}/team-members/${item.id}` : `${baseUrl}/team-members`, {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(item),
+        });
+        if (res.ok) {
+          get().fetchTeamMembers();
+          toast.success(isUpdate ? "Đã cập nhật thành viên đội ngũ!" : "Đã thêm thành viên đội ngũ!");
+        } else {
+          const error = await res.json().catch(() => ({}));
+          toast.error(error.error || "Lỗi khi lưu thành viên đội ngũ");
+        }
+      },
+      deleteTeamMember: async (id) => {
+        const token = useAuthStore.getState().session?.token;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${baseUrl}/team-members/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          get().fetchTeamMembers();
+          toast.success("Đã xóa thành viên đội ngũ!");
+        } else {
+          toast.error("Lỗi khi xóa thành viên đội ngũ");
         }
       },
 
