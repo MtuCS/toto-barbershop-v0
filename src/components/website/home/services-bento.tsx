@@ -12,25 +12,25 @@ const SERVICES = [
     number: "01",
     title: "Tóc & tạo kiểu",
     description:
-      "Tư vấn kỹ theo dáng mặt và chất tóc thật. Tỉ mỉ từng đường kéo để tóc dài ra vẫn giữ được form dáng.",
+      "Cắt tóc & lên form chuẩn nam tính, uốn sóng tự nhiên và nhuộm màu tôn dáng mặt, giữ độ khỏe cho tóc.",
   },
   {
     number: "02",
-    title: "Vệ sinh & chăm sóc",
+    title: "Gội & cạo",
     description:
-      "Gội đầu, cạo mặt và chăm sóc da đầu vừa đủ để bạn rời ghế với cảm giác nhẹ nhõm, sạch sẽ.",
+      "Gội đầu thư giãn ấn huyệt nhẹ nhàng, cạo mặt êm ái cùng ủ khăn ấm và ráy tai tỉ mỉ.",
   },
   {
     number: "03",
-    title: "Râu & khăn nóng",
+    title: "Chăm sóc da mặt",
     description:
-      "Tạo dáng râu theo đường nét gương mặt, kết hợp khăn nóng và dao cạo truyền thống cho bề mặt êm gọn.",
+      "Đắp khăn nóng, lột mụn làm sạch sâu cùng combo dưỡng da tẩy tế bào chết, thải chì và đắp mặt nạ ngũ hoa.",
   },
   {
     number: "04",
     title: "Mấy gói combo",
     description:
-      "Kết hợp trọn vẹn từ cắt tóc, gội đầu, cạo râu đến dưỡng da để lấy lại phong độ tinh tươm nhất.",
+      "Trải nghiệm trọn vẹn từ combo thư giãn đến full combo chăm sóc toàn diện để lấy lại phong độ tinh tươm nhất.",
   },
 ] as const
 
