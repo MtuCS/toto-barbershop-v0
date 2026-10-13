@@ -214,7 +214,7 @@ export default async function ServicesPage() {
               <div className="group relative rounded-[2rem] p-1.5 border border-white/10 bg-white/[0.02] shadow-[0_25px_60px_rgba(0,0,0,0.8)] backdrop-blur-sm transition-all duration-500 hover:border-[#79b8a7]/40">
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[calc(2rem-0.375rem)] border border-white/5 bg-black/60">
                   <Image
-                    src="/images/hero-portrait.png"
+                    src="/images/service-banner.jpg"
                     alt="Video tổng hợp dịch vụ ToTo Barbershop"
                     fill
                     priority
@@ -224,20 +224,20 @@ export default async function ServicesPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-[#07110f]/90 via-black/40 to-black/20" />
 
                   {/* Play Button Overlay */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                  {/* <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
                     <div className="flex size-14 items-center justify-center rounded-full border border-white/30 bg-black/60 text-[#79b8a7] shadow-[0_0_30px_rgba(121,184,167,0.35)] backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:bg-[#79b8a7] group-hover:text-[#07110f]">
                       <Play className="size-6 fill-current ml-0.5" />
                     </div>
                     <span className="mt-3 text-xs font-mono uppercase tracking-widest text-white/80 group-hover:text-[#79b8a7] transition-colors">
 
                     </span>
-                  </div>
+                  </div> */}
 
                   {/* Corner tags */}
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-white/70 backdrop-blur-md bg-black/60 px-3 py-1 rounded-full border border-white/10">
+                  {/* <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-white/70 backdrop-blur-md bg-black/60 px-3 py-1 rounded-full border border-white/10">
                     <span className="text-[#79b8a7]">ToTo Atmosphere</span>
                     <span className="text-white/50">85 Đồng Đen, Tân Bình</span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
