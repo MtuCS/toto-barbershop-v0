@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import Image from "next/image"
-import { ArrowUpRight, MessageCircle, Sparkles } from "lucide-react"
+import { ArrowUpRight, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface ServiceSubItem {
@@ -22,10 +22,43 @@ export interface FigmaServiceGroup {
 
 export function FigmaServicesList({ groups }: { groups: FigmaServiceGroup[] }) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {groups.map((group) => (
-        <FigmaServiceCard key={group.id} group={group} />
-      ))}
+    <div className="space-y-6 md:space-y-8">
+      {/* 4 Nhóm Card Dịch Vụ */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {groups.map((group) => (
+          <FigmaServiceCard key={group.id} group={group} />
+        ))}
+      </div>
+
+      {/* Floating Capsule Action Bar tinh tế, thanh thoát theo chuẩn UI/UX Pro Max */}
+      <div className="mt-8 flex justify-center">
+        <div className="group/capsule relative inline-flex w-full max-w-xl sm:w-auto flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6 rounded-2xl sm:rounded-full border border-white/10 bg-[#07110f]/80 p-2 sm:p-1.5 sm:pl-5 sm:pr-2 shadow-[0_12px_32px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all duration-300 hover:border-[#79b8a7]/40 hover:shadow-[0_15px_35px_rgba(121,184,167,0.12)]">
+          {/* Subtle live indicator dot + Text */}
+          <div className="flex items-center gap-2.5 text-center sm:text-left py-1 sm:py-0">
+            <span className="relative flex size-2 shrink-0">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#79b8a7] opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-[#79b8a7]" />
+            </span>
+            <span className="font-sans text-xs sm:text-sm font-medium text-white/80">
+              Bạn cần tư vấn kiểu tóc hoặc dịch vụ phù hợp?
+            </span>
+          </div>
+
+          {/* Button-in-Button Nested CTA Pill */}
+          <a
+            href="https://m.me/totobarbershopHCM"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Nhắn tin Messenger tư vấn với ToTo Barbershop"
+            className="group/btn inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl sm:rounded-full bg-[#79b8a7] px-4 py-2 sm:py-1.5 text-xs font-bold uppercase tracking-wider text-[#07110f] transition-all duration-300 hover:bg-[#68a494] hover:shadow-[0_0_20px_rgba(121,184,167,0.35)] active:scale-95 cursor-pointer shrink-0"
+          >
+            <span>Tư vấn</span>
+            <span className="flex size-5 sm:size-5.5 items-center justify-center rounded-full bg-[#07110f]/15 text-[#07110f] transition-transform duration-300 group-hover/btn:rotate-45 group-hover/btn:bg-[#07110f]/25">
+              <ArrowUpRight className="size-3.5 stroke-[2.5]" />
+            </span>
+          </a>
+        </div>
+      </div>
     </div>
   )
 }
@@ -99,8 +132,8 @@ function FigmaServiceCard({ group }: { group: FigmaServiceGroup }) {
           </h3>
         </div>
 
-        {/* Danh sách dịch vụ + giá (Không quy trình, chỉ hình minh họa + giá theo feedback) */}
-        <div className="mt-4 flex-1 space-y-3.5 divide-y divide-white/5">
+        {/* Danh sách dịch vụ + giá */}
+        <div className="mt-4 flex-1 space-y-3.5 divide-y divide-white/5 pb-2">
           {group.items.map((sub, idx) => (
             <div key={idx} className={idx > 0 ? "pt-3.5" : ""}>
               <div className="flex items-baseline justify-between gap-2">
@@ -116,26 +149,6 @@ function FigmaServiceCard({ group }: { group: FigmaServiceGroup }) {
               </p>
             </div>
           ))}
-        </div>
-
-        {/* Bottom CTA: Đổi sang "Tìm hiểu", bấm vào mở thẳng khung chat Messenger */}
-        <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between">
-          <span className="text-[11px] font-mono text-white/40">
-            Tư vấn chi tiết
-          </span>
-          <a
-            href="https://m.me/totobarbershopHCM"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Tìm hiểu dịch vụ ${group.title} qua Messenger`}
-            className="group/btn inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 pl-3.5 pr-1.5 py-1 text-xs font-semibold text-[#f2f5f3] transition-all duration-300 hover:border-[#79b8a7]/60 hover:bg-[#79b8a7]/20 hover:text-[#79b8a7] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79b8a7]"
-          >
-            <MessageCircle className="size-3.5 text-[#79b8a7]" />
-            <span className="text-[11px] font-bold">Tìm hiểu</span>
-            <span className="flex size-6 items-center justify-center rounded-full bg-[#79b8a7]/20 text-[#79b8a7] transition-all duration-300 group-hover/btn:bg-[#79b8a7] group-hover/btn:text-[#07110f] group-hover/btn:rotate-45">
-              <ArrowUpRight className="size-3 stroke-[2.5]" aria-hidden="true" />
-            </span>
-          </a>
         </div>
       </div>
     </div>
