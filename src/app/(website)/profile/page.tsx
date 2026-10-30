@@ -69,12 +69,12 @@ function OrderStepper({ status }: { status: string }) {
                   ? 'bg-primary text-white ring-4 ring-primary/20 scale-110' 
                   : isDone 
                     ? 'bg-primary text-white' 
-                    : 'bg-white border-2 border-neutral-300 text-neutral-400'
+                    : 'bg-white border-2 border-neutral-300 text-neutral-500'
               }`}>
                 {idx + 1}
               </div>
               <span className={`text-[11px] font-medium mt-2 max-w-[80px] text-center leading-tight ${
-                isCurrent ? 'text-primary font-bold' : isDone ? 'text-neutral-800' : 'text-neutral-400'
+                isCurrent ? 'text-primary font-bold' : isDone ? 'text-neutral-800' : 'text-neutral-500'
               }`}>
                 {s.label}
               </span>
@@ -229,9 +229,6 @@ function ProfileContent() {
       es.close();
     };
   }, [user?.id, token])
-
-
-
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -412,17 +409,23 @@ function ProfileContent() {
     <div className="mx-auto max-w-5xl px-5 py-12 md:px-6">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl font-bold uppercase tracking-tight">Hồ sơ của tôi</h1>
-          <p className="mt-2 text-neutral-500">Quản lý thông tin cá nhân và đơn hàng</p>
+          <h1 className="font-display text-4xl font-bold uppercase tracking-tight text-[#f2f5f3]">Hồ sơ của tôi</h1>
+          <p className="mt-2 text-neutral-400">Quản lý thông tin cá nhân và đơn hàng</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); router.push(`/profile?tab=${v}`); }} className="w-full">
         <TabsList className="mb-8 grid w-full grid-cols-2 gap-4 bg-transparent p-0">
-          <TabsTrigger value="profile" className="flex h-14 sm:h-16 items-center justify-center gap-2 rounded-2xl border-2 border-transparent bg-neutral-100 text-sm sm:text-base font-bold text-neutral-500 transition-all hover:bg-neutral-200/50 data-[state=active]:border-primary data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:shadow-none">
+          <TabsTrigger 
+            value="profile" 
+            className="flex h-14 sm:h-16 items-center justify-center gap-2 rounded-2xl border-2 border-transparent bg-white text-sm sm:text-base font-bold text-neutral-600 transition-all hover:bg-neutral-50 hover:text-neutral-900 data-[state=active]:border-primary data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm cursor-pointer"
+          >
             <User className="size-5 sm:size-6" /> <span className="hidden sm:inline">Thông tin cá nhân</span><span className="sm:hidden">Hồ sơ</span>
           </TabsTrigger>
-          <TabsTrigger value="orders" className="flex h-14 sm:h-16 items-center justify-center gap-2 rounded-2xl border-2 border-transparent bg-neutral-100 text-sm sm:text-base font-bold text-neutral-500 transition-all hover:bg-neutral-200/50 data-[state=active]:border-primary data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:shadow-none">
+          <TabsTrigger 
+            value="orders" 
+            className="flex h-14 sm:h-16 items-center justify-center gap-2 rounded-2xl border-2 border-transparent bg-white text-sm sm:text-base font-bold text-neutral-600 transition-all hover:bg-neutral-50 hover:text-neutral-900 data-[state=active]:border-primary data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm cursor-pointer"
+          >
             <Package className="size-5 sm:size-6" /> <span className="hidden sm:inline">Đơn hàng của tôi</span><span className="sm:hidden">Đơn hàng</span>
           </TabsTrigger>
         </TabsList>
@@ -430,35 +433,55 @@ function ProfileContent() {
         <TabsContent value="profile" className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="grid gap-8 md:grid-cols-2">
             {/* Thông tin liên hệ */}
-            <div className="space-y-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 md:p-8">
-              <h2 className="text-xl font-bold">Thông tin liên hệ</h2>
+            <div className="space-y-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 md:p-8 text-neutral-900">
+              <h2 className="text-xl font-bold text-neutral-900">Thông tin liên hệ</h2>
               <form noValidate onSubmit={handleSave} className="space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Email (Không thể thay đổi)</label>
+                  <label className="text-sm font-semibold text-neutral-800">Email (Không thể thay đổi)</label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input type="email" disabled value={user.email} className="h-12 rounded-xl bg-neutral-100 pl-11 text-neutral-500" />
+                    <Mail className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-500" />
+                    <Input 
+                      type="email" 
+                      disabled 
+                      value={user.email} 
+                      className="h-12 rounded-xl bg-neutral-100 pl-11 text-neutral-700 font-medium border-neutral-300" 
+                    />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Họ và tên*</label>
+                  <label className="text-sm font-semibold text-neutral-800">Họ và tên*</label>
                   <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Nguyễn Văn A" className="h-12 rounded-xl pl-11 focus-visible:ring-primary/20" />
+                    <User className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-500" />
+                    <Input 
+                      value={formData.name} 
+                      onChange={e => setFormData({...formData, name: e.target.value})} 
+                      placeholder="Nguyễn Văn A" 
+                      className="h-12 rounded-xl pl-11 bg-white text-neutral-900 placeholder:text-neutral-400 border-neutral-300 focus-visible:border-primary focus-visible:ring-primary/20" 
+                    />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Số điện thoại</label>
+                  <label className="text-sm font-semibold text-neutral-800">Số điện thoại</label>
                   <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-400" />
-                    <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="09xxxxxxxx" className="h-12 rounded-xl pl-11 focus-visible:ring-primary/20" />
+                    <Phone className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-neutral-500" />
+                    <Input 
+                      value={formData.phone} 
+                      onChange={e => setFormData({...formData, phone: e.target.value})} 
+                      placeholder="09xxxxxxxx" 
+                      className="h-12 rounded-xl pl-11 bg-white text-neutral-900 placeholder:text-neutral-400 border-neutral-300 focus-visible:border-primary focus-visible:ring-primary/20" 
+                    />
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button type="submit" disabled={saving} className="h-12 rounded-xl w-full sm:w-auto px-8">
+                  <Button type="submit" disabled={saving} className="h-12 rounded-xl w-full sm:w-auto px-8 bg-primary text-white hover:bg-primary/90 font-semibold cursor-pointer">
                     {saving ? <Loader2 className="mr-2 size-4 animate-spin"/> : <Save className="mr-2 size-4"/>} Lưu thông tin
                   </Button>
-                  <Button type="button" variant="outline" className="h-12 rounded-xl w-full sm:w-auto px-8 border-neutral-300" onClick={() => { setPasswordForm({currentPassword: "", newPassword: "", confirmPassword: ""}); setPasswordModalOpen(true); }}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="h-12 rounded-xl w-full sm:w-auto px-8 border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-100 hover:text-neutral-900 font-semibold cursor-pointer" 
+                    onClick={() => { setPasswordForm({currentPassword: "", newPassword: "", confirmPassword: ""}); setPasswordModalOpen(true); }}
+                  >
                     Đổi mật khẩu
                   </Button>
                 </div>
@@ -466,34 +489,41 @@ function ProfileContent() {
             </div>
 
             {/* Sổ địa chỉ */}
-            <div className="space-y-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 md:p-8">
+            <div className="space-y-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 md:p-8 text-neutral-900">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Sổ địa chỉ</h2>
-                <Button onClick={openAddressModal} variant="outline" size="sm" className="rounded-full h-8">
+                <h2 className="text-xl font-bold text-neutral-900">Sổ địa chỉ</h2>
+                <Button 
+                  onClick={openAddressModal} 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-full h-8 border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-100 hover:text-neutral-900 font-semibold cursor-pointer"
+                >
                   <Plus className="mr-2 size-4"/> Thêm mới
                 </Button>
               </div>
               
               <div className="space-y-4 mt-4">
                 {(!user.addresses || user.addresses.length === 0) ? (
-                  <div className="p-8 text-center text-neutral-400 border border-dashed rounded-xl">Chưa có địa chỉ nào được lưu.</div>
+                  <div className="p-8 text-center text-neutral-600 font-medium border border-dashed border-neutral-300 rounded-xl bg-neutral-50/50">
+                    Chưa có địa chỉ nào được lưu.
+                  </div>
                 ) : (
                   user.addresses.map(addr => (
                     <div key={addr.id} className={`p-4 rounded-xl border transition-all ${addr.isDefault ? 'border-primary/50 bg-primary/5' : 'border-neutral-200 hover:border-neutral-300'}`}>
                       <div className="flex justify-between items-start">
                         <div className="flex gap-3">
-                          <MapPin className={`mt-0.5 size-5 ${addr.isDefault ? 'text-primary' : 'text-neutral-400'}`} />
+                          <MapPin className={`mt-0.5 size-5 shrink-0 ${addr.isDefault ? 'text-primary' : 'text-neutral-500'}`} />
                           <div>
                             <p className="font-semibold text-neutral-900">{addr.street}</p>
-                            <p className="text-sm text-neutral-500 mt-1">{addr.ward}, {addr.district}, {addr.province}</p>
+                            <p className="text-sm text-neutral-600 mt-1">{addr.ward}, {addr.district}, {addr.province}</p>
                             {addr.isDefault && <span className="inline-block mt-2 text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">Mặc định</span>}
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <Button variant="outline" size="sm" onClick={() => setAddressToDelete(addr.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                          <Button variant="outline" size="sm" onClick={() => setAddressToDelete(addr.id)} className="text-red-600 border-red-200 hover:text-red-700 hover:bg-red-50 cursor-pointer">
                             <Trash2 className="size-4 mr-2" /> Xóa</Button>
                           {!addr.isDefault && (
-                            <Button variant="link" size="sm" onClick={() => handleSetDefaultAddress(addr.id)} className="text-xs h-6 px-2 text-primary hover:text-primary/80">Đặt mặc định</Button>
+                            <Button variant="link" size="sm" onClick={() => handleSetDefaultAddress(addr.id)} className="text-xs h-6 px-2 text-primary hover:text-primary/80 cursor-pointer">Đặt mặc định</Button>
                           )}
                         </div>
                       </div>
@@ -506,21 +536,27 @@ function ProfileContent() {
         </TabsContent>
 
         <TabsContent value="orders" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="rounded-2xl bg-neutral-50 p-6 shadow-sm ring-1 ring-black/5 md:p-8">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-bold"><ShoppingBag className="size-5" /> Lịch sử Đơn hàng</h2>
-            {orders.length === 0 ? <div className="text-center py-12 text-neutral-500 bg-white rounded-xl border border-dashed">Bạn chưa có đơn hàng nào.</div> : (
+          <div className="rounded-2xl bg-neutral-50 p-6 shadow-sm ring-1 ring-black/5 md:p-8 text-neutral-900">
+            <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-neutral-900">
+              <ShoppingBag className="size-5 text-primary" /> Lịch sử Đơn hàng
+            </h2>
+            {orders.length === 0 ? (
+              <div className="text-center py-12 text-neutral-600 font-medium bg-white rounded-xl border border-dashed border-neutral-300">
+                Bạn chưa có đơn hàng nào.
+              </div>
+            ) : (
               <div className="space-y-6">
                 {orders.map(o => (
-                  <div key={o.id} className="rounded-xl bg-white p-6 shadow-sm border border-neutral-100 hover:shadow-md transition-shadow">
+                  <div key={o.id} className="rounded-xl bg-white p-6 shadow-sm border border-neutral-200 text-neutral-900 hover:shadow-md transition-shadow">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-4">
                       <div>
-                        <p className="font-bold text-lg">Đơn hàng TOTO-DH{o.id.toString().padStart(4, '0')}</p>
-                        <p className="text-sm text-neutral-500 mt-1">Ngày đặt: {new Date(o.createdAt).toLocaleDateString("vi-VN", { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="font-bold text-lg text-neutral-900">Đơn hàng TOTO-DH{o.id.toString().padStart(4, '0')}</p>
+                        <p className="text-sm text-neutral-600 mt-1">Ngày đặt: {new Date(o.createdAt).toLocaleDateString("vi-VN", { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                       <div className="text-left sm:text-right">
-                        <p className="font-bold text-lg text-primary">{o.total.toLocaleString("vi-VN")}đ</p>
+                        <p className="font-bold text-lg text-primary">{(o.total || 0).toLocaleString("vi-VN")}đ</p>
                         <div className="flex items-center sm:justify-end gap-2 mt-2">
-                          <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${(o.paymentStatus || '').toUpperCase() === 'PAID' ? 'bg-emerald-100 text-emerald-700' : (o.paymentStatus || '').toUpperCase() === 'REFUNDED' ? 'bg-purple-100 text-purple-700' : 'bg-neutral-100 text-neutral-600'}`}>
+                          <span className={`px-2.5 py-1 rounded text-xs uppercase font-bold tracking-wider ${(o.paymentStatus || '').toUpperCase() === 'PAID' ? 'bg-emerald-100 text-emerald-800' : (o.paymentStatus || '').toUpperCase() === 'REFUNDED' ? 'bg-purple-100 text-purple-800' : 'bg-neutral-200 text-neutral-800'}`}>
                             {(o.paymentStatus || '').toUpperCase() === 'PAID' ? 'Đã thanh toán' : (o.paymentStatus || '').toUpperCase() === 'REFUNDED' ? 'Đã hoàn tiền' : 'Chưa thanh toán'}
                           </span>
                         </div>
@@ -534,10 +570,10 @@ function ProfileContent() {
 
                     <div className="mt-4 flex flex-col items-center sm:flex-row sm:justify-end gap-4 border-t border-neutral-100 pt-4">
                       <Button 
-                        variant="ghost" 
+                        variant="outline" 
                         size="sm" 
                         onClick={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
-                        className="text-neutral-500 w-full sm:w-auto"
+                        className="border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-100 hover:text-neutral-900 font-medium w-full sm:w-auto cursor-pointer"
                       >
                         {expandedOrderId === o.id ? 'Thu gọn' : 'Xem chi tiết'}
                         {expandedOrderId === o.id ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
@@ -545,7 +581,7 @@ function ProfileContent() {
                       {(o.status || 'PENDING').toUpperCase() === 'PENDING' && (o.paymentStatus || '').toUpperCase() !== 'PAID' && (o.paymentMethod || '').toLowerCase() === 'payos' && (
                         <Button 
                           size="sm" 
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold w-full sm:w-auto shadow-sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold w-full sm:w-auto shadow-sm cursor-pointer"
                           disabled={retryingPaymentId === o.id}
                           onClick={() => handleRetryPayment(o.id)}
                         >
@@ -554,18 +590,23 @@ function ProfileContent() {
                         </Button>
                       )}
                       {(o.status || 'PENDING').toUpperCase() === 'PENDING' && (
-                        <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 w-full sm:w-auto" onClick={() => setOrderToCancel(o.id)}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="border-red-200 text-red-600 hover:text-red-700 hover:bg-red-50 font-medium w-full sm:w-auto cursor-pointer" 
+                          onClick={() => setOrderToCancel(o.id)}
+                        >
                           Hủy đơn
                         </Button>
                       )}
                       {(o.status || '').toUpperCase() === "PENDING" && (o.paymentStatus || '').toUpperCase() === "PAID" && (
-                        <p className="text-sm text-amber-600 font-medium italic bg-amber-50 px-4 py-2 rounded-lg text-center w-full sm:w-auto">Đã thanh toán. L/H CSKH để huỷ đơn & hoàn tiền.</p>
+                        <p className="text-sm text-amber-800 font-medium italic bg-amber-50 border border-amber-200 px-4 py-2 rounded-lg text-center w-full sm:w-auto">Đã thanh toán. L/H CSKH để huỷ đơn & hoàn tiền.</p>
                       )}
                     </div>
 
                     {/* Order Details Accordion */}
                     {expandedOrderId === o.id && (
-                      <div className="mt-6 border-t border-neutral-100 pt-6 animate-in slide-in-from-top-2 duration-200">
+                      <div className="mt-6 border-t border-neutral-100 pt-6 animate-in slide-in-from-top-2 duration-200 text-neutral-900">
                         <div className="grid sm:grid-cols-2 gap-8">
                           {/* Left: Products */}
                           <div>
@@ -584,10 +625,10 @@ function ProfileContent() {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-neutral-900 truncate">{item.title}</p>
-                                    <p className="text-xs text-neutral-500 mt-1">{item.variantName}</p>
+                                    <p className="text-xs text-neutral-600 mt-1">{item.variantName}</p>
                                     <div className="flex justify-between items-center mt-2">
                                       <p className="text-sm text-primary font-semibold">{(item.price || 0).toLocaleString("vi-VN")}đ</p>
-                                      <p className="text-xs text-neutral-500 font-medium">x{item.quantity || 1}</p>
+                                      <p className="text-xs text-neutral-600 font-medium">x{item.quantity || 1}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -601,11 +642,11 @@ function ProfileContent() {
                               <h3 className="font-bold text-neutral-900 mb-4 flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-primary" /> Thông tin giao hàng
                               </h3>
-                              <div className="bg-neutral-50 rounded-lg p-4 text-sm border border-neutral-100">
+                              <div className="bg-neutral-50 rounded-lg p-4 text-sm border border-neutral-200">
                                 <p className="font-semibold text-neutral-900 mb-1">{o.customer?.name} - {o.customer?.phone}</p>
-                                <p className="text-neutral-600 leading-relaxed">{o.customer?.address}</p>
+                                <p className="text-neutral-700 leading-relaxed">{o.customer?.address}</p>
                                 {o.customer?.note && (
-                                  <p className="mt-2 text-neutral-500 italic border-t border-neutral-200 pt-2">Ghi chú: {o.customer.note}</p>
+                                  <p className="mt-2 text-neutral-600 italic border-t border-neutral-200 pt-2">Ghi chú: {o.customer.note}</p>
                                 )}
                               </div>
                             </div>
@@ -614,28 +655,28 @@ function ProfileContent() {
                               <h3 className="font-bold text-neutral-900 mb-4 flex items-center gap-2">
                                 <ShoppingBag className="w-4 h-4 text-primary" /> Chi tiết thanh toán
                               </h3>
-                              <div className="bg-neutral-50 rounded-lg p-4 text-sm space-y-3 border border-neutral-100">
-                                <div className="flex justify-between text-neutral-600">
+                              <div className="bg-neutral-50 rounded-lg p-4 text-sm space-y-3 border border-neutral-200 text-neutral-800">
+                                <div className="flex justify-between text-neutral-700">
                                   <span>Tạm tính</span>
-                                  <span>{(o.subtotal || 0).toLocaleString("vi-VN")}đ</span>
+                                  <span className="font-medium text-neutral-900">{(o.subtotal || 0).toLocaleString("vi-VN")}đ</span>
                                 </div>
-                                <div className="flex justify-between text-neutral-600">
+                                <div className="flex justify-between text-neutral-700">
                                   <span>Phí giao hàng</span>
-                                  <span>{(o.shippingFee || 0).toLocaleString("vi-VN")}đ</span>
+                                  <span className="font-medium text-neutral-900">{(o.shippingFee || 0).toLocaleString("vi-VN")}đ</span>
                                 </div>
                                 {(o.discount || 0) > 0 && (
-                                  <div className="flex justify-between text-emerald-600 font-medium">
+                                  <div className="flex justify-between text-emerald-700 font-medium">
                                     <span>Giảm giá {o.couponCode ? `(${o.couponCode})` : ''}</span>
                                     <span>-{(o.discount || 0).toLocaleString("vi-VN")}đ</span>
                                   </div>
                                 )}
-                                <div className="pt-3 border-t border-neutral-200 flex justify-between font-bold text-base">
+                                <div className="pt-3 border-t border-neutral-200 flex justify-between font-bold text-base text-neutral-900">
                                   <span>Tổng cộng</span>
-                                  <span className="text-primary">{(o.total || 0).toLocaleString("vi-VN")}đ</span>
+                                  <span className="text-primary font-bold">{(o.total || 0).toLocaleString("vi-VN")}đ</span>
                                 </div>
-                                <div className="pt-3 border-t border-neutral-200 flex justify-between text-neutral-600">
+                                <div className="pt-3 border-t border-neutral-200 flex justify-between text-neutral-700">
                                   <span>Phương thức</span>
-                                  <span className="font-medium uppercase">{o.paymentMethod || 'COD'}</span>
+                                  <span className="font-semibold uppercase text-neutral-900">{o.paymentMethod || 'COD'}</span>
                                 </div>
                               </div>
                             </div>
@@ -652,15 +693,15 @@ function ProfileContent() {
       </Tabs>
 
       <Dialog open={addressModalOpen} onOpenChange={setAddressModalOpen}>
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-[450px] bg-white text-neutral-900 border border-neutral-200 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Thêm địa chỉ giao hàng</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-neutral-900">Thêm địa chỉ giao hàng</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tỉnh / Thành phố</label>
+              <label className="text-sm font-semibold text-neutral-800">Tỉnh / Thành phố</label>
               <select 
-                className="w-full h-10 px-3 rounded-md border border-neutral-200 outline-none focus:ring-2 focus:ring-primary/20 bg-white"
+                className="w-full h-11 px-3 rounded-lg border border-neutral-300 outline-none focus:ring-2 focus:ring-primary/20 bg-white text-neutral-900 text-sm font-medium"
                 value={newAddress.provinceCode}
                 onChange={e => {
                   const name = e.target.options[e.target.selectedIndex].text
@@ -668,15 +709,15 @@ function ProfileContent() {
                   if (e.target.value) fetchDistricts(e.target.value)
                 }}
               >
-                <option value="">Chọn Tỉnh/Thành</option>
-                {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                <option value="" className="text-neutral-500">Chọn Tỉnh/Thành</option>
+                {provinces.map(p => <option key={p.code} value={p.code} className="text-neutral-900">{p.name}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Quận / Huyện</label>
+              <label className="text-sm font-semibold text-neutral-800">Quận / Huyện</label>
               <select 
                 disabled={!newAddress.provinceCode}
-                className="w-full h-10 px-3 rounded-md border border-neutral-200 outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-neutral-100 bg-white"
+                className="w-full h-11 px-3 rounded-lg border border-neutral-300 outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-neutral-100 disabled:text-neutral-500 bg-white text-neutral-900 text-sm font-medium"
                 value={newAddress.districtCode}
                 onChange={e => {
                   const name = e.target.options[e.target.selectedIndex].text
@@ -684,39 +725,43 @@ function ProfileContent() {
                   if (e.target.value) fetchWards(e.target.value)
                 }}
               >
-                <option value="">Chọn Quận/Huyện</option>
-                {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
+                <option value="" className="text-neutral-500">Chọn Quận/Huyện</option>
+                {districts.map(d => <option key={d.code} value={d.code} className="text-neutral-900">{d.name}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Phường / Xã</label>
+              <label className="text-sm font-semibold text-neutral-800">Phường / Xã</label>
               <select 
                 disabled={!newAddress.districtCode}
-                className="w-full h-10 px-3 rounded-md border border-neutral-200 outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-neutral-100 bg-white"
+                className="w-full h-11 px-3 rounded-lg border border-neutral-300 outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-neutral-100 disabled:text-neutral-500 bg-white text-neutral-900 text-sm font-medium"
                 value={newAddress.wardCode}
                 onChange={e => {
                   const name = e.target.options[e.target.selectedIndex].text
                   setNewAddress({...newAddress, wardCode: e.target.value, wardName: name})
                 }}
               >
-                <option value="">Chọn Phường/Xã</option>
-                {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
+                <option value="" className="text-neutral-500">Chọn Phường/Xã</option>
+                {wards.map(w => <option key={w.code} value={w.code} className="text-neutral-900">{w.name}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Số nhà, Tên đường</label>
+              <label className="text-sm font-semibold text-neutral-800">Số nhà, Tên đường</label>
               <Input 
                 placeholder="VD: 123 Đường Lê Lợi"
                 value={newAddress.street}
                 onChange={e => setNewAddress({...newAddress, street: e.target.value})}
+                className="h-11 rounded-lg border-neutral-300 bg-white text-neutral-900 placeholder:text-neutral-400"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddressModalOpen(false)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setAddressModalOpen(false)} className="border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-100 hover:text-neutral-900 font-medium cursor-pointer">
+              Hủy
+            </Button>
             <Button 
               onClick={handleAddAddress} 
               disabled={addingAddress || !newAddress.provinceCode || !newAddress.districtCode || !newAddress.wardCode || !newAddress.street}
+              className="bg-primary text-white hover:bg-primary/90 font-medium cursor-pointer"
             >
               {addingAddress ? "Đang lưu..." : "Lưu địa chỉ"}
             </Button>
@@ -725,59 +770,62 @@ function ProfileContent() {
       </Dialog>
 
       <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[400px] bg-white text-neutral-900 border border-neutral-200 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Đổi mật khẩu</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-neutral-900">Đổi mật khẩu</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Mật khẩu hiện tại</label>
+              <label className="text-sm font-semibold text-neutral-800">Mật khẩu hiện tại</label>
               <div className="relative">
                 <Input 
                   type={showCurrentPassword ? "text" : "password"}
                   value={passwordForm.currentPassword}
                   onChange={e => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
-                  className="pr-10"
+                  className="h-11 rounded-lg border-neutral-300 bg-white text-neutral-900 placeholder:text-neutral-400 pr-10"
                 />
-                <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600">
+                <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-500 hover:text-neutral-800 cursor-pointer">
                   {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Mật khẩu mới</label>
+              <label className="text-sm font-semibold text-neutral-800">Mật khẩu mới</label>
               <div className="relative">
                 <Input 
                   type={showNewPassword ? "text" : "password"}
                   value={passwordForm.newPassword}
                   onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})}
-                  className="pr-10"
+                  className="h-11 rounded-lg border-neutral-300 bg-white text-neutral-900 placeholder:text-neutral-400 pr-10"
                 />
-                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600">
+                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-500 hover:text-neutral-800 cursor-pointer">
                   {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Xác nhận mật khẩu mới</label>
+              <label className="text-sm font-semibold text-neutral-800">Xác nhận mật khẩu mới</label>
               <div className="relative">
                 <Input 
                   type={showConfirmPassword ? "text" : "password"}
                   value={passwordForm.confirmPassword}
                   onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
-                  className="pr-10"
+                  className="h-11 rounded-lg border-neutral-300 bg-white text-neutral-900 placeholder:text-neutral-400 pr-10"
                 />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600">
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-500 hover:text-neutral-800 cursor-pointer">
                   {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPasswordModalOpen(false)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setPasswordModalOpen(false)} className="border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-100 hover:text-neutral-900 font-medium cursor-pointer">
+              Hủy
+            </Button>
             <Button 
               onClick={handleChangePassword} 
               disabled={changingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+              className="bg-primary text-white hover:bg-primary/90 font-medium cursor-pointer"
             >
               {changingPassword ? "Đang xử lý..." : "Cập nhật"}
             </Button>
@@ -786,16 +834,16 @@ function ProfileContent() {
       </Dialog>
 
       <AlertDialog open={addressToDelete !== null} onOpenChange={(open) => !open && setAddressToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white text-neutral-900 border border-neutral-200 shadow-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc muốn xóa địa chỉ này?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-lg font-bold text-neutral-900">Bạn có chắc muốn xóa địa chỉ này?</AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-600">
               Địa chỉ này sẽ bị xóa khỏi danh sách sổ địa chỉ của bạn.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={() => addressToDelete !== null && handleDeleteAddress(addressToDelete)}>
+            <AlertDialogCancel className="border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-100 hover:text-neutral-900 cursor-pointer">Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={() => addressToDelete !== null && handleDeleteAddress(addressToDelete)} className="bg-red-600 text-white hover:bg-red-700 cursor-pointer">
               Xóa
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -803,16 +851,16 @@ function ProfileContent() {
       </AlertDialog>
 
       <AlertDialog open={orderToCancel !== null} onOpenChange={(open) => !open && setOrderToCancel(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white text-neutral-900 border border-neutral-200 shadow-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc muốn hủy đơn hàng này?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-lg font-bold text-neutral-900">Bạn có chắc muốn hủy đơn hàng này?</AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-600">
               Hành động này không thể hoàn tác. Đơn hàng sẽ bị hủy.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Đóng</AlertDialogCancel>
-            <AlertDialogAction onClick={() => orderToCancel !== null && handleCancelOrder(orderToCancel)}>
+            <AlertDialogCancel className="border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-100 hover:text-neutral-900 cursor-pointer">Đóng</AlertDialogCancel>
+            <AlertDialogAction onClick={() => orderToCancel !== null && handleCancelOrder(orderToCancel)} className="bg-red-600 text-white hover:bg-red-700 cursor-pointer">
               Hủy Đơn Hàng
             </AlertDialogAction>
           </AlertDialogFooter>
