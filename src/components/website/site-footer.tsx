@@ -45,11 +45,30 @@ function InstagramIcon({ className }: { className?: string }) {
 export function SiteFooter() {
   const settings = useDataStore((s) => s.settings) || {}
 
-  // Lấy dữ liệu động từ Admin Settings với giá trị mặc định chuẩn của ToTo Barbershop
-  const businessName = settings.business?.name || "ToTo Barbershop"
-  const address = settings.contact?.address || "85 Đồng Đen, Phường 12, Quận Tân Bình, TP.HCM"
-  const hours = settings.contact?.hours || "09:00 – 20:30 (Mở cửa tất cả các ngày trong tuần)"
-  const phone = settings.contact?.phone || "0981 378 179"
+  // Lấy dữ liệu động từ Admin Settings với giá trị mặc định chuẩn của ToTo Barbershop (bỏ qua dữ liệu seed mẫu cũ)
+  const rawName = settings.business?.name?.trim()
+  const businessName =
+    rawName && rawName !== "TOTO BARBERSHOP" ? rawName : "ToTo Barbershop"
+
+  const rawAddress = settings.contact?.address?.trim()
+  const address =
+    rawAddress &&
+    rawAddress !== "85 Đồng Đen, Phường 12, Quận Tân Bình" &&
+    rawAddress !== "123 Đường ABC, Quận 1, TPHCM"
+      ? rawAddress
+      : "85 Đồng Đen, Phường 12, Quận Tân Bình, TP.HCM"
+
+  const rawHours = settings.contact?.hours?.trim()
+  const hours =
+    rawHours && rawHours !== "08:30 - 20:30 (Thứ 2 - Chủ Nhật)"
+      ? rawHours
+      : "09:00 – 20:30 (Mở cửa tất cả các ngày trong tuần)"
+
+  const rawPhone = settings.contact?.phone?.trim()
+  const phone =
+    rawPhone && rawPhone.replace(/\s+/g, "") !== "0901234567"
+      ? rawPhone
+      : "0981 378 179"
   
   const facebookUrl = settings.social?.facebook || settings.socials?.facebook || "https://www.facebook.com/totobarbershopHCM"
   const instagramUrl = settings.social?.instagram || settings.socials?.instagram || "https://www.instagram.com/totobarbershop_/"
