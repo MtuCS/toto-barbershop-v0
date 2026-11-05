@@ -329,23 +329,23 @@ export function ServicesBento() {
 
             <h2
               id="home-services-title"
-              className="mt-6 text-center font-sans text-[clamp(2.85rem,5.8vw,5rem)] font-bold leading-[0.98] tracking-[-0.045em] text-[#f2f5f3]"
+              className="home-section-title mt-4 text-center font-sans text-[clamp(2.5rem,5vw,4.25rem)] font-bold leading-[1.05] tracking-[-0.04em] text-[#f2f5f3]"
             >
               <span
                 data-services-title-mask
                 data-testid="home-services-title-mask"
-                className="block overflow-hidden py-[0.08em]"
+                className="inline-block overflow-hidden py-[0.08em]"
               >
-                <span data-services-title-line className="block">
+                <span data-services-title-line className="inline-block">
                   Mấy món nghề
                 </span>
-              </span>
+              </span>{" "}
               <span
                 data-services-title-mask
                 data-testid="home-services-title-mask"
-                className="block overflow-hidden py-[0.08em] text-[#79b8a7]"
+                className="inline-block overflow-hidden py-[0.08em] text-[#79b8a7]"
               >
-                <span data-services-title-line className="block">
+                <span data-services-title-line className="inline-block">
                   ToTo
                 </span>
               </span>

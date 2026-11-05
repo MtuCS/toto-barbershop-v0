@@ -84,7 +84,7 @@ export function SiteFooter() {
           {/* Thông tin chính */}
           <div className="flex flex-col justify-between">
             <div>
-              <h2 className="home-section-title home-contact-title text-3xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-4xl lg:text-5xl leading-[1.15]">
+              <h2 className="home-contact-title text-2xl font-bold uppercase tracking-tight text-[#f2f5f3] sm:text-3xl lg:text-4xl xl:text-[2.5rem] leading-[1.15] sm:whitespace-nowrap">
                 BẠN MUỐN GHÉ TOTO?
               </h2>
 

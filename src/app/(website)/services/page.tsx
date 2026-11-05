@@ -201,10 +201,10 @@ export default async function ServicesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             {/* Left Column (Editorial Typography) */}
             <div className="lg:col-span-7 flex flex-col justify-center">
-              <h1 className="font-sans text-4xl sm:text-6xl md:text-7xl font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.05]">
-                MẤY MÓN NGHỀ<br className="hidden sm:inline" /> TẠI TOTO
+              <h1 className="font-sans text-3xl sm:text-4xl lg:text-5xl xl:text-[3.25rem] font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.08] sm:whitespace-nowrap">
+                MẤY MÓN NGHỀ TẠI TOTO
               </h1>
-              <p className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-white/70 font-sans">
+              <p className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-white/70 font-sans text-balance">
                 Rõ ràng, chỉn chu và minh bạch. Mọi dịch vụ đều được thực hiện kĩ lưỡng bởi đội ngũ thợ lành nghề.
               </p>
             </div>
@@ -251,16 +251,16 @@ export default async function ServicesPage() {
       <section className="relative px-5 py-12 md:px-8 md:py-16 border-b border-white/10 bg-[#07110f]">
         <div className="mx-auto max-w-[1400px]">
           {/* Section Header */}
-          <div className="text-center max-w-3xl mx-auto mb-10">
+          <div className="text-center max-w-5xl mx-auto mb-10">
             <div className="flex justify-center mb-4">
               <span className="inline-flex items-center gap-2 rounded-full border border-[#79b8a7]/30 bg-[#79b8a7]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7] backdrop-blur-md">
                 Bảng Giá &amp; Dịch Vụ
               </span>
             </div>
-            <h2 className="font-sans text-3xl sm:text-5xl md:text-6xl font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.1]">
+            <h2 className="font-sans text-2xl sm:text-4xl lg:text-[2.75rem] font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.15] md:whitespace-nowrap">
               DỊCH VỤ CHỈN CHU &amp; MINH BẠCH
             </h2>
-            <p className="mt-5 text-sm sm:text-base leading-relaxed text-white/65">
+            <p className="mt-5 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed text-white/65 text-balance">
               TOTO gói gọn quy trình thành từng nhóm rõ ràng, giúp bạn nắm được dịch vụ và giá trước khi ngồi ghế.
             </p>
           </div>
@@ -276,16 +276,16 @@ export default async function ServicesPage() {
       <section className="relative px-5 py-12 md:px-8 md:py-16 border-b border-white/10 bg-[#07110f]">
         <div className="mx-auto max-w-[1400px]">
           {/* Section Title in quotation marks & exact sub-headline */}
-          <div className="text-center max-w-3xl mx-auto mb-10">
+          <div className="text-center max-w-5xl mx-auto mb-10">
             <div className="flex justify-center mb-4">
               <span className="inline-flex items-center gap-2 rounded-full border border-[#79b8a7]/30 bg-[#79b8a7]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7] backdrop-blur-md">
                 Lookbook
               </span>
             </div>
-            <h2 className="font-sans text-3xl sm:text-5xl md:text-6xl font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.1]">
+            <h2 className="font-sans text-2xl sm:text-4xl lg:text-[2.75rem] font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.15] md:whitespace-nowrap">
               GÓC THÀNH PHẨM
             </h2>
-            <p className="mt-5 text-sm sm:text-base leading-relaxed text-white/65">
+            <p className="mt-5 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed text-white/65 text-balance">
               Những thành phẩm được tạo ra từ sự tin tưởng của anh em và sự tỉ mỉ của TOTO.
             </p>
           </div>
@@ -301,16 +301,16 @@ export default async function ServicesPage() {
       <section className="relative px-5 py-12 md:px-8 md:py-16 border-b border-white/10 bg-[#07110f]">
         <div className="mx-auto max-w-[1400px]">
           {/* Section Header */}
-          <div className="text-center max-w-3xl mx-auto mb-10">
+          <div className="text-center max-w-5xl mx-auto mb-10">
             <div className="flex justify-center mb-4">
               <span className="inline-flex items-center gap-2 rounded-full border border-[#79b8a7]/30 bg-[#79b8a7]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7] backdrop-blur-md">
                 Đội Ngũ Thợ
               </span>
             </div>
-            <h2 className="font-sans text-3xl sm:text-5xl md:text-6xl font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.1]">
+            <h2 className="font-sans text-2xl sm:text-4xl lg:text-[2.75rem] font-extrabold uppercase tracking-tight text-[#f2f5f3] leading-[1.15] md:whitespace-nowrap">
               TỔ ĐỘI TOTO
             </h2>
-            <p className="mt-5 text-sm sm:text-base leading-relaxed text-white/65">
+            <p className="mt-5 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed text-white/65 text-balance">
               Nơi bạn yên tâm gửi gắm mái tóc. Dù là anh em quen từ trước hay một gương mặt mới, TOTO luôn ở đây để chăm chút diện mạo cho bạn. Chào mừng bạn ghé tiệm.
             </p>
           </div>
@@ -324,13 +324,13 @@ export default async function ServicesPage() {
       {/* 5. KHỐI CHỐT CTA (TƯ VẤN - Bật thẳng Messenger TOTO) */}
       {/* ========================================================================= */}
       <section className="relative px-5 py-14 md:px-8 md:py-20 bg-gradient-to-b from-[#07110f] via-[#091a16]/40 to-[#07110f] text-center">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-5xl">
           <div className="flex justify-center mb-5">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#79b8a7]/30 bg-[#79b8a7]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7] backdrop-blur-md">
               TƯ VẤN
             </span>
           </div>
-          <h2 className="font-sans text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#f2f5f3] leading-[1.1]">
+          <h2 className="font-sans text-2xl sm:text-4xl lg:text-[2.75rem] font-extrabold tracking-tight text-[#f2f5f3] leading-[1.15] md:whitespace-nowrap">
             Tư vấn kiểu tóc hay chọn thợ hợp gu?
           </h2>
           <p className="mt-6 max-w-xl mx-auto text-sm sm:text-base leading-relaxed text-white/65">

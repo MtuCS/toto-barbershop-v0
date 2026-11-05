@@ -155,7 +155,7 @@ function PillarCard({
             </span>
           </div>
 
-          <h3 className="font-display text-xl font-bold uppercase leading-snug tracking-wide text-white transition-colors duration-300 group-hover:text-[#f3d27a]">
+          <h3 className="font-display text-base xl:text-[17px] font-bold uppercase leading-snug tracking-wide text-white transition-colors duration-300 group-hover:text-[#f3d27a] sm:whitespace-nowrap">
             {pillar.title}
           </h3>
 
@@ -219,7 +219,7 @@ export function CareerRevealBlock() {
     >
       {/* Left Narrative */}
       <div className="lg:col-span-6">
-        <h2 className="font-display text-3xl font-bold uppercase leading-[1.15] tracking-tight text-white sm:text-4xl lg:text-[42px]">
+        <h2 className="font-display text-2xl font-bold uppercase leading-[1.18] tracking-tight text-white sm:text-3xl lg:text-4xl sm:whitespace-nowrap">
           Hợp gu, cùng nhà,{" "}
           <span className="font-agatho italic font-bold normal-case tracking-normal text-[#79b8a7]">
             đi đường dài.

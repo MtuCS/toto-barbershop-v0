@@ -82,9 +82,9 @@ export default function TrainingPage() {
             </p>
 
             {/* Main Headline (H1) - Pairing bold Oswald display with Playfair Display Serif */}
-            <h1 className="font-agatho text-3xl font-bold uppercase leading-[1.25] tracking-tight text-white sm:text-5xl lg:text-[56px]">
-              CẮT CÓ NGHỀ - LÀM CÓ GU -{" "}
-              <span className="font-agatho  font-bold text-[#79b8a7]">
+            <h1 className="font-agatho text-3xl font-bold uppercase leading-[1.25] tracking-tight text-white sm:text-5xl lg:text-[54px]">
+              <span className="sm:whitespace-nowrap">CẮT CÓ NGHỀ - LÀM CÓ GU -</span>{" "}
+              <span className="font-agatho font-bold text-[#79b8a7] whitespace-nowrap">
                 ĐỨNG GHẾ CÓ CHẤT.
               </span>
             </h1>
@@ -138,13 +138,13 @@ export default function TrainingPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           {/* Upgraded Barber Artisanal Section Header */}
           <div className="mb-14 flex flex-col justify-between gap-6 border-b border-white/12 pb-9 lg:flex-row lg:items-end">
-            <div className="max-w-2xl">
+            <div className="lg:shrink-0">
               <div className="mb-3 flex items-center gap-3 text-[#d4a84b]/80">
                 <Scissors className="h-4 w-4" strokeWidth={1.25} />
                 <span className="h-[1px] w-12 bg-gradient-to-r from-[#d4a84b]/70 to-transparent" />
               </div>
 
-              <h2 className="text-3xl leading-[1.18] tracking-tight text-white sm:text-4xl lg:text-[44px]">
+              <h2 className="text-2xl leading-[1.18] tracking-tight text-white sm:text-3xl lg:text-4xl sm:whitespace-nowrap">
                 <span className="font-display font-bold uppercase">
                   3 Thật:{" "}
                 </span>
@@ -154,7 +154,7 @@ export default function TrainingPage() {
               </h2>
             </div>
 
-            <p className="max-w-md text-base leading-relaxed text-[#c9d4d0] lg:text-right">
+            <p className="max-w-md text-base leading-relaxed text-[#c9d4d0] lg:text-right text-balance">
               Tại ToTo, mọi thứ đều đi từ thực tế để rèn luyện nên những “tay
               kéo” vững nghề.
             </p>
@@ -192,13 +192,13 @@ export default function TrainingPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#79b8a7]">
                 Giải đáp thực tế
               </p>
-              <h2 className="mt-3 font-display text-3xl font-bold uppercase leading-tight tracking-tight text-white sm:text-4xl">
-                Mấy điều anh em{" "}
-                <span className="font-agatho italic font-bold normal-case tracking-normal text-[#79b8a7]">
+              <h2 className="mt-3 font-display text-2xl font-bold uppercase leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
+                <span className="whitespace-nowrap">Mấy điều anh em</span>{" "}
+                <span className="font-agatho italic font-bold normal-case tracking-normal text-[#79b8a7] whitespace-nowrap">
                   hay thắc mắc
                 </span>
               </h2>
-              <p className="mt-4 text-sm leading-relaxed text-[#a8b6b1] sm:text-base">
+              <p className="mt-4 text-sm leading-relaxed text-[#a8b6b1] sm:text-base text-balance">
                 Những câu hỏi thực tế nhất từ anh em mới bắt đầu tìm hiểu nghề
                 tóc tại ToTo Barbershop.
               </p>
@@ -234,9 +234,9 @@ export default function TrainingPage() {
               />
 
               <div className="relative z-10">
-                <h2 className="font-display text-2xl font-bold uppercase leading-snug tracking-tight text-white sm:text-3xl lg:text-[34px]">
-                  Bắt đầu hành trình{" "}
-                  <span className="font-agatho italic font-bold normal-case tracking-normal text-[#8FFF02]">
+                <h2 className="font-display text-2xl font-bold uppercase leading-snug tracking-tight text-white sm:text-3xl lg:text-4xl">
+                  <span className="whitespace-nowrap">Bắt đầu hành trình</span>{" "}
+                  <span className="font-agatho italic font-bold normal-case tracking-normal text-[#8FFF02] whitespace-nowrap">
                     cầm kéo cùng ToTo
                   </span>
                 </h2>
