@@ -21,7 +21,7 @@ export const MAIN_NAV: NavLink[] = [
   { label: 'Trang chủ', href: '/' },
   { label: 'Dịch vụ', href: '/services' },
   { label: 'Đào tạo', href: '/training' },
-  { label: 'TOTO Merch & Co.', href: '/merchandise' },
+  { label: 'TOTO Merch & Co.', href: '/merchandise', showInHeader: false },
   // { label: 'Về Toto', href: '/about' },
   { label: 'Liên hệ', href: '/contact', showInHeader: false },
 ]

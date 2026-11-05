@@ -296,11 +296,10 @@ export default async function ServicesPage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. TỔ ĐỘI TOTO (Chỉ hiển thị ảnh chân dung và tên theo feedback) */}
+      {/* 4. TỔ ĐỘI TOTO (Tạm ẩn chờ chụp hình thực tế các thợ) */}
       {/* ========================================================================= */}
-      <section className="relative px-5 py-12 md:px-8 md:py-16 border-b border-white/10 bg-[#07110f]">
+      {/* <section className="relative px-5 py-12 md:px-8 md:py-16 border-b border-white/10 bg-[#07110f]">
         <div className="mx-auto max-w-[1400px]">
-          {/* Section Header */}
           <div className="text-center max-w-5xl mx-auto mb-10">
             <div className="flex justify-center mb-4">
               <span className="inline-flex items-center gap-2 rounded-full border border-[#79b8a7]/30 bg-[#79b8a7]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#79b8a7] backdrop-blur-md">
@@ -315,10 +314,9 @@ export default async function ServicesPage() {
             </p>
           </div>
 
-          {/* 4 Thẻ chân dung tối giản: Hình + Tên */}
           <FigmaTeamList members={teamMembers} />
         </div>
-      </section>
+      </section> */}
 
       {/* ========================================================================= */}
       {/* 5. KHỐI CHỐT CTA (TƯ VẤN - Bật thẳng Messenger TOTO) */}
