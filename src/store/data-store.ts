@@ -911,8 +911,11 @@ export const useDataStore = create<DataState>()(
 
       fetchSettings: async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/settings`);
-          if (res.ok) set({ settings: await res.json() });
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/settings`);
+          if (res.ok) {
+            const raw = await res.json();
+            set({ settings: normalizeLegacySettings(raw) });
+          }
         } catch (error) { console.error(error); }
       },
 
@@ -980,24 +983,70 @@ export const useDataStore = create<DataState>()(
     }),
     {
       name: "toto-admin-data",
-      version: 3,
+      version: 4,
       migrate: (persistedState, version) => {
         const state = persistedState as any
         if (state) {
           if (!Array.isArray(state.orders)) {
             state.orders = Array.isArray(state.orders?.data) ? state.orders.data : []
           }
+          if (state.settings) {
+            state.settings = normalizeLegacySettings(state.settings)
+          }
         }
         return state as DataState
       },
       onRehydrateStorage: () => (state) => {
-        if (state && !Array.isArray(state.orders)) {
-          state.orders = Array.isArray((state.orders as any)?.data) ? (state.orders as any).data : []
+        if (state) {
+          if (!Array.isArray(state.orders)) {
+            state.orders = Array.isArray((state.orders as any)?.data) ? (state.orders as any).data : []
+          }
+          if (state.settings) {
+            state.settings = normalizeLegacySettings(state.settings)
+          }
         }
       },
     },
   ),
 )
+
+function normalizeLegacySettings(raw: any): SettingsData {
+  if (!raw || typeof raw !== "object") return {} as SettingsData
+  const next = { ...raw }
+
+  if (next.business && typeof next.business === "object") {
+    const name = next.business.name?.trim()
+    next.business = {
+      ...next.business,
+      name: !name || name === "TOTO BARBERSHOP" ? "ToTo Barbershop" : name,
+    }
+  }
+
+  if (next.contact && typeof next.contact === "object") {
+    const phone = next.contact.phone?.trim()
+    const hours = next.contact.hours?.trim()
+    const address = next.contact.address?.trim()
+    next.contact = {
+      ...next.contact,
+      phone:
+        !phone || phone.replace(/\s+/g, "") === "0901234567"
+          ? "0981 378 179"
+          : phone,
+      hours:
+        !hours || hours === "08:30 - 20:30 (Thứ 2 - Chủ Nhật)"
+          ? "09:00 – 20:30 (Mở cửa tất cả các ngày trong tuần)"
+          : hours,
+      address:
+        !address ||
+        address === "85 Đồng Đen, Phường 12, Quận Tân Bình" ||
+        address === "123 Đường ABC, Quận 1, TPHCM"
+          ? "85 Đồng Đen, Phường 12, Quận Tân Bình, TP.HCM"
+          : address,
+    }
+  }
+
+  return next as SettingsData
+}
 
 export function getOrderByCode(orders: Order[], code: string) {
   return orders.find((o) => o.code === code)

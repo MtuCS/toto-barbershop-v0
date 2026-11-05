@@ -6,10 +6,29 @@ import { useDataStore } from "@/store/data-store"
 export function MapSection() {
   const settings = useDataStore((s) => s.settings) || {}
 
-  const businessName = settings.business?.name || "ToTo Barbershop"
-  const address = settings.contact?.address || "85 Đồng Đen, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh"
-  const hours = settings.contact?.hours || "09:00 – 20:30 (Mở cửa tất cả các ngày trong tuần)"
-  const phone = settings.contact?.phone || "0981 378 179"
+  const rawName = settings.business?.name?.trim()
+  const businessName =
+    rawName && rawName !== "TOTO BARBERSHOP" ? rawName : "ToTo Barbershop"
+
+  const rawAddress = settings.contact?.address?.trim()
+  const address =
+    rawAddress &&
+    rawAddress !== "85 Đồng Đen, Phường 12, Quận Tân Bình" &&
+    rawAddress !== "123 Đường ABC, Quận 1, TPHCM"
+      ? rawAddress
+      : "85 Đồng Đen, Phường 12, Quận Tân Bình, TP.HCM"
+
+  const rawHours = settings.contact?.hours?.trim()
+  const hours =
+    rawHours && rawHours !== "08:30 - 20:30 (Thứ 2 - Chủ Nhật)"
+      ? rawHours
+      : "09:00 – 20:30 (Mở cửa tất cả các ngày trong tuần)"
+
+  const rawPhone = settings.contact?.phone?.trim()
+  const phone =
+    rawPhone && rawPhone.replace(/\s+/g, "") !== "0901234567"
+      ? rawPhone
+      : "0981 378 179"
   
   const googleMapsDirectionsUrl = settings.contact?.googleMapsUrl || 
     "https://www.google.com/maps/place/Toto+babershop/@10.793289,106.644723,17z/data=!4m6!3m5!1s0x317529fab862286b:0x558f62689c90fdae!8m2!3d10.793289!4d106.644723!16s%2Fg%2F11sy6vhbxb?entry=ttu"
