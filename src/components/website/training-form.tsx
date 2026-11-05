@@ -142,11 +142,12 @@ export function TrainingForm() {
       </div>
 
       {/* Nút [Gửi thông tin] — Kết thúc gọn gàng, không có thông tin thừa bên dưới */}
+      {/* Nút [Gửi thông tin] — Căn giữa text, icon neo bên phải */}
       <div className="pt-2">
         <button
           type="submit"
           disabled={loading}
-          className="group relative flex h-13 w-full items-center justify-between rounded-xl bg-[#68a494] pl-6 pr-2 text-sm font-bold text-[#0b1916] shadow-[0_14px_32px_-8px_rgba(212,168,75,0.4)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[#e2b85c] hover:shadow-[0_18px_38px_-6px_rgba(212,168,75,0.55)] active:scale-[0.99] disabled:pointer-events-none disabled:opacity-60 cursor-pointer sm:text-base"
+          className="group relative flex h-13 w-full items-center justify-center rounded-xl bg-[#68a494] px-4 text-sm font-bold text-[#0b1916] shadow-[0_14px_32px_-8px_rgba(212,168,75,0.4)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[#e2b85c] hover:shadow-[0_18px_38px_-6px_rgba(212,168,75,0.55)] active:scale-[0.99] disabled:pointer-events-none disabled:opacity-60 cursor-pointer sm:text-base"
         >
           <span className="flex items-center gap-2 whitespace-nowrap">
             {loading ? (
@@ -163,7 +164,8 @@ export function TrainingForm() {
               "Gửi thông tin"
             )}
           </span>
-          <span className="flex size-9 items-center justify-center rounded-lg bg-[#0b1916]/15 text-current transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+
+          <span className="absolute right-2 flex size-9 items-center justify-center rounded-lg bg-[#0b1916]/15 text-current transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
             <ArrowUpRight strokeWidth={2} className="size-4" />
           </span>
         </button>
