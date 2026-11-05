@@ -82,9 +82,9 @@ export default function TrainingPage() {
             </p>
 
             {/* Main Headline (H1) - Pairing bold Oswald display with Playfair Display Serif */}
-            <h1 className="font-display text-3xl font-bold uppercase leading-[1.15] tracking-tight text-white sm:text-5xl lg:text-[56px]">
+            <h1 className="font-agatho text-3xl font-bold uppercase leading-[1.25] tracking-tight text-white sm:text-5xl lg:text-[56px]">
               CẮT CÓ NGHỀ - LÀM CÓ GU -{" "}
-              <span className="font-agatho italic font-bold text-[#d4a84b]">
+              <span className="font-agatho  font-bold text-[#79b8a7]">
                 ĐỨNG GHẾ CÓ CHẤT.
               </span>
             </h1>
@@ -148,7 +148,7 @@ export default function TrainingPage() {
                 <span className="font-display font-bold uppercase">
                   3 Thật:{" "}
                 </span>
-                <span className="font-agatho italic font-bold text-[#d4a84b]">
+                <span className="font-agatho italic font-bold text-[#79b8a7]">
                   Học thật - Tóc thật - Chất thật.
                 </span>
               </h2>
@@ -189,12 +189,12 @@ export default function TrainingPage() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-4 lg:sticky lg:top-28 lg:self-start">
               {/* Eyebrow 2 of 2 on page */}
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#d4a84b]">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#79b8a7]">
                 Giải đáp thực tế
               </p>
               <h2 className="mt-3 font-display text-3xl font-bold uppercase leading-tight tracking-tight text-white sm:text-4xl">
                 Mấy điều anh em{" "}
-                <span className="font-agatho italic font-bold normal-case tracking-normal text-[#d4a84b]">
+                <span className="font-agatho italic font-bold normal-case tracking-normal text-[#79b8a7]">
                   hay thắc mắc
                 </span>
               </h2>
@@ -236,7 +236,7 @@ export default function TrainingPage() {
               <div className="relative z-10">
                 <h2 className="font-display text-2xl font-bold uppercase leading-snug tracking-tight text-white sm:text-3xl lg:text-[34px]">
                   Bắt đầu hành trình{" "}
-                  <span className="font-agatho italic font-bold normal-case tracking-normal text-[#d4a84b]">
+                  <span className="font-agatho italic font-bold normal-case tracking-normal text-[#8FFF02]">
                     cầm kéo cùng ToTo
                   </span>
                 </h2>

@@ -221,7 +221,7 @@ export function CareerRevealBlock() {
       <div className="lg:col-span-6">
         <h2 className="font-display text-3xl font-bold uppercase leading-[1.15] tracking-tight text-white sm:text-4xl lg:text-[42px]">
           Hợp gu, cùng nhà,{" "}
-          <span className="font-agatho italic font-bold normal-case tracking-normal text-[#d4a84b]">
+          <span className="font-agatho italic font-bold normal-case tracking-normal text-[#79b8a7]">
             đi đường dài.
           </span>
         </h2>
@@ -239,7 +239,7 @@ export function CareerRevealBlock() {
         {/* Hairline-divided values (no nested cards) */}
         <dl className="mt-9 grid grid-cols-1 gap-6 border-t border-white/10 pt-7 sm:grid-cols-3">
           <div>
-            <dt className="font-agatho italic text-lg font-bold text-[#d4a84b]">
+            <dt className="font-agatho italic text-lg font-bold text-[#79b8a7]">
               Vững tay kéo
             </dt>
             <dd className="mt-1.5 text-sm leading-relaxed text-[#a8b6b1]">
@@ -247,7 +247,7 @@ export function CareerRevealBlock() {
             </dd>
           </div>
           <div className="sm:border-l sm:border-white/10 sm:pl-6">
-            <dt className="font-agatho italic text-lg font-bold text-[#d4a84b]">
+            <dt className="font-agatho italic text-lg font-bold text-[#79b8a7]">
               Tâm sáng
             </dt>
             <dd className="mt-1.5 text-sm leading-relaxed text-[#a8b6b1]">
@@ -255,7 +255,7 @@ export function CareerRevealBlock() {
             </dd>
           </div>
           <div className="sm:border-l sm:border-white/10 sm:pl-6">
-            <dt className="font-agatho italic text-lg font-bold text-[#d4a84b]">
+            <dt className="font-agatho italic text-lg font-bold text-[#79b8a7]">
               Cùng nhịp sống
             </dt>
             <dd className="mt-1.5 text-sm leading-relaxed text-[#a8b6b1]">
