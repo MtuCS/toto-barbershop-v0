@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Menu, ShoppingBag, User, LogIn, LogOut, Dices, ChevronRight } from "lucide-react"
@@ -46,14 +46,16 @@ function Logo() {
   )
 }
 
-const FULL_HEADER_NAV = MAIN_NAV.filter((link) => link.showInHeader !== false)
+const HEADER_NAV = MAIN_NAV.filter((link) => link.showInHeader !== false)
 
-const FULL_MOBILE_NAV_LIST = [
+const MOBILE_NAV_LIST = [
+  { label: "Trang chủ", href: "/" },
   { label: "Dịch vụ", href: "/services" },
-  { label: "Shop", href: "/shop" },
-  { label: "TOTO Merchandise", href: "/merchandise" },
   { label: "Đào tạo", href: "/training" },
-  { label: "Liên hệ", href: "/contact" },
+  // Tạm ẩn các trang để chờ hoàn thiện, sau đó mở lại:
+  // { label: "Shop", href: "/shop" },
+  // { label: "TOTO Merchandise", href: "/merchandise" },
+  // { label: "Liên hệ", href: "/contact" },
 ]
 
 export function SiteHeader() {
@@ -61,28 +63,9 @@ export function SiteHeader() {
   const router = useRouter()
   const mounted = useMounted()
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [isPreviewMode, setIsPreviewMode] = useState(false)
 
-  // Kiểm tra cờ preview=all từ URL query an toàn trong client-side hoặc từ localStorage
-  useEffect(() => {
-    if (typeof window === "undefined") return
-
-    const params = new URLSearchParams(window.location.search)
-    const previewParam = params.get("preview")
-
-    if (previewParam === "all" || previewParam === "true") {
-      localStorage.setItem("toto_preview_mode", "all")
-      setIsPreviewMode(true)
-    } else if (previewParam === "off" || previewParam === "none") {
-      localStorage.removeItem("toto_preview_mode")
-      setIsPreviewMode(false)
-    } else if (localStorage.getItem("toto_preview_mode") === "all") {
-      setIsPreviewMode(true)
-    }
-  }, [pathname])
-
-  const headerNav = isPreviewMode ? FULL_HEADER_NAV : []
-  const mobileNavList = isPreviewMode ? FULL_MOBILE_NAV_LIST : []
+  const headerNav = HEADER_NAV
+  const mobileNavList = MOBILE_NAV_LIST
 
   // Stores
   const { user, isAuthModalOpen: authOpen, setAuthModalOpen: setAuthOpen, logout } = useCustomerUserStore()
